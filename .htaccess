@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect Trailing Slashes...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)/$ /berbagi/$1 [L,R=301]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Jangan rewrite ulang request yang sudah menuju public/
+    RewriteCond %{REQUEST_URI} !^/berbagi/public(/|$)
+
+    # Arahkan semua request ke folder public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

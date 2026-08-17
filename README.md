@@ -64,24 +64,30 @@ WHATSAPP_API_URL=https://gateway-provider.example.com
 WHATSAPP_API_TOKEN=token-anda
 ```
 
-Jangan lupa `storage:link` agar upload gambar banner tampil.
+Di produksi cPanel (tanpa symlink), disk `public` sudah diarahkan ke `public/storage` (lihat `config/filesystems.php`); pastikan folder tersebut ada. Di lingkungan lokal tetap bisa `php artisan storage:link`.
 
 ## Cron / Scheduler (penting untuk produksi)
 
-Pengiriman WhatsApp berjalan via scheduler. Tambahkan baris berikut di **cron job cPanel** (sesuaikan path):
+Pengiriman WhatsApp berjalan via scheduler. Tambahkan baris berikut di **cron job cPanel** (sesuaikan path dan versi PHP):
 
 ```bash
-* * * * * /usr/bin/php7.4 /home/USERNAME/public_html/artisan schedule:run >> /dev/null 2>&1
+* * * * * /usr/local/bin/php /home/USERNAME/public_html/berbagi.or.id/berbagi/artisan schedule:run >> /dev/null 2>&1
 ```
 
-Scheduler akan menjalankan `whatsapp:send` setiap 5 menit (didefinisikan di `app/Console/Kernel.php`).
+Scheduler akan menjalankan `whatsapp:send` setiap 5 menit (didefinisikan di `app/Console/Kernel.php`). Sebelum pengiriman aktif, isi `WHATSAPP_API_URL` dan `WHATSAPP_API_TOKEN` di `.env` produksi.
 
 ## Catatan Produksi (cPanel + LiteSpeed)
 
-1. Letakkan isi project di `public_html`; isi folder `public/` dipindah ke `public_html/`, lalu ubah `index.php` agar memuat `../bootstrap/app.php` (bootstrap dipindah ke folder induk) atau gunakan struktur standar Laravel dengan symlink `public_html` → `project/public`.
-2. Pastikan folder `storage/` dan `bootstrap/cache/` writable.
-3. Gunakan PHP 7.4 sebagai PHP version di cPanel (MultiPHP Manager).
-4. Konfigurasi `.env` dengan kredensial database produksi, lalu `php artisan config:cache`.
+Deployment aktual di `berbagi.or.id` memakai struktur berikut:
+
+1. Seluruh project Laravel ditaruh di `public_html/berbagi.or.id/berbagi` (dokumen root domain tetap `public_html/berbagi.or.id/`).
+2. `.htaccess` di root project mengarahkan semua request ke `public/` (lihat file `.htaccess`), sehingga aplikasi hidup di URL `http://berbagi.or.id/berbagi/`.
+3. Dukungan sub-direktori ditangani di `app/Providers/AppServiceProvider.php` (`configureSubDirectory`): koreksi `SCRIPT_NAME`/`PHP_SELF` + `URL::forceRootUrl`, sehingga routing, redirect, dan asset konsisten. `APP_URL` di `.env` harus berisi `http://berbagi.or.id/berbagi`.
+4. Karena symlink tidak bisa dibuat via FTP, disk `public` di `config/filesystems.php` diarahkan ke folder sungguhan `public/storage` (bukan `storage/app/public`). Pastikan folder `public/storage/banners` ada dan writable.
+5. Pastikan folder `storage/`, `storage/framework/{cache,sessions,views}`, dan `bootstrap/cache/` writable.
+6. Gunakan PHP 7.4 sebagai PHP version di cPanel (MultiPHP Manager / LiteSpeed).
+7. Tanpa SSH, jalankan migrasi via script web sementara di `public/` lalu hapus, atau via cPanel Terminal / cron sekali jalan: `php artisan migrate --force`.
+8. Jangan lupa `php artisan config:cache` setelah `.env` produksi final (dengan koneksi DB dan `APP_URL` yang benar).
 
 ## Struktur Penting
 
