@@ -1,75 +1,98 @@
-# Berbagi.or.id
+# Berbagi — Sistem Manajemen Fundraising
 
-Platform berbagi konten berbasis **PHP 8** dan **MySQL/MariaDB** — tempat siapa saja membagikan ilmu, cerita, dan pengalaman.
+Sistem manajemen fundraising untuk **BWA (Berbagi Wakaf & Amal)**, portal **berbagi.or.id**. Dibangun dengan **Laravel 8.83** + **PHP 7.4** + **MySQL/MariaDB**, siap produksi di **cPanel + LiteSpeed**.
+
+> Project ini adalah migrasi dari Google Apps Script ke aplikasi web self-hosted.
 
 ## Fitur
 
-- Registrasi dan login pengguna (password di-hash dengan `password_hash`)
-- Menulis, mengedit, dan menghapus konten (draf / terbit)
-- Kategori konten, pencarian, dan paginasi
-- Statistik jumlah dilihat dan daftar konten terpopuler
-- Komentar pada konten yang telah terbit
-- Proteksi CSRF pada semua form
-- Query database menggunakan prepared statement (PDO)
+- **4 role pengguna**: admin super, supervisor/TL, agen/freelancer, donatur (publik)
+- **Manajemen cabang** dengan target fundraising masing-masing (default target nasional: Rp1,5 Miliar)
+- **Manajemen donatur/kontak** dengan status follow-up (prospect, pending, committed, donated, dll.)
+- **Pencatatan donasi** per program wakaf & campaign tag
+- **Program & campaign tag** untuk pengelompokan fundraising
+- **Pengumuman/banner** di halaman publik
+- **Pengaturan sistem** (target global, pengingat WhatsApp) tanpa hardcode
+- **WhatsApp API integration** dengan pengiriman antrian terjadwal via cron (tiap 5 menit)
+- **Activity log** seluruh aktivitas penting pengguna
 
-## Struktur Project
+## Teknologi
 
-```
-.
-├── autoload.php          # Loader .env + autoload kelas App\
-├── config/config.php     # Konfigurasi database & aplikasi
-├── public/               # Web root (entry point: index.php)
-│   ├── index.php         # Front controller / routing
-│   ├── css/style.css
-│   └── .htaccess         # Rewrite untuk Apache
-├── src/                  # Kelas inti (Auth, Post, Comments, Database)
-├── sql/schema.sql        # Skema database + seed kategori
-├── storage/              # Penyimpanan upload (cadangan)
-└── templates/            # Tampilan (layout, halaman, error)
-```
+| Komponen | Versi |
+|----------|-------|
+| PHP | 7.4.x (kompatibel cPanel LiteSpeed) |
+| Laravel | 8.83.x |
+| Database | MySQL 5.7+ / MariaDB 10.x |
+| UI | Blade + CSS custom (glassmorphism, warna #1E3A5F & #2ECC71) |
 
-## Prasyarat
-
-- PHP >= 8.1 dengan ekstensi `pdo_mysql`, `mbstring`
-- MySQL atau MariaDB
-- Composer (opsional)
-
-## Instalasi
+## Instalasi Lokal
 
 ```bash
-# 1. Buat database
-mysql -u root < sql/schema.sql
-
-# 2. Siapkan konfigurasi
+composer install
 cp .env.example .env
-#   lalu sesuaikan DB_USER dan DB_PASS
+php artisan key:generate
 
-# 3. Jalankan (built-in server PHP)
-composer run serve
-# atau:
-php -S 0.0.0.0:8000 public/index.php
+# Konfigurasi koneksi DB di .env, lalu:
+php artisan migrate --seed
+php artisan storage:link
+php artisan serve
 ```
 
-Akses aplikasi di `http://localhost:8000`.
+Akses: `http://localhost:8000`
 
-## Konfigurasi Environment
+### Akun default (dari seeder)
 
-| Variabel | Default | Keterangan |
-|----------|---------|------------|
-| `APP_ENV` | `development` | `development` / `production` |
-| `APP_URL` | `http://localhost:8000` | URL publik aplikasi |
-| `DB_HOST` | `127.0.0.1` | Host database |
-| `DB_PORT` | `3306` | Port database |
-| `DB_NAME` | `berbagi` | Nama database |
-| `DB_USER` | `berbagi` | User database |
-| `DB_PASS` | (kosong) | Password database |
+| Role | Login | Password |
+|------|-------|----------|
+| Admin super | `admin` | `admin12345` |
+| Supervisor | `supervisor_{kota}` (contoh: `supervisor_jakarta_pusat`) | `super12345` |
+| Agen | `agen_{kode}` (contoh: `agen_BWA-01`) | `agen12345` |
 
-## Catatan Keamanan
+> Segera ganti password default sebelum digunakan produksi.
 
-- Jangan pernah commit file `.env` berisi password asli.
-- Di environment produksi, set `APP_ENV=production`.
-- File `.env` dan `storage/` sudah masuk `.gitignore`.
+## Kredensial & Config
+
+Semua konfigurasi rahasia lewat `.env` (tidak dikomit):
+
+```
+APP_NAME=Berbagi
+DB_DATABASE=berbagi
+DB_USERNAME=berbagi
+DB_PASSWORD=...
+
+WHATSAPP_API_URL=https://gateway-provider.example.com
+WHATSAPP_API_TOKEN=token-anda
+```
+
+Jangan lupa `storage:link` agar upload gambar banner tampil.
+
+## Cron / Scheduler (penting untuk produksi)
+
+Pengiriman WhatsApp berjalan via scheduler. Tambahkan baris berikut di **cron job cPanel** (sesuaikan path):
+
+```bash
+* * * * * /usr/bin/php7.4 /home/USERNAME/public_html/artisan schedule:run >> /dev/null 2>&1
+```
+
+Scheduler akan menjalankan `whatsapp:send` setiap 5 menit (didefinisikan di `app/Console/Kernel.php`).
+
+## Catatan Produksi (cPanel + LiteSpeed)
+
+1. Letakkan isi project di `public_html`; isi folder `public/` dipindah ke `public_html/`, lalu ubah `index.php` agar memuat `../bootstrap/app.php` (bootstrap dipindah ke folder induk) atau gunakan struktur standar Laravel dengan symlink `public_html` → `project/public`.
+2. Pastikan folder `storage/` dan `bootstrap/cache/` writable.
+3. Gunakan PHP 7.4 sebagai PHP version di cPanel (MultiPHP Manager).
+4. Konfigurasi `.env` dengan kredensial database produksi, lalu `php artisan config:cache`.
+
+## Struktur Penting
+
+- `routes/web.php` — seluruh route + middleware role
+- `app/Http/Middleware/CheckRole.php` — otorisasi role
+- `app/Console/Kernel.php` — scheduler WhatsApp
+- `app/Services/WhatsAppApiService.php` — integrasi WhatsApp API
+- `database/migrations/` — skema 11 tabel
+- `database/seeders/` — data awal (cabang, user, program, tags)
+- `resources/views/` — seluruh view (layout sidebar, 3 dashboard, halaman publik, CRUD)
 
 ## Lisensi
 
-MIT
+Pengembangan internal BWA. Kode tidak dipublikasikan untuk umum.
