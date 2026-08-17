@@ -1,0 +1,19 @@
+{
+    "name": "berbagi/berbagi",
+    "description": "Berbagi.or.id - Platform berbagi konten berbasis PHP dan MySQL",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "scripts": {
+        "db:setup": "mysql -u root < sql/schema.sql",
+        "serve": "php -S 0.0.0.0:8000 public/index.php"
+    }
+}

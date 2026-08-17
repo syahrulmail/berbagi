@@ -121,6 +121,9 @@
 **/tmp/
 **/temp/
 
+# Application runtime
+storage/uploads/*
+
 # Dart
 **/.dart_tool/
 **/*.dart_tool
