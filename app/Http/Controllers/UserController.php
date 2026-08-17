@@ -52,6 +52,7 @@ class UserController extends Controller
 
         $data['password'] = Hash::make($data['password']);
         $data['is_active'] = $request->boolean('is_active');
+        $data['slug'] = User::uniqueSlug($data['username']);
 
         $user = User::create($data);
 
@@ -86,6 +87,7 @@ class UserController extends Controller
         }
 
         $data['is_active'] = $request->boolean('is_active');
+        $data['slug'] = User::uniqueSlug($data['username'], $user->id);
 
         $user->update($data);
 

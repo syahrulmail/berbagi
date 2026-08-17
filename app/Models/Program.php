@@ -12,6 +12,7 @@ class Program extends Model
     protected $fillable = [
         'name',
         'slug',
+        'category',
         'description',
         'goal_amount',
         'image',

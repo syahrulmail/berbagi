@@ -36,6 +36,14 @@
         </div>
     </div>
     <div class="metric-card">
+        <div class="metric-icon green"><i class="fab fa-whatsapp"></i></div>
+        <div class="metric-info">
+            <div class="metric-label">Follow-up WA Agen</div>
+            <div class="metric-value">{{ $fuTotal }}</div>
+            <div class="metric-sub">Klik WA di halaman publik</div>
+        </div>
+    </div>
+    <div class="metric-card">
         <div class="metric-icon red"><i class="fas fa-users"></i></div>
         <div class="metric-info">
             <div class="metric-label">Jumlah Agen</div>

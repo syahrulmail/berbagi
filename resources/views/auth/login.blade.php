@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name', 'Berbagi') }} · Masuk</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
@@ -13,7 +14,7 @@
 <div class="auth-wrapper">
     <div class="auth-card">
         <div class="auth-brand">
-            <i class="fas fa-hands-helping auth-brand-icon"></i>
+            <span class="auth-brand-icon">BWA</span>
             <h1>Berbagi.or.id</h1>
             <p>Sistem Manajemen Fundraising BWA</p>
         </div>

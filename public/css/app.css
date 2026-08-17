@@ -1,20 +1,21 @@
 :root {
-    --primary: #1E3A5F;
-    --primary-light: #2C5182;
-    --primary-dark: #142A47;
-    --accent: #2ECC71;
-    --accent-dark: #27AE60;
+    --primary: #086E66;
+    --primary-light: #088E84;
+    --primary-dark: #054D48;
+    --accent: #08A899;
+    --accent-dark: #088E84;
+    --gold: #D4911E;
     --warning: #E67E22;
     --danger: #E74C3C;
-    --gray-100: #F4F6F9;
-    --gray-200: #E8ECF1;
-    --gray-300: #D5DBE1;
-    --gray-500: #6B7A8D;
-    --gray-700: #3D4C5E;
-    --text: #1F2933;
-    --shadow-sm: 0 1px 3px rgba(30, 58, 95, 0.08);
-    --shadow-md: 0 4px 16px rgba(30, 58, 95, 0.10);
-    --shadow-lg: 0 10px 32px rgba(30, 58, 95, 0.14);
+    --gray-100: #F4F7F6;
+    --gray-200: #E6EFEE;
+    --gray-300: #D2E2E0;
+    --gray-500: #5E7472;
+    --gray-700: #2E4B49;
+    --text: #14312F;
+    --shadow-sm: 0 1px 3px rgba(8, 110, 102, 0.08);
+    --shadow-md: 0 4px 16px rgba(8, 110, 102, 0.10);
+    --shadow-lg: 0 10px 32px rgba(5, 77, 72, 0.16);
     --radius: 12px;
     --sidebar-width: 248px;
     --sidebar-collapsed: 72px;
@@ -27,7 +28,7 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Fira Sans', 'Segoe UI', Roboto, -apple-system, sans-serif;
     background: var(--gray-100);
     color: var(--text);
     font-size: 14px;
@@ -71,10 +72,18 @@ a {
 }
 
 .sidebar-brand-icon {
-    font-size: 22px;
-    color: var(--accent);
-    min-width: 32px;
-    text-align: center;
+    display: grid;
+    place-items: center;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(8, 168, 153, 0.35);
+    flex-shrink: 0;
 }
 
 .sidebar-brand-text {
@@ -765,7 +774,7 @@ a {
 
 /* ============ AUTH ============ */
 .auth-body {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 55%, #0D1F36 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 55%, #043D3A 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -791,9 +800,11 @@ a {
 }
 
 .auth-brand-icon {
-    font-size: 40px;
-    color: var(--accent);
-    background: rgba(46, 204, 113, 0.12);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
     width: 72px;
     height: 72px;
     display: inline-flex;
@@ -801,6 +812,7 @@ a {
     justify-content: center;
     border-radius: 20px;
     margin-bottom: 12px;
+    box-shadow: 0 10px 26px rgba(8, 168, 153, 0.35);
 }
 
 .auth-brand h1 {

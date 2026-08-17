@@ -29,6 +29,16 @@
                 <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" required>
             </div>
         </div>
+        @if($user->slug)
+        <div class="form-group">
+            <label>Link Halaman Agen</label>
+            <div class="input-group">
+                <input type="text" value="{{ config('app.url') }}/cs/{{ $user->slug }}" readonly style="flex:1;background:var(--gray-100);">
+                <a href="{{ route('public.agent', $user->slug) }}" target="_blank" class="btn btn-sm"><i class="fas fa-external-link"></i> Buka</a>
+            </div>
+            <small style="color: var(--gray-500);">Slug: <code>{{ $user->slug }}</code> (otomatis dari username).</small>
+        </div>
+        @endif
         <div class="form-row">
             <div class="form-group">
                 <label for="password">Password Baru</label>

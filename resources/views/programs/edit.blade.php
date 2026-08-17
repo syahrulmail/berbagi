@@ -24,6 +24,18 @@
             <input type="text" id="slug" name="slug" value="{{ old('slug', $program->slug) }}">
         </div>
         <div class="form-group">
+            <label for="category">Kategori</label>
+            <select id="category" name="category">
+                <option value="">— Pilih Kategori —</option>
+                <option value="penggalangan" {{ old('category', $program->category) == 'penggalangan' ? 'selected' : '' }}>Penggalangan</option>
+                <option value="penyaluran" {{ old('category', $program->category) == 'penyaluran' ? 'selected' : '' }}>Penyaluran</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="image">Link Gambar / Foto Utama</label>
+            <input type="url" id="image" name="image" value="{{ old('image', $program->image) }}" placeholder="https://...">
+        </div>
+        <div class="form-group">
             <label for="description">Deskripsi</label>
             <textarea id="description" name="description" rows="4">{{ old('description', $program->description) }}</textarea>
         </div>

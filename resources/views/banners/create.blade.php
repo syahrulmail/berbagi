@@ -37,7 +37,7 @@
             </div>
             <div class="form-group">
                 <label for="label_color">Warna Label</label>
-                <input type="color" id="label_color" name="label_color" value="{{ old('label_color', '#1E3A5F') }}" style="width: 60px; height: 42px; padding: 4px; cursor: pointer;">
+                <input type="color" id="label_color" name="label_color" value="{{ old('label_color', '#086E66') }}" style="width: 60px; height: 42px; padding: 4px; cursor: pointer;">
             </div>
         </div>
         <div class="form-group">

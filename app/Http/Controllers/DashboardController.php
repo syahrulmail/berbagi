@@ -135,7 +135,15 @@ class DashboardController extends Controller
 
         $progress = $target > 0 ? round(((float) $collected / $target) * 100, 1) : 0;
 
-        return view('dashboard.supervisor', compact('branch', 'collected', 'target', 'progress', 'agents'));
+        $fuTotal = 0;
+        if ($branch) {
+            $agentIds = User::where('role', 'agen')
+                ->where('branch_id', $branch->id)
+                ->pluck('id');
+            $fuTotal = \App\Models\WaFollowup::whereIn('agen_id', $agentIds)->count();
+        }
+
+        return view('dashboard.supervisor', compact('branch', 'collected', 'target', 'progress', 'agents', 'fuTotal'));
     }
 
     protected function agenDashboard(User $user)
@@ -151,12 +159,32 @@ class DashboardController extends Controller
         $totalContacts = $user->contacts()->count();
         $donatedContacts = $user->contacts()->where('status', 'donated')->count();
 
+        $fuTotal = \App\Models\WaFollowup::where('agen_id', $user->id)->count();
+        $fuMonth = \App\Models\WaFollowup::where('agen_id', $user->id)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+
+        $recentFollowups = \App\Models\WaFollowup::where('agen_id', $user->id)
+            ->with('program')
+            ->orderByDesc('created_at')
+            ->limit(8)
+            ->get();
+
         $recentDonations = Donation::where('agen_id', $user->id)
             ->with(['program', 'branch'])
             ->orderByDesc('donation_date')
             ->limit(10)
             ->get();
 
-        return view('dashboard.agen', compact('collected', 'totalContacts', 'donatedContacts', 'recentDonations'));
+        return view('dashboard.agen', compact(
+            'collected',
+            'totalContacts',
+            'donatedContacts',
+            'fuTotal',
+            'fuMonth',
+            'recentFollowups',
+            'recentDonations'
+        ));
     }
 }

@@ -37,6 +37,7 @@
                     <th>Email</th>
                     <th>Role</th>
                     <th>Cabang</th>
+                    <th>Link Agen</th>
                     <th>Status</th>
                     <th class="text-right">Aksi</th>
                 </tr>
@@ -59,6 +60,16 @@
                             <span class="badge {{ $roleColors[$user->role] ?? 'badge-gray' }}">{{ $user->roleLabel() }}</span>
                         </td>
                         <td>{{ $user->branch->name ?? '-' }}</td>
+                        <td>
+                            @if($user->role == 'agen' || $user->role == 'supervisor')
+                                <button type="button" class="btn btn-sm btn-outline" title="Salin link agen"
+                                        onclick="copyAgentLink('{{ $user->slug }}')">
+                                    <i class="fas fa-link"></i> Salin
+                                </button>
+                            @else
+                                <span style="color: var(--gray-300);">—</span>
+                            @endif
+                        </td>
                         <td>
                             <span class="badge {{ $user->is_active ? 'badge-green' : 'badge-gray' }}">
                                 {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
@@ -84,7 +95,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <i class="fas fa-users-slash"></i>
                             <p>Tidak ada pengguna ditemukan.</p>
                         </td>
@@ -96,3 +107,23 @@
     {{ $users->links() }}
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function copyAgentLink(slug) {
+        var url = '{{ config('app.url') }}/cs/' + slug;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(function () {
+                toast('Link agen disalin: ' + url);
+            });
+        }
+    }
+    function toast(msg) {
+        var el = document.createElement('div');
+        el.style.cssText = 'position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--primary-dark);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:999;box-shadow:var(--shadow-lg);';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 2600);
+    }
+</script>
+@endpush

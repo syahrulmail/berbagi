@@ -6,7 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') · {{ config('app.name', 'Berbagi') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @stack('styles')
@@ -15,7 +16,7 @@
 <div class="layout" id="app-layout">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <i class="fas fa-hands-helping sidebar-brand-icon"></i>
+            <span class="sidebar-brand-icon">BWA</span>
             <span class="sidebar-brand-text">Berbagi.or.id</span>
         </div>
 
@@ -47,6 +48,10 @@
 
             <a href="{{ route('whatsapp.index') }}" class="nav-item {{ request()->routeIs('whatsapp.*') ? 'active' : '' }}">
                 <i class="fab fa-whatsapp"></i><span class="nav-text">WhatsApp</span>
+            </a>
+
+            <a href="{{ route('followups.index') }}" class="nav-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
+                <i class="fas fa-phone-volume"></i><span class="nav-text">Follow-up WA</span>
             </a>
 
             @if(auth()->user()->isAdmin())

@@ -25,6 +25,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'username',
+        'slug',
         'email',
         'password',
         'role',
@@ -91,6 +92,25 @@ class User extends Authenticatable
     public function isDonatur(): bool
     {
         return $this->role === self::ROLE_DONATUR;
+    }
+
+    public static function uniqueSlug(string $username, $ignoreId = null): string
+    {
+        $base = \Illuminate\Support\Str::slug($username);
+
+        if (empty($base)) {
+            $base = 'user-' . strtolower(\Illuminate\Support\Str::random(6));
+        }
+
+        $slug = $base;
+        $i = 2;
+
+        while (static::where('slug', $slug)->where('id', '!=', $ignoreId)->exists()) {
+            $slug = $base . '-' . $i;
+            $i++;
+        }
+
+        return $slug;
     }
 
     public function roleLabel(): string

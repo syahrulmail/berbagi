@@ -9,11 +9,11 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WaFollowupController;
 use App\Http\Controllers\WhatsAppController;
-use App\Models\Program;
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,21 +22,15 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    $programs = Program::where('is_active', true)
-        ->withSum('donations as total_collected', 'amount')
-        ->with('campaignTags')
-        ->orderBy('name')
-        ->get();
+Route::get('/', [PublicController::class, 'home'])->name('home');
 
-    return view('public.home', compact('programs'));
-})->name('home');
+Route::get('/program/{program:slug}', [PublicController::class, 'program'])->name('public.program');
 
-Route::get('/program/{program:slug}', function (Program $program) {
-    $collected = $program->donations()->sum('amount');
+Route::get('/cs/{slug}', [PublicController::class, 'agent'])->name('public.agent');
 
-    return view('public.program', compact('program', 'collected'));
-})->name('public.program');
+Route::post('/wa/followup', [PublicController::class, 'followup'])
+    ->name('wa.followup')
+    ->middleware('throttle:30,1');
 
 /*
 |--------------------------------------------------------------------------
@@ -77,9 +71,11 @@ Route::middleware('auth')->group(function () {
         Route::resource('donations', DonationController::class)->except('show');
         Route::resource('programs', ProgramController::class)->except('show');
         Route::resource('whatsapp', WhatsAppController::class)->only(['index', 'create', 'store', 'destroy']);
+        Route::resource('followups', WaFollowupController::class)->only(['index']);
     });
 
     Route::middleware('role:admin,supervisor')->group(function () {
         Route::resource('banners', BannerController::class)->except('show');
+        Route::delete('followups/{followup}', [WaFollowupController::class, 'destroy'])->name('followups.destroy');
     });
 });

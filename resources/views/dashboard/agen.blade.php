@@ -36,6 +36,14 @@
         </div>
     </div>
     <div class="metric-card">
+        <div class="metric-icon green"><i class="fab fa-whatsapp"></i></div>
+        <div class="metric-info">
+            <div class="metric-label">Follow-up WA</div>
+            <div class="metric-value">{{ $fuMonth }}</div>
+            <div class="metric-sub">Klik tombol WA bulan ini (total {{ $fuTotal }})</div>
+        </div>
+    </div>
+    <div class="metric-card">
         <div class="metric-icon red"><i class="fas fa-plus-circle"></i></div>
         <div class="metric-info">
             <div class="metric-label">Aksi Cepat</div>
@@ -44,6 +52,39 @@
                 <a href="{{ route('contacts.create') }}" class="btn btn-sm" style="margin-top:6px;">Tambah Kontak</a>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fab fa-whatsapp"></i> Follow-up WhatsApp Terbaru</h2>
+        <a href="{{ route('followups.index', ['agen_id' => auth()->id()]) }}" class="btn btn-sm">Lihat Semua</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>Program</th>
+                    <th>Sumber</th>
+                    <th>Nomor</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recentFollowups as $fu)
+                    <tr>
+                        <td>{{ $fu->created_at->format('d M Y H:i') }}</td>
+                        <td>{{ $fu->program->name ?? '-' }}</td>
+                        <td>{{ ucfirst(str_replace('_', ' ', $fu->source)) }}</td>
+                        <td>{{ $fu->phone ?: '-' }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="empty-state">Belum ada follow-up WA yang tercatat.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 

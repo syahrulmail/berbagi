@@ -25,7 +25,7 @@
         <div class="form-group">
             <label for="color">Warna *</label>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="color" id="color" name="color" value="{{ old('color', '#2ECC71') }}" style="width: 60px; height: 42px; padding: 4px; cursor: pointer;">
+                <input type="color" id="color" name="color" value="{{ old('color', '#08A899') }}" style="width: 60px; height: 42px; padding: 4px; cursor: pointer;">
                 <span style="font-size: 13px; color: var(--gray-500);">Pilih warna untuk label</span>
             </div>
         </div>

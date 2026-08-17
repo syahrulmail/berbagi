@@ -33,7 +33,9 @@ class ProgramController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:programs,slug'],
+            'category' => ['nullable', 'in:penggalangan,penyaluran'],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'url'],
             'goal_amount' => ['required', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
             'tags' => ['nullable', 'array'],
@@ -63,7 +65,9 @@ class ProgramController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:programs,slug,' . $program->id],
+            'category' => ['nullable', 'in:penggalangan,penyaluran'],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'url'],
             'goal_amount' => ['required', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
             'tags' => ['nullable', 'array'],
