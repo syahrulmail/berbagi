@@ -27,6 +27,7 @@ class UserSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        $this->ensureSlug($admin);
 
         $branches = Branch::all();
 
@@ -43,6 +44,7 @@ class UserSeeder extends Seeder
                     'is_active' => true,
                 ]
             );
+            $this->ensureSlug($supervisor);
 
             $branch->supervisor_id = $supervisor->id;
             $branch->save();
@@ -51,7 +53,7 @@ class UserSeeder extends Seeder
         // Agen contoh untuk beberapa cabang
         $agenNames = ['Andi', 'Budi', 'Citra', 'Dewi', 'Eko'];
         foreach ($branches->take(5) as $index => $branch) {
-            User::updateOrCreate(
+            $agen = User::updateOrCreate(
                 ['username' => 'agen_' . $branch->code],
                 [
                     'name' => 'Agen ' . $agenNames[$index],
@@ -62,6 +64,15 @@ class UserSeeder extends Seeder
                     'is_active' => true,
                 ]
             );
+            $this->ensureSlug($agen);
+        }
+    }
+
+    protected function ensureSlug(User $user)
+    {
+        if (empty($user->slug)) {
+            $user->slug = User::uniqueSlug($user->username ?: $user->name, $user->id);
+            $user->save();
         }
     }
 }
