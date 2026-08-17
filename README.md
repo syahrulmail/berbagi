@@ -78,16 +78,22 @@ Scheduler akan menjalankan `whatsapp:send` setiap 5 menit (didefinisikan di `app
 
 ## Catatan Produksi (cPanel + LiteSpeed)
 
-Deployment aktual di `berbagi.or.id` memakai struktur berikut:
+Deployment aktual di `berbagi.or.id` memakai struktur berikut (root domain):
 
-1. Seluruh project Laravel ditaruh di `public_html/berbagi.or.id/berbagi` (dokumen root domain tetap `public_html/berbagi.or.id/`).
-2. `.htaccess` di root project mengarahkan semua request ke `public/` (lihat file `.htaccess`), sehingga aplikasi hidup di URL `http://berbagi.or.id/berbagi/`.
-3. Dukungan sub-direktori ditangani di `app/Providers/AppServiceProvider.php` (`configureSubDirectory`): koreksi `SCRIPT_NAME`/`PHP_SELF` + `URL::forceRootUrl`, sehingga routing, redirect, dan asset konsisten. `APP_URL` di `.env` harus berisi `http://berbagi.or.id/berbagi`.
+1. Seluruh project Laravel ditaruh di `public_html/berbagi.or.id/berbagi` (dokumen root project).
+2. Di cPanel → **Domains**, Document Root `berbagi.or.id` diubah menunjuk ke folder `public`:
+   ```
+   /home/USERNAME/public_html/berbagi.or.id/berbagi/public
+   ```
+   Aplikasi langsung hidup di `http://berbagi.or.id/`. Saat mengubah Document Root, **jangan** memilih opsi "move content" — cukup arahkan, lalu upload project.
+3. `APP_URL` di `.env` diisi `http://berbagi.or.id`. Dukungan sub-direktori tetap ada di `app/Providers/AppServiceProvider.php` (`configureSubDirectory`) untuk kasus pemasangan di sub-path bila suatu saat diperlukan; jika `APP_URL` tanpa path, logika ini otomatis di-skip.
 4. Karena symlink tidak bisa dibuat via FTP, disk `public` di `config/filesystems.php` diarahkan ke folder sungguhan `public/storage` (bukan `storage/app/public`). Pastikan folder `public/storage/banners` ada dan writable.
 5. Pastikan folder `storage/`, `storage/framework/{cache,sessions,views}`, dan `bootstrap/cache/` writable.
 6. Gunakan PHP 7.4 sebagai PHP version di cPanel (MultiPHP Manager / LiteSpeed).
 7. Tanpa SSH, jalankan migrasi via script web sementara di `public/` lalu hapus, atau via cPanel Terminal / cron sekali jalan: `php artisan migrate --force`.
 8. Jangan lupa `php artisan config:cache` setelah `.env` produksi final (dengan koneksi DB dan `APP_URL` yang benar).
+
+Catatan: file `.htaccess` di root project hanya diperlukan untuk skenario sub-direktori; pada deployment root domain (Document Root → `public/`) file tersebut tidak terpakai.
 
 ## Struktur Penting
 
