@@ -80,20 +80,16 @@ Scheduler akan menjalankan `whatsapp:send` setiap 5 menit (didefinisikan di `app
 
 Deployment aktual di `berbagi.or.id` memakai struktur berikut (root domain):
 
-1. Seluruh project Laravel ditaruh di `public_html/berbagi.or.id/berbagi` (dokumen root project).
-2. Di cPanel → **Domains**, Document Root `berbagi.or.id` diubah menunjuk ke folder `public`:
-   ```
-   /home/USERNAME/public_html/berbagi.or.id/berbagi/public
-   ```
-   Aplikasi langsung hidup di `http://berbagi.or.id/`. Saat mengubah Document Root, **jangan** memilih opsi "move content" — cukup arahkan, lalu upload project.
-3. `APP_URL` di `.env` diisi `http://berbagi.or.id`. Dukungan sub-direktori tetap ada di `app/Providers/AppServiceProvider.php` (`configureSubDirectory`) untuk kasus pemasangan di sub-path bila suatu saat diperlukan; jika `APP_URL` tanpa path, logika ini otomatis di-skip.
+1. Seluruh project Laravel ditaruh di `public_html/berbagi.or.id` (document root project) — akses via FTP, bukan via `/berbagi/`.
+2. Document Root domain `berbagi.or.id` menunjuk ke folder project root (bukan `public`). Request diarahkan ke folder `public/` lewat `.htaccess` di root project (mode root domain: trailing slash di-redirect ke path tanpa slash, lalu semua request di-rewrite ke `public/`).
+3. `APP_URL` di `.env` diisi `http://berbagi.or.id`.
 4. Karena symlink tidak bisa dibuat via FTP, disk `public` di `config/filesystems.php` diarahkan ke folder sungguhan `public/storage` (bukan `storage/app/public`). Pastikan folder `public/storage/banners` ada dan writable.
 5. Pastikan folder `storage/`, `storage/framework/{cache,sessions,views}`, dan `bootstrap/cache/` writable.
 6. Gunakan PHP 7.4 sebagai PHP version di cPanel (MultiPHP Manager / LiteSpeed).
 7. Tanpa SSH, jalankan migrasi via script web sementara di `public/` lalu hapus, atau via cPanel Terminal / cron sekali jalan: `php artisan migrate --force`.
 8. Jangan lupa `php artisan config:cache` setelah `.env` produksi final (dengan koneksi DB dan `APP_URL` yang benar).
 
-Catatan: file `.htaccess` di root project hanya diperlukan untuk skenario sub-direktori; pada deployment root domain (Document Root → `public/`) file tersebut tidak terpakai.
+Catatan: file `.htaccess` di root project **wajib ada** dalam mode ini — berisi redirect trailing slash (bukan `/berbagi/`!) dan rewrite ke `public/`. Jangan menimpa dengan versi sub-direktori lama yang merujuk `/berbagi/` (akan menyebabkan `/login/` → 404 dan loop redirect).
 
 ## Struktur Penting
 
