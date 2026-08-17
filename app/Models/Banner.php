@@ -22,4 +22,16 @@ class Banner extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function getImageUrlAttribute()
+    {
+        $img = $this->image;
+        if (!$img) {
+            return '';
+        }
+        if (\Illuminate\Support\Str::startsWith($img, ['http://', 'https://', '/', 'data:'])) {
+            return $img;
+        }
+        return asset('storage/' . ltrim($img, '/'));
+    }
 }

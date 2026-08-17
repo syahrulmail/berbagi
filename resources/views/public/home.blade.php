@@ -28,7 +28,7 @@
                         @foreach($banners as $banner)
                         <div class="slider-slide">
                             @if($banner->url)<a href="{{ $banner->url }}" target="_blank" rel="noopener">@endif
-                                <img src="{{ $banner->image }}" alt="{{ $banner->title }}">
+                                <img src="{{ $banner->image_url }}" alt="{{ $banner->title }}">
                                 <div class="slider-caption">
                                     <h3>{{ $banner->title }}</h3>
                                 </div>
@@ -87,7 +87,7 @@
                 <article class="program-card" data-category="{{ $cat }}" data-tags="{{ $tags }}" data-query="{{ strtolower($program->name . ' ' . $program->description . ' ' . $program->campaignTags->pluck('name')->join(' ')) }}">
                     <a href="{{ route('public.program', $program->slug) }}" class="pc-media">
                         @if($program->image)
-                            <img src="{{ $program->image }}" alt="{{ $program->name }}" loading="lazy">
+                            <img src="{{ $program->image_url }}" alt="{{ $program->name }}" loading="lazy">
                         @else
                             <div style="width:100%;height:100%;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal-100),var(--teal-50));color:var(--teal-400);font-size:40px;"><i class="fas fa-book-quran"></i></div>
                         @endif

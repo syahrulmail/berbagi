@@ -54,7 +54,7 @@
                 <article class="program-card">
                     <a href="{{ route('public.program', $program->slug) }}" class="pc-media">
                         @if($program->image)
-                            <img src="{{ $program->image }}" alt="{{ $program->name }}" loading="lazy">
+                            <img src="{{ $program->image_url }}" alt="{{ $program->name }}" loading="lazy">
                         @else
                             <div style="width:100%;height:100%;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal-100),var(--teal-50));color:var(--teal-400);font-size:40px;"><i class="fas fa-book-quran"></i></div>
                         @endif

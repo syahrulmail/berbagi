@@ -38,4 +38,16 @@ class Program extends Model
     {
         return $this->donations()->sum('amount');
     }
+
+    public function getImageUrlAttribute()
+    {
+        $img = $this->image;
+        if (!$img) {
+            return '';
+        }
+        if (\Illuminate\Support\Str::startsWith($img, ['http://', 'https://', '/', 'data:'])) {
+            return $img;
+        }
+        return asset('storage/' . ltrim($img, '/'));
+    }
 }

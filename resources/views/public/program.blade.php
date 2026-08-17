@@ -19,7 +19,7 @@
         <div class="detail-grid">
             <div class="detail-media">
                 @if($program->image)
-                    <img src="{{ $program->image }}" alt="{{ $program->name }}">
+                    <img src="{{ $program->image_url }}" alt="{{ $program->name }}">
                 @else
                     <div style="width:100%;height:100%;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal-100),var(--teal-50));color:var(--teal-400);font-size:70px;"><i class="fas fa-book-quran"></i></div>
                 @endif
