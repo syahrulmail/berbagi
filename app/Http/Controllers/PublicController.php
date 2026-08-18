@@ -48,17 +48,34 @@ class PublicController extends Controller
         $collected = $program->donations()->sum('amount');
         $waNumber = Setting::get('wa_public_number', '6281234567890');
         $waTemplate = Setting::get('wa_public_template', '');
+        $agen = null;
 
-        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate'));
+        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen'));
+    }
+
+    public function agentProgram(string $agentSlug, Program $program)
+    {
+        $agen = $this->resolveAgent($agentSlug);
+
+        if (!$program->is_active) {
+            abort(404);
+        }
+
+        $collected = $program->donations()->sum('amount');
+
+        $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
+        $waNumber = $waNumber !== ''
+            ? $waNumber
+            : preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890'));
+
+        $waTemplate = Setting::get('wa_agent_template', '');
+
+        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen'));
     }
 
     public function agent(string $slug)
     {
-        $agen = User::where('slug', $slug)->where('is_active', true)->first();
-
-        if (!$agen || ($agen->role !== User::ROLE_AGEN && $agen->role !== User::ROLE_SUPERVISOR)) {
-            abort(404);
-        }
+        $agen = $this->resolveAgent($slug);
 
         $programs = Program::where('is_active', true)
             ->withSum('donations as total_collected', 'amount')
@@ -70,6 +87,17 @@ class PublicController extends Controller
         $waFallback = Setting::get('wa_public_number', '6281234567890');
 
         return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback'));
+    }
+
+    protected function resolveAgent(string $slug): User
+    {
+        $agen = User::where('slug', $slug)->where('is_active', true)->first();
+
+        if (!$agen || ($agen->role !== User::ROLE_AGEN && $agen->role !== User::ROLE_SUPERVISOR)) {
+            abort(404);
+        }
+
+        return $agen;
     }
 
     public function followup(Request $request)

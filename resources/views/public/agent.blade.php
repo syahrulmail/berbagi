@@ -27,7 +27,7 @@
             'progress'    => $progress,
             'collected'   => 'Rp ' . number_format($collected, 0, ',', '.'),
             'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
-            'url'         => route('public.program', $p->slug),
+            'url'         => route('public.agent-program', ['agentSlug' => $agen->slug, 'program' => $p->slug]),
             'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
             'wa_source'   => 'agent',
             'wa_program'  => $p->id,

@@ -7,16 +7,40 @@
 
 @php
     $progress = $program->goal_amount > 0 ? min(100, round(((float) $collected / (float) $program->goal_amount) * 100, 1)) : 0;
-    $waMsg = str_replace('{program}', $program->name, $waTemplate ?: 'Assalamualaikum, saya ingin berdonasi untuk program {program}. Mohon info selanjutnya.');
+
+    if ($agen) {
+        $waMsg = str_replace(
+            ['{agen}', '{program}'],
+            [$agen->name, $program->name],
+            $waTemplate ?: 'Assalamualaikum {agen}, saya ingin berdonasi untuk program {program} melalui Anda.'
+        );
+    } else {
+        $waMsg = str_replace('{program}', $program->name, $waTemplate ?: 'Assalamualaikum, saya ingin berdonasi untuk program {program}. Mohon info selanjutnya.');
+    }
 @endphp
 
 <main class="section">
     <div class="container">
-        <nav class="mb-8 flex items-center gap-2 text-sm text-gray-500">
-            <a href="{{ route('home') }}" class="font-medium text-primary-600 transition hover:text-primary-700"><i class="fas fa-arrow-left"></i> Semua Program</a>
+        <nav class="mb-8 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+            <a href="{{ route('home') }}" class="font-medium text-primary-600 transition hover:text-primary-700"><i class="fas fa-arrow-left"></i> Beranda</a>
             <span>/</span>
+            @if($agen)
+                <a href="{{ route('public.agent', $agen->slug) }}" class="font-medium text-primary-600 transition hover:text-primary-700">{{ $agen->name }}</a>
+                <span>/</span>
+            @endif
             <span class="truncate">{{ $program->name }}</span>
         </nav>
+
+        @if($agen)
+            <div class="mb-8 flex flex-wrap items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50/60 p-4" data-reveal>
+                <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-lg font-bold text-white">{{ strtoupper(mb_substr($agen->name, 0, 1)) }}</div>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">Mendukung melalui agen</p>
+                    <p class="font-semibold text-primary-900">{{ $agen->name }}</p>
+                </div>
+                <a href="{{ route('public.agent', $agen->slug) }}" class="btn btn-outline btn-sm">Lihat Program Lainnya</a>
+            </div>
+        @endif
 
         <div class="grid gap-8 lg:grid-cols-2">
             <div class="overflow-hidden rounded-3xl border border-black/5 shadow-card" data-reveal>
@@ -57,12 +81,19 @@
                         <i class="fab fa-whatsapp text-xl"></i>
                     </div>
                     <div class="flex-1">
-                        <p class="text-sm text-gray-600">Untuk berdonasi atau bertanya, silakan hubungi tim BWA melalui WhatsApp.</p>
+                        <p class="text-sm text-gray-600">Untuk berdonasi atau bertanya, silakan hubungi {{ $agen ? $agen->name : 'tim BWA' }} melalui WhatsApp.</p>
                     </div>
-                    <a href="https://wa.me/{{ $waNumber }}?text={{ urlencode($waMsg) }}" target="_blank" rel="noopener" class="btn btn-wa"
-                       data-wa-log data-wa-source="program" data-wa-program="{{ $program->id }}">
-                        <i class="fab fa-whatsapp"></i> Donasi
-                    </a>
+                    @if($agen)
+                        <a href="https://wa.me/{{ $waNumber }}?text={{ urlencode($waMsg) }}" target="_blank" rel="noopener" class="btn btn-wa"
+                           data-wa-log data-wa-source="agent" data-wa-agen="{{ $agen->id }}" data-wa-program="{{ $program->id }}">
+                            <i class="fab fa-whatsapp"></i> Donasi
+                        </a>
+                    @else
+                        <a href="https://wa.me/{{ $waNumber }}?text={{ urlencode($waMsg) }}" target="_blank" rel="noopener" class="btn btn-wa"
+                           data-wa-log data-wa-source="program" data-wa-program="{{ $program->id }}">
+                            <i class="fab fa-whatsapp"></i> Donasi
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
