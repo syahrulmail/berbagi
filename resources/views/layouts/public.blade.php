@@ -10,59 +10,60 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/public.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @stack('styles')
 </head>
-<body>
+<body class="bg-white text-primary-950">
 
-<nav class="pub-nav">
-    <div class="container pub-nav-inner">
-        <a href="{{ route('home') }}" class="brand">
-            <span class="brand-mark">BWA</span>
-            <span class="brand-text">
-                <span class="brand-name">Berbagi.or.id</span>
-                <span class="brand-tagline">Badan Wakaf Al Qur'an</span>
+<header class="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-md">
+    <div class="container flex h-16 items-center justify-between">
+        <a href="{{ route('home') }}" class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-bold text-white shadow-lg shadow-primary-500/25">BWA</span>
+            <span class="leading-tight">
+                <span class="block text-base font-bold text-primary-900">Berbagi.or.id</span>
+                <span class="block text-[11px] font-medium text-gray-500">Badan Wakaf Al Qur'an</span>
             </span>
         </a>
-        <div class="pub-nav-links">
-            <a href="{{ route('home') }}" class="nav-btn"><i class="fas fa-house"></i><span>Beranda</span></a>
-            <a href="{{ route('login') }}" class="nav-btn"><i class="fas fa-user"></i><span>Masuk</span></a>
-        </div>
+        <nav class="flex items-center gap-2">
+            <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house mr-1.5"></i>Beranda</a>
+            <a href="{{ route('home') }}#program" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700">Program</a>
+            <a href="{{ route('login') }}" class="btn btn-primary btn-sm"><i class="fas fa-right-to-bracket"></i>Masuk</a>
+        </nav>
     </div>
-</nav>
+</header>
 
 @yield('content')
 
-<footer class="pub-footer">
-    <div class="container">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <span class="brand">
-                    <span class="brand-mark">BWA</span>
-                    <span class="brand-text">
-                        <span class="brand-name">Berbagi.or.id</span>
-                        <span class="brand-tagline">Badan Wakaf Al Qur'an</span>
+<footer class="mt-16 bg-primary-950 text-primary-100">
+    <div class="container py-14">
+        <div class="grid gap-10 md:grid-cols-3">
+            <div>
+                <a href="{{ route('home') }}" class="mb-4 flex items-center gap-3">
+                    <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-bold text-white">BWA</span>
+                    <span class="leading-tight">
+                        <span class="block text-base font-bold text-white">Berbagi.or.id</span>
+                        <span class="block text-[11px] font-medium text-primary-300">Badan Wakaf Al Qur'an</span>
                     </span>
-                </span>
-                <p>Platform wakaf, infak, dan sedekah Badan Wakaf Al Qur'an (BWA). Semangat dalam mentadabburi dan mengamalkan Al Qur'an untuk kebaikan ummat.</p>
+                </a>
+                <p class="max-w-xs text-sm leading-relaxed text-primary-300">Platform wakaf, infak, dan sedekah Badan Wakaf Al Qur'an (BWA). Semangat dalam mentadabburi dan mengamalkan Al Qur'an untuk kebaikan ummat.</p>
             </div>
-            <div class="footer-col">
-                <h4>Program</h4>
-                <ul>
-                    <li><a href="{{ route('home') }}">Semua Program</a></li>
-                    <li><a href="{{ route('home') }}#program">Program Penggalangan</a></li>
-                    <li><a href="{{ route('home') }}#program">Program Penyaluran</a></li>
+            <div>
+                <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Program</h4>
+                <ul class="space-y-2.5 text-sm">
+                    <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Semua Program</a></li>
+                    <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Program Penggalangan</a></li>
+                    <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Program Penyaluran</a></li>
                 </ul>
             </div>
-            <div class="footer-col">
-                <h4>Lembaga</h4>
-                <ul>
-                    <li><a href="{{ route('home') }}">Beranda</a></li>
-                    <li><a href="{{ route('login') }}">Masuk Anggota</a></li>
+            <div>
+                <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Lembaga</h4>
+                <ul class="space-y-2.5 text-sm">
+                    <li><a href="{{ route('home') }}" class="text-primary-300 transition hover:text-white">Beranda</a></li>
+                    <li><a href="{{ route('login') }}" class="text-primary-300 transition hover:text-white">Masuk Anggota</a></li>
                 </ul>
             </div>
         </div>
-        <div class="footer-bottom">
+        <div class="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm text-primary-400 sm:flex-row sm:items-center sm:justify-between">
             <span>&copy; {{ date('Y') }} Badan Wakaf Al Qur'an (BWA) · berbagi.or.id</span>
             <span>Wakaf untuk ummat, dari Anda untuk kebaikan.</span>
         </div>
@@ -70,6 +71,12 @@
 </footer>
 
 <div class="toast-wrap" id="toastWrap"></div>
+
+<script src="{{ asset('js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ asset('js/components/BannerSlider.js') }}"></script>
+<script src="{{ asset('js/components/ProgramExplorer.js') }}"></script>
+<script src="{{ asset('js/components/CountUp.js') }}"></script>
+<script src="{{ asset('js/app.js') }}"></script>
 
 <script>
 (function () {
@@ -88,7 +95,6 @@
         }, 2600);
     }
 
-    // Logging klik WhatsApp (atribusi follow-up ke agen)
     function logWaClick(el) {
         var csrf = document.querySelector('meta[name="csrf-token"]');
         var payload = {
@@ -124,18 +130,30 @@
         if (el) logWaClick(el);
     });
 
-    // Animasi progress bar saat terlihat
     var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
             if (entry.isIntersecting) {
-                entry.target.style.width = entry.target.dataset.percent + '%';
+                entry.target.classList.add('reveal-visible');
                 io.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('[data-reveal]').forEach(function (el) {
+        io.observe(el);
+    });
+
+    var pio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.style.width = entry.target.dataset.percent + '%';
+                pio.unobserve(entry.target);
             }
         });
     }, { threshold: 0.15 });
     document.querySelectorAll('.progress-fill[data-percent]').forEach(function (bar) {
-        io.observe(bar);
+        pio.observe(bar);
     });
+
     window.BerbagiToast = toast;
 })();
 </script>

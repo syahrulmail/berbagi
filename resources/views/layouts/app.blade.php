@@ -168,6 +168,12 @@
     });
     document.addEventListener('click', () => dropdown.classList.remove('open'));
 </script>
+
+<script src="{{ asset('js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ asset('js/components/DonutChart.js') }}"></script>
+<script src="{{ asset('js/components/BarChart.js') }}"></script>
+<script src="{{ asset('js/components/CountUp.js') }}"></script>
+<script src="{{ asset('js/app.js') }}"></script>
 @stack('scripts')
 </body>
 </html>
