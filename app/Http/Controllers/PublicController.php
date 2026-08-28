@@ -37,8 +37,27 @@ class PublicController extends Controller
 
         $homeQuote = Setting::get('home_quote', '<p>&quot;Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.&quot; — <strong>HR. Ahmad &amp; Thabrani</strong></p>');
 
+        $testimonials = array_values(array_filter(array_map(function ($item) {
+            if (! is_array($item)) {
+                return null;
+            }
+            $text = trim((string) ($item['text'] ?? ''));
+            $name = trim((string) ($item['name'] ?? ''));
+
+            if ($text === '' && $name === '') {
+                return null;
+            }
+
+            return [
+                'photo' => (string) ($item['photo'] ?? ''),
+                'photo_url' => asset_photo_url((string) ($item['photo'] ?? '')),
+                'text'  => $text,
+                'name'  => $name,
+            ];
+        }, json_decode(Setting::get('home_testimonials', '[]'), true) ?: [])));
+
         return view('public.home', compact(
-            'programs', 'banners', 'tags', 'waNumber', 'waTemplate', 'homeQuote'
+            'programs', 'banners', 'tags', 'waNumber', 'waTemplate', 'homeQuote', 'testimonials'
         ));
     }
 

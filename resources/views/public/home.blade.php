@@ -12,6 +12,58 @@
         color: #086e66;
         font-style: italic;
     }
+    .testimonial-photo {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        flex: none;
+        filter: drop-shadow(0 8px 16px rgba(8, 110, 102, 0.18));
+    }
+    .testimonial-photo-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 120px;
+        height: 120px;
+        flex: none;
+        border-radius: 9999px;
+        background: #e7f4f2;
+        color: #086e66;
+        font-size: 44px;
+        font-weight: 700;
+    }
+    .testimonial-slide { display: none; }
+    .testimonial-slide.active { display: block; animation: tFade .6s ease; }
+    @keyframes tFade {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: none; }
+    }
+    .testimonial-text {
+        font-style: italic;
+        font-weight: 400;
+        font-size: 1.15rem;
+        line-height: 1.8;
+        color: #064e3b;
+    }
+    .testimonial-name {
+        font-style: normal;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    #testimonialDots button {
+        width: 9px;
+        height: 9px;
+        border-radius: 9999px;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        background: #cbe4e0;
+        transition: background .2s, transform .2s;
+    }
+    #testimonialDots button.active {
+        background: #08A899;
+        transform: scale(1.25);
+    }
 </style>
 @endpush
 
@@ -88,6 +140,33 @@
 </section>
 @endif
 
+@if(count($testimonials) > 0)
+<section class="border-b border-black/5 bg-primary-50/40 py-16" data-reveal>
+    <div class="container mx-auto max-w-3xl">
+        <div id="testimonialSlider" class="relative" data-autoplay="6000">
+            @foreach($testimonials as $i => $testimonial)
+            <div class="testimonial-slide {{ $i === 0 ? 'active' : '' }}">
+                <div class="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-10">
+                    @if($testimonial['photo_url'])
+                    <img src="{{ $testimonial['photo_url'] }}" alt="{{ $testimonial['name'] }}" class="testimonial-photo" loading="lazy">
+                    @else
+                    <div class="testimonial-photo-placeholder">{{ mb_substr($testimonial['name'], 0, 1) }}</div>
+                    @endif
+                    <div class="text-center sm:text-left">
+                        <p class="testimonial-text">&ldquo;{{ $testimonial['text'] }}&rdquo;</p>
+                        <p class="testimonial-name mt-4">{{ $testimonial['name'] }}</p>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @if(count($testimonials) > 1)
+        <div class="mt-8 flex justify-center gap-2.5" id="testimonialDots"></div>
+        @endif
+    </div>
+</section>
+@endif
+
 <main class="section" id="program">
     <div class="container">
         <div class="section-head" data-reveal>
@@ -116,4 +195,55 @@
         </div>
     </div>
 </section>
+
+@push('scripts')
+<script>
+(function () {
+    var slider = document.getElementById('testimonialSlider');
+    if (!slider) return;
+
+    var slides = slider.querySelectorAll('.testimonial-slide');
+    if (slides.length < 2) return;
+
+    var dotsWrap = document.getElementById('testimonialDots');
+    var idx = 0;
+    var timer = null;
+    var interval = parseInt(slider.getAttribute('data-autoplay'), 10) || 6000;
+    var dots = [];
+
+    for (var i = 0; i < slides.length; i++) {
+        var dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', 'Testimoni ' + (i + 1));
+        (function (k) {
+            dot.addEventListener('click', function () { go(k); restart(); });
+        })(i);
+        dotsWrap.appendChild(dot);
+        dots.push(dot);
+    }
+
+    function go(n) {
+        slides[idx].classList.remove('active');
+        if (dots[idx]) dots[idx].classList.remove('active');
+        idx = (n + slides.length) % slides.length;
+        slides[idx].classList.add('active');
+        if (dots[idx]) dots[idx].classList.add('active');
+    }
+
+    function next() { go(idx + 1); }
+
+    function restart() {
+        clearInterval(timer);
+        timer = setInterval(next, interval);
+    }
+
+    if (dots[0]) dots[0].classList.add('active');
+    timer = setInterval(next, interval);
+
+    slider.addEventListener('mouseenter', function () { clearInterval(timer); });
+    slider.addEventListener('mouseleave', restart);
+})();
+</script>
+@endpush
+
 @endsection
