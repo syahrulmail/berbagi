@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Banner;
 use App\Models\CampaignTag;
+use App\Models\Donation;
 use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
@@ -35,8 +36,13 @@ class PublicController extends Controller
 
         $totalCollected = \App\Models\Donation::sum('amount');
         $totalAgents = User::where('role', User::ROLE_AGEN)->where('is_active', true)->count();
+        $globalTarget = (float) Setting::get('global_target', '1500000000');
+        $globalProgress = $globalTarget > 0 ? min(100, round(($totalCollected / $globalTarget) * 100, 1)) : 0;
 
-        return view('public.home', compact('programs', 'banners', 'tags', 'waNumber', 'waTemplate', 'totalCollected', 'totalAgents'));
+        return view('public.home', compact(
+            'programs', 'banners', 'tags', 'waNumber', 'waTemplate',
+            'totalCollected', 'totalAgents', 'globalTarget', 'globalProgress'
+        ));
     }
 
     public function program(Program $program)
@@ -89,6 +95,34 @@ class PublicController extends Controller
         return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback'));
     }
 
+    public function transparansi()
+    {
+        $totalCollected = Donation::sum('amount');
+        $totalGoal = (float) Setting::get('global_target', '1500000000');
+        $totalDonations = Donation::count();
+
+        $programs = Program::where('is_active', true)
+            ->withSum('donations as total_collected', 'amount')
+            ->orderBy('name')
+            ->get();
+
+        $perProgram = $programs->map(function ($p) {
+            $collected = (float) ($p->total_collected ?? 0);
+            $goal = (float) $p->goal_amount;
+
+            return [
+                'name'     => $p->name,
+                'collected' => $collected,
+                'goal'     => $goal,
+                'progress' => $goal > 0 ? min(100, round(($collected / $goal) * 100, 1)) : 0,
+            ];
+        })->values();
+
+        $waNumber = preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890'));
+
+        return view('public.transparansi', compact('totalCollected', 'totalGoal', 'totalDonations', 'perProgram', 'waNumber'));
+    }
+
     protected function resolveAgent(string $slug): User
     {
         $agen = User::where('slug', $slug)->where('is_active', true)->first();
@@ -103,7 +137,7 @@ class PublicController extends Controller
     public function followup(Request $request)
     {
         $data = $request->validate([
-            'source' => ['required', 'in:home,program,agent'],
+            'source' => ['required', 'in:home,program,agent,transparansi'],
             'program_id' => ['nullable', 'exists:programs,id'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'phone' => ['nullable', 'string', 'max:30'],

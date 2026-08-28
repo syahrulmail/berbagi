@@ -25,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
     {
         \Illuminate\Pagination\Paginator::defaultView('vendor.pagination.custom');
 
+        \Illuminate\Support\Facades\View::composer('layouts.public', function ($view) {
+            $view->with('siteWaNumber', preg_replace('/\D/', '', \App\Models\Setting::get('wa_public_number', '6281234567890')));
+        });
+
         if (! $this->app->runningInConsole()) {
             $this->configureSubDirectory();
         }

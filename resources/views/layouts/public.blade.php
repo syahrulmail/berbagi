@@ -15,6 +15,23 @@
 </head>
 <body class="bg-white text-primary-950">
 
+<div class="trustbar">
+    <div class="container flex h-9 items-center justify-between gap-3">
+        <span class="inline-flex items-center gap-1.5 truncate">
+            <i class="fas fa-shield-heart text-gold-400"></i>
+            Badan Wakaf Al Qur'an &middot; Terdaftar &amp; Berizin
+        </span>
+        <div class="flex shrink-0 items-center gap-4">
+            <a href="{{ route('public.transparansi') }}" class="inline-flex items-center gap-1.5 transition hover:text-white">
+                <i class="fas fa-file-invoice"></i> Transparansi
+            </a>
+            <a href="{{ route('public.transparansi') }}#laporan" class="hidden items-center gap-1.5 transition hover:text-white sm:inline-flex">
+                Laporan
+            </a>
+        </div>
+    </div>
+</div>
+
 <header class="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-md">
     <div class="container flex h-16 items-center justify-between">
         <a href="{{ route('home') }}" class="flex items-center gap-3">
@@ -59,6 +76,7 @@
                 <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Lembaga</h4>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="{{ route('home') }}" class="text-primary-300 transition hover:text-white">Beranda</a></li>
+                    <li><a href="{{ route('public.transparansi') }}" class="text-primary-300 transition hover:text-white"><i class="fas fa-file-invoice mr-1.5"></i>Transparansi</a></li>
                     <li><a href="{{ route('login') }}" class="text-primary-300 transition hover:text-white">Masuk Anggota</a></li>
                 </ul>
             </div>
@@ -69,6 +87,23 @@
         </div>
     </div>
 </footer>
+
+<div class="donasi-bar-spacer lg:hidden"></div>
+
+<div class="donasi-bar lg:hidden">
+    <div class="donasi-bar-inner">
+        <div class="donasi-bar-info">
+            <strong>Wakaf untuk Ummat</strong>
+            <span>Gratis konsultasi · Tanpa kewajiban</span>
+        </div>
+        <a href="https://wa.me/{{ $siteWaNumber }}?text={{ urlencode('Assalamualaikum, saya ingin berdonasi untuk program wakaf Berbagi.or.id. Mohon info selanjutnya.') }}"
+           target="_blank" rel="noopener"
+           class="btn btn-wa"
+           data-wa-log data-wa-source="home">
+            <i class="fab fa-whatsapp"></i> Donasi
+        </a>
+    </div>
+</div>
 
 <div class="toast-wrap" id="toastWrap"></div>
 

@@ -1118,3 +1118,36 @@
     opacity: 1;
     transform: translateY(0);
 }
+
+/* ============ TRUST BAR ============ */
+.trustbar {
+    @apply bg-primary-950 text-primary-200;
+    font-size: 12.5px;
+}
+
+/* ============ MOBILE DONASI BAR ============ */
+.donasi-bar-spacer {
+    height: 76px;
+}
+
+.donasi-bar {
+    @apply fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-white/95 backdrop-blur-md;
+    box-shadow: 0 -6px 24px rgba(2, 35, 33, 0.08);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.donasi-bar-inner {
+    @apply mx-auto flex h-[76px] max-w-7xl items-center justify-between gap-3 px-4;
+}
+
+.donasi-bar-info {
+    @apply flex flex-col leading-tight;
+}
+
+.donasi-bar-info strong {
+    @apply text-sm font-bold text-primary-900;
+}
+
+.donasi-bar-info span {
+    @apply text-[11px] text-gray-500;
+}

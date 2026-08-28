@@ -55,6 +55,8 @@
             '      <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105">' +
             '      <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-primary-100 to-primary-50 text-primary-400"><i class="fas fa-book-quran" style="font-size:40px;"></i></div>' +
             '      <span class="absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white" :class="p.category === \'penyaluran\' ? \'bg-gold-500\' : \'bg-primary-500\'">{{ p.category }}</span>' +
+            '      <span v-if="p.is_complete" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-check-circle"></i> Tercapai</span>' +
+            '      <span v-else-if="p.progress >= 90" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-gold-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
             '    </a>' +
             '    <div class="flex flex-1 flex-col p-5">' +
             '      <div v-if="p.tags.length" class="mb-2 flex flex-wrap gap-1.5">' +
@@ -63,16 +65,22 @@
             '      <h3 class="mb-1.5 text-lg font-bold text-primary-900"><a :href="p.url" class="transition-colors hover:text-primary-600">{{ p.name }}</a></h3>' +
             '      <p class="mb-4 line-clamp-2 text-sm text-gray-600">{{ p.description }}</p>' +
             '      <div class="mt-auto">' +
-            '        <div class="mb-1.5 flex justify-between text-xs text-gray-500">' +
+            '        <div class="mb-1.5 flex items-center justify-between gap-2 text-xs text-gray-500">' +
             '          <span>Terkumpul <strong class="text-primary-700">{{ p.collected }}</strong></span>' +
             '          <span>Target {{ p.goal }}</span>' +
             '        </div>' +
             '        <div class="h-2 w-full overflow-hidden rounded-full bg-primary-100">' +
-            '          <div class="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400" :style="{ width: p.progress + \'%\' }"></div>' +
+            '          <div class="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400" :style="{ width: Math.max(4, p.progress) + \'%\' }"></div>' +
+            '        </div>' +
+            '        <div class="mt-1.5 flex items-center justify-between gap-2 text-[11px]">' +
+            '          <span v-if="p.is_complete" class="font-semibold text-emerald-600"><i class="fas fa-check-circle"></i> Target tercapai</span>' +
+            '          <span v-else-if="p.remaining" class="truncate font-semibold text-gray-500">Masih perlu <strong class="text-primary-700">{{ p.remaining }}</strong></span>' +
+            '          <span v-else></span>' +
+            '          <span class="shrink-0 font-semibold text-primary-700">{{ p.progress }}%</span>' +
             '        </div>' +
             '        <div class="mt-4 flex gap-2">' +
-            '          <a :href="p.url" class="btn btn-outline btn-sm flex-1">Detail</a>' +
-            '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-ghost-wa btn-sm" aria-label="Donasi via WhatsApp" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i></a>' +
+            '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Donasi Sekarang</a>' +
+            '          <a :href="p.url" class="btn btn-outline btn-sm"><i class="fas fa-circle-info"></i> Detail</a>' +
             '        </div>' +
             '      </div>' +
             '    </div>' +
