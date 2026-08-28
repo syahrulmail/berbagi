@@ -89,7 +89,7 @@ class PublicController extends Controller
 
         $relatedCards = $this->relatedProgramCards($program, $waNumber, $waTemplate, 'program');
 
-        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen', 'relatedCards'));
+        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen', 'relatedCards'))->with('agenPhoto', '');
     }
 
     public function agentProgram(string $agentSlug, Program $program)
@@ -113,7 +113,10 @@ class PublicController extends Controller
 
         $relatedCards = $this->relatedProgramCards($program, $waNumber, $waTemplate, 'agent');
 
-        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen', 'relatedCards'));
+        $profile = $this->agentProfile($agen);
+        $agenPhoto = asset_photo_url($profile['photo'] ?? '');
+
+        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen', 'agenPhoto', 'relatedCards'));
     }
 
     public function agent(string $slug)
@@ -135,7 +138,27 @@ class PublicController extends Controller
 
         $sections = $this->funnelSections();
 
-        return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback', 'tags') + $sections);
+        $profile = $this->agentProfile($agen);
+        $agenPhoto = asset_photo_url($profile['photo'] ?? '');
+        $agenIntro = ($profile['intro'] ?? '') !== ''
+            ? $profile['intro']
+            : 'Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.';
+
+        return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback', 'tags', 'agenPhoto', 'agenIntro') + $sections);
+    }
+
+    protected function agentProfile(User $user): array
+    {
+        $decoded = json_decode(Setting::get('agent_profile_' . $user->slug, '{}'), true);
+
+        if (! is_array($decoded)) {
+            $decoded = [];
+        }
+
+        return [
+            'photo' => (string) ($decoded['photo'] ?? ''),
+            'intro' => (string) ($decoded['intro'] ?? ''),
+        ];
     }
 
     protected function resolveAgent(string $slug): User

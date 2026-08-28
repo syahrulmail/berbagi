@@ -43,9 +43,13 @@
 <section class="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 py-16 text-center text-white">
     <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-primary-500/20 blur-3xl"></div>
     <div class="container relative">
+        @if($agenPhoto)
+        <img src="{{ $agenPhoto }}" alt="{{ $agen->name }}" class="mx-auto h-20 w-20 rounded-3xl object-cover shadow-xl shadow-primary-900/40 ring-2 ring-white/30">
+        @else
         <div class="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-primary-400 to-primary-600 text-3xl font-bold shadow-xl shadow-primary-900/40">
             {{ strtoupper(mb_substr($agen->name, 0, 1)) }}
         </div>
+        @endif
         <h1 class="mt-5 text-3xl font-extrabold md:text-4xl">{{ $agen->name }}</h1>
         <p class="mt-2 text-primary-100">Agen Wakaf & Sedekah · Badan Wakaf Al Qur'an</p>
         <div class="mt-5 flex flex-wrap justify-center gap-2">
@@ -57,11 +61,8 @@
                data-wa-log data-wa-source="agent" data-wa-agen="{{ $agen->id }}">
                 <i class="fab fa-whatsapp"></i> Chat Saya
             </a>
-            <a href="{{ route('home') }}" class="btn btn-light"><i class="fas fa-house"></i> Beranda</a>
         </div>
-        <p class="mx-auto mt-7 max-w-xl text-sm leading-relaxed text-primary-100/90">
-            Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.
-        </p>
+        <p class="mx-auto mt-7 max-w-xl text-sm leading-relaxed text-primary-100/90">{{ $agenIntro }}</p>
     </div>
 </section>
 

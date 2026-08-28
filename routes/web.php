@@ -9,6 +9,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
@@ -77,6 +78,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('programs', ProgramController::class)->except('show');
         Route::resource('whatsapp', WhatsAppController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::resource('followups', WaFollowupController::class)->only(['index']);
+        Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
     });
 
     Route::middleware('role:admin,supervisor')->group(function () {

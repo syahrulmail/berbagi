@@ -34,6 +34,10 @@
                 </a>
             @endif
 
+            <a href="{{ route('profile.edit') }}" class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                <i class="fas fa-user-circle"></i><span class="nav-text">Profil Saya</span>
+            </a>
+
             <a href="{{ route('contacts.index') }}" class="nav-item {{ request()->routeIs('contacts.*') ? 'active' : '' }}">
                 <i class="fas fa-address-book"></i><span class="nav-text">Kontak</span>
             </a>

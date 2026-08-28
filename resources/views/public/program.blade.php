@@ -46,7 +46,11 @@
 
         @if($agen)
             <div class="mb-8 flex flex-wrap items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50/60 p-4" data-reveal>
+                @if(!empty($agenPhoto))
+                <img src="{{ $agenPhoto }}" alt="{{ $agen->name }}" class="h-12 w-12 flex-shrink-0 rounded-xl object-cover">
+                @else
                 <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-lg font-bold text-white">{{ strtoupper(mb_substr($agen->name, 0, 1)) }}</div>
+                @endif
                 <div class="flex-1">
                     <p class="text-sm text-gray-500">Mendukung melalui agen</p>
                     <p class="font-semibold text-primary-900">{{ $agen->name }}</p>
