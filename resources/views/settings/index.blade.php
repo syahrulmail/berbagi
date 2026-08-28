@@ -20,6 +20,12 @@
             <small style="color: var(--gray-500);">Total target fundraising secara keseluruhan.</small>
         </div>
 
+        <div class="form-group">
+            <label for="trustbar_text">Teks Bar Atas (Trustbar)</label>
+            <input type="text" id="trustbar_text" name="trustbar_text" value="{{ old('trustbar_text', $settings['trustbar_text']) }}" maxlength="160">
+            <small style="color: var(--gray-500);">Teks yang tampil pada baris teratas seluruh halaman publik, mis. "Badan Wakaf Al Qur'an · Terdaftar &amp; Berizin".</small>
+        </div>
+
         <hr style="border: none; border-top: 1px solid var(--gray-200); margin: 20px 0;">
 
         <h3 style="font-size: 15px; margin-bottom: 14px;">WhatsApp Publik</h3>

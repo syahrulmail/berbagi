@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Facades\View::composer('layouts.public', function ($view) {
             $view->with('siteWaNumber', preg_replace('/\D/', '', \App\Models\Setting::get('wa_public_number', '6281234567890')));
+            $view->with('trustbarText', \App\Models\Setting::get('trustbar_text', 'Badan Wakaf Al Qur\'an · Terdaftar & Berizin'));
         });
 
         if (! $this->app->runningInConsole()) {

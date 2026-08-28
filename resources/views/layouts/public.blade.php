@@ -19,7 +19,7 @@
     <div class="container flex h-9 items-center justify-between gap-3">
         <span class="inline-flex items-center gap-1.5 truncate">
             <i class="fas fa-shield-heart text-gold-400"></i>
-            Badan Wakaf Al Qur'an &middot; Terdaftar &amp; Berizin
+            {{ $trustbarText }}
         </span>
     </div>
 </div>

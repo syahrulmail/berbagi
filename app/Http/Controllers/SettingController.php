@@ -12,6 +12,7 @@ class SettingController extends Controller
     {
         $settings = [
             'global_target' => Setting::get('global_target', '1500000000'),
+            'trustbar_text' => Setting::get('trustbar_text', 'Badan Wakaf Al Qur\'an · Terdaftar & Berizin'),
             'wa_reminder_enabled' => Setting::get('wa_reminder_enabled', '0'),
             'wa_reminder_hour' => Setting::get('wa_reminder_hour', '09'),
             'wa_public_number' => Setting::get('wa_public_number', '6281234567890'),
@@ -26,6 +27,7 @@ class SettingController extends Controller
     {
         $data = $request->validate([
             'global_target' => ['required', 'numeric', 'min:0'],
+            'trustbar_text' => ['nullable', 'string', 'max:160'],
             'wa_reminder_enabled' => ['nullable'],
             'wa_reminder_hour' => ['required', 'numeric', 'between:0,23'],
             'wa_public_number' => ['required', 'string', 'max:30'],
@@ -34,6 +36,7 @@ class SettingController extends Controller
         ]);
 
         Setting::set('global_target', (string) $data['global_target']);
+        Setting::set('trustbar_text', trim($data['trustbar_text'] ?? ''));
         Setting::set('wa_reminder_enabled', $request->boolean('wa_reminder_enabled') ? '1' : '0');
         Setting::set('wa_reminder_hour', (string) (int) $data['wa_reminder_hour']);
         Setting::set('wa_public_number', $data['wa_public_number']);
