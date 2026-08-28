@@ -15,6 +15,7 @@ class SettingController extends Controller
             'trustbar_text' => Setting::get('trustbar_text', 'Badan Wakaf Al Qur\'an · Terdaftar & Berizin'),
             'home_quote' => Setting::get('home_quote', '<p>&quot;Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.&quot; — <strong>HR. Ahmad &amp; Thabrani</strong></p>'),
             'home_testimonials' => $this->decodeTestimonials(Setting::get('home_testimonials', '[]')),
+            'home_partner_logos' => $this->decodeLogos(Setting::get('home_partner_logos', '[]')),
             'wa_reminder_enabled' => Setting::get('wa_reminder_enabled', '0'),
             'wa_reminder_hour' => Setting::get('wa_reminder_hour', '09'),
             'wa_public_number' => Setting::get('wa_public_number', '6281234567890'),
@@ -42,6 +43,10 @@ class SettingController extends Controller
             'testimonials.*.photo_remove' => ['nullable', 'string', 'in:0,1'],
             'testimonials.*.text' => ['nullable', 'string', 'max:500'],
             'testimonials.*.name' => ['nullable', 'string', 'max:100'],
+            'logos' => ['nullable', 'array'],
+            'logos.*.photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'logos.*.existing_photo' => ['nullable', 'string', 'max:255'],
+            'logos.*.photo_remove' => ['nullable', 'string', 'in:0,1'],
         ]);
 
         Setting::set('global_target', (string) $data['global_target']);
@@ -54,6 +59,7 @@ class SettingController extends Controller
         Setting::set('wa_agent_template', $data['wa_agent_template'] ?? '');
 
         $this->saveTestimonials($request);
+        $this->savePartnerLogos($request);
 
         ActivityLog::record('settings.update', 'Memperbarui pengaturan sistem');
 
@@ -137,5 +143,55 @@ class SettingController extends Controller
         }
 
         \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+    }
+
+    protected function decodeLogos(string $json): array
+    {
+        $decoded = json_decode($json, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $logos = [];
+        foreach ($decoded as $item) {
+            $path = is_array($item) ? (string) ($item['photo'] ?? '') : (string) $item;
+            $path = trim($path);
+
+            if ($path !== '') {
+                $logos[] = $path;
+            }
+        }
+
+        return $logos;
+    }
+
+    protected function savePartnerLogos(Request $request): void
+    {
+        $logos = [];
+
+        foreach ((array) $request->input('logos', []) as $index => $row) {
+            $existing = (string) ($row['existing_photo'] ?? '');
+            $removeFlag = (string) ($row['photo_remove'] ?? '0');
+            $photo = $existing;
+
+            $file = $request->file('logos.' . $index . '.photo');
+            if ($file !== null && $file->isValid()) {
+                $newPath = $file->store('partner-logos', 'public');
+                if ($newPath && $photo && $photo !== $newPath) {
+                    $this->deleteStoredPhoto($photo);
+                }
+                $photo = $newPath ?: $photo;
+            } elseif ($removeFlag === '1' && $photo) {
+                $this->deleteStoredPhoto($photo);
+                $photo = '';
+            }
+
+            if ($photo !== '') {
+                $logos[] = $photo;
+            }
+        }
+
+        Setting::set('home_partner_logos', json_encode($logos, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }

@@ -56,8 +56,14 @@ class PublicController extends Controller
             ];
         }, json_decode(Setting::get('home_testimonials', '[]'), true) ?: [])));
 
+        $partnerLogos = array_values(array_filter(array_map(function ($item) {
+            $path = trim(is_array($item) ? (string) ($item['photo'] ?? '') : (string) $item);
+
+            return $path !== '' ? asset_photo_url($path) : null;
+        }, json_decode(Setting::get('home_partner_logos', '[]'), true) ?: [])));
+
         return view('public.home', compact(
-            'programs', 'banners', 'tags', 'waNumber', 'waTemplate', 'homeQuote', 'testimonials'
+            'programs', 'banners', 'tags', 'waNumber', 'waTemplate', 'homeQuote', 'testimonials', 'partnerLogos'
         ));
     }
 

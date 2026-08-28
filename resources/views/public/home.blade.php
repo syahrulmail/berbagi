@@ -64,6 +64,28 @@
         background: #08A899;
         transform: scale(1.25);
     }
+    .logo-marquee { overflow: hidden; }
+    .logo-track {
+        display: flex;
+        align-items: center;
+        gap: 56px;
+        width: max-content;
+        animation: logoScroll 40s linear infinite;
+    }
+    .logo-marquee:hover .logo-track { animation-play-state: paused; }
+    .logo-item {
+        height: 60px;
+        width: auto;
+        object-fit: contain;
+        flex: none;
+        opacity: .8;
+        transition: opacity .2s;
+    }
+    .logo-item:hover { opacity: 1; }
+    @keyframes logoScroll {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); }
+    }
 </style>
 @endpush
 
@@ -163,6 +185,23 @@
         @if(count($testimonials) > 1)
         <div class="mt-8 flex justify-center gap-2.5" id="testimonialDots"></div>
         @endif
+    </div>
+</section>
+@endif
+
+@if(count($partnerLogos) > 0)
+<section class="border-b border-black/5 bg-white py-10" data-reveal>
+    <div class="container mx-auto max-w-6xl">
+        <div class="logo-marquee">
+            <div class="logo-track">
+                @foreach($partnerLogos as $logo)
+                <img src="{{ $logo }}" alt="Logo mitra" class="logo-item" loading="lazy">
+                @endforeach
+                @foreach($partnerLogos as $logo)
+                <img src="{{ $logo }}" alt="Logo mitra" class="logo-item" loading="lazy" aria-hidden="true">
+                @endforeach
+            </div>
+        </div>
     </div>
 </section>
 @endif
