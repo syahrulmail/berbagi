@@ -2,6 +2,8 @@
 
 @section('title', 'Edit Pengguna')
 
+@include('partials.photo-upload-styles')
+
 @section('content')
 <div class="page-header">
     <div>
@@ -12,7 +14,7 @@
 </div>
 
 <div class="card" style="max-width: 640px;">
-    <form method="POST" action="{{ route('users.update', $user) }}">
+    <form method="POST" action="{{ route('users.update', $user) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         <div class="form-group">
@@ -75,6 +77,28 @@
             <label for="phone">No. WhatsApp</label>
             <input type="text" id="phone" name="phone" value="{{ old('phone', $user->phone) }}">
         </div>
+        @if(in_array($user->role, ['agen', 'supervisor']))
+        <div class="form-group">
+            <label>Foto Profil</label>
+            @php
+                $photoUrl = asset_photo_url($profile['photo'] ?? '');
+                $existingPhoto = $profile['photo'] ?? '';
+            @endphp
+            @include('partials.photo-upload')
+            @error('photo')
+                <small style="color: var(--danger);">{{ $message }}</small>
+            @enderror
+        </div>
+        <div class="form-group">
+            <label for="intro">Teks Sambutan</label>
+            <textarea id="intro" name="intro" rows="3" maxlength="500"
+                      placeholder="Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.">{{ old('intro', $profile['intro'] ?? '') }}</textarea>
+            <small style="color: var(--gray-500);">Sambutan yang tampil di bawah nama pada halaman publik (berbagi.or.id/cs/{{ $user->slug }}). Kosongkan untuk memakai teks bawaan.</small>
+            @error('intro')
+                <small style="color: var(--danger);">{{ $message }}</small>
+            @enderror
+        </div>
+        @endif
         <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }}> Aktif
@@ -86,4 +110,6 @@
         </div>
     </form>
 </div>
+
+@include('partials.photo-upload-script')
 @endsection
