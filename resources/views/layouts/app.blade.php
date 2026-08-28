@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ assetv('css/app.css') }}">
     @stack('styles')
 </head>
 <body class="layout-body">
@@ -169,11 +169,11 @@
     document.addEventListener('click', () => dropdown.classList.remove('open'));
 </script>
 
-<script src="{{ asset('js/vendor/vue.global.prod.js') }}"></script>
-<script src="{{ asset('js/components/DonutChart.js') }}"></script>
-<script src="{{ asset('js/components/BarChart.js') }}"></script>
-<script src="{{ asset('js/components/CountUp.js') }}"></script>
-<script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ assetv('js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ assetv('js/components/DonutChart.js') }}"></script>
+<script src="{{ assetv('js/components/BarChart.js') }}"></script>
+<script src="{{ assetv('js/components/CountUp.js') }}"></script>
+<script src="{{ assetv('js/app.js') }}"></script>
 @stack('scripts')
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>403 · Tidak Diizinkan</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ assetv('css/app.css') }}">
     <style>
         .error-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); }
         .error-box { background: #fff; border-radius: 16px; padding: 48px; text-align: center; max-width: 440px; box-shadow: 0 24px 64px rgba(0,0,0,0.3); }
