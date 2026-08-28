@@ -54,7 +54,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 */
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('role:admin,supervisor,agen');
 
     Route::middleware('role:admin')->group(function () {
         Route::resource('branches', BranchController::class)->except('show');

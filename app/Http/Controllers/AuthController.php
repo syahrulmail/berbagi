@@ -36,6 +36,12 @@ class AuthController extends Controller
             ])->withInput();
         }
 
+        if ($user->isDonatur()) {
+            return back()->withErrors([
+                'login' => 'Akun donatur tidak memiliki akses login. Silakan hubungi admin bila ini sebuah kesalahan.',
+            ])->withInput();
+        }
+
         Auth::login($user, $request->boolean('remember'));
 
         ActivityLog::record('login', $user->name . ' login ke sistem');
