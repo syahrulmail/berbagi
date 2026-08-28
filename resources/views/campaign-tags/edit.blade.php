@@ -16,12 +16,13 @@
         @csrf
         @method('PUT')
         <div class="form-group">
-            <label for="name">Nama Label *</label>
-            <input type="text" id="name" name="name" value="{{ old('name', $campaignTag->name) }}" required>
+            <label for="name">Nama Label (pisahkan dengan koma) *</label>
+            <textarea id="name" name="name" rows="3" placeholder="Wakaf Al-Quran, Donasi Hewan Qurban" required>{{ old('name', $campaignTag->name) }}</textarea>
+            <small style="color: var(--gray-500);">Label pertama akan mengganti nama label ini. Label lain setelah koma (<code>,</code>) akan dibuat sebagai label baru.</small>
         </div>
         <div class="form-group">
             <label for="slug">Slug</label>
-            <input type="text" id="slug" name="slug" value="{{ old('slug', $campaignTag->slug) }}">
+            <input type="text" id="slug" name="slug" value="{{ old('slug', $campaignTag->slug) }}" placeholder="Kosongkan untuk otomatis">
         </div>
         <div class="form-group">
             <label for="color">Warna *</label>
