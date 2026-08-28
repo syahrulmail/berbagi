@@ -86,164 +86,18 @@
         from { transform: translateX(0); }
         to { transform: translateX(-50%); }
     }
-    .psm-fab {
-        position: fixed;
-        right: 20px;
-        bottom: 24px;
-        z-index: 80;
-        display: inline-flex;
+    .filter-bar-sticky {
+        position: sticky;
+        top: 76px;
+        z-index: 30;
         align-items: center;
-        gap: 8px;
-        padding: 13px 20px;
-        border: none;
-        border-radius: 9999px;
-        background: #08A899;
-        color: #fff;
-        font-weight: 700;
-        font-size: 14px;
-        box-shadow: 0 8px 22px rgba(8, 110, 102, .38);
-        cursor: pointer;
-        transition: transform .2s, background .2s;
-    }
-    .psm-fab:hover {
-        transform: translateY(-2px);
-        background: #086e66;
-    }
-    .psm-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 90;
-        background: rgba(2, 44, 41, .55);
-        backdrop-filter: blur(3px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px 16px;
-    }
-    .psm-modal {
-        width: 100%;
-        max-width: 620px;
-        max-height: calc(100vh - 48px);
-        background: #fff;
-        border-radius: 20px;
-        box-shadow: 0 24px 60px rgba(2, 44, 41, .35);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-    .psm-head {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 18px 22px 4px;
-    }
-    .psm-title { font-size: 18px; font-weight: 800; color: #04211f; }
-    .psm-title i { color: #08A899; margin-right: 4px; }
-    .psm-sub { font-size: 12.5px; color: var(--gray-500); margin-top: 2px; }
-    .psm-close {
-        border: none;
-        background: #f1f5f5;
-        color: #086e66;
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 16px;
-        flex: none;
-    }
-    .psm-close:hover { background: #e2efed; }
-    .psm-filter-wrap { padding: 12px 22px 4px; }
-    .psm-filter-wrap .search-box { min-width: 0; }
-    .psm-filter-wrap .filter-pills {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 6px;
-        margin-top: 10px;
-        -webkit-overflow-scrolling: touch;
-    }
-    .psm-results { overflow-y: auto; padding: 8px 22px 20px; }
-    .psm-item {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 14px;
-        border: 1px solid var(--gray-200);
+        margin-bottom: 20px;
+        padding: 12px 16px;
+        border: 1px solid rgba(0, 0, 0, .06);
         border-radius: 16px;
-        margin-bottom: 10px;
-        background: #fcfefe;
-    }
-    .psm-item-top { display: flex; gap: 12px; }
-    .psm-item-thumb {
-        flex: 0 0 84px;
-        height: 84px;
-        border-radius: 12px;
-        overflow: hidden;
-        display: block;
-    }
-    .psm-item-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .psm-item-ph {
-        display: grid;
-        place-items: center;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #e7f4f2, #f4faf9);
-        color: #08A899;
-        font-size: 22px;
-    }
-    .psm-item-main { flex: 1; min-width: 0; }
-    .psm-item-title {
-        font-weight: 700;
-        color: #04211f;
-        display: block;
-        line-height: 1.3;
-    }
-    .psm-item-title:hover { color: #086e66; }
-    .psm-item-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-    .psm-cat {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .02em;
-        color: #fff;
-        background: #08A899;
-        padding: 2px 8px;
-        border-radius: 9999px;
-    }
-    .psm-cat.is-gold { background: #D4911E; }
-    .psm-tag {
-        font-size: 11px;
-        font-weight: 600;
-        color: #086e66;
-        background: #e7f4f2;
-        padding: 2px 8px;
-        border-radius: 9999px;
-    }
-    .psm-progress {
-        height: 5px;
-        background: #e7f4f2;
-        border-radius: 9999px;
-        margin-top: 8px;
-        overflow: hidden;
-    }
-    .psm-progress div {
-        height: 100%;
-        background: linear-gradient(90deg, #08A899, #34d399);
-        border-radius: 9999px;
-    }
-    .psm-item-stats {
-        display: flex;
-        gap: 10px;
-        align-items: baseline;
-        font-size: 12px;
-        color: var(--gray-500);
-        margin-top: 6px;
-    }
-    .psm-item-stats strong { color: #086e66; }
-    .psm-pct { margin-left: auto; font-weight: 700; color: #086e66; }
-    .psm-item-actions { display: flex; gap: 8px; }
-    @media (max-width: 1023px) {
-        .psm-fab { bottom: 104px; }
+        background: rgba(255, 255, 255, .92);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 24px -12px rgba(2, 35, 33, .18);
     }
 </style>
 @endpush
@@ -369,7 +223,7 @@
     <div class="container">
         <div data-reveal>
             <div data-vue-app="ProgramExplorer">
-                <script type="application/json">@json(['programs' => $programCards, 'tags' => $tags->pluck('name')->all()])</script>
+                <script type="application/json">@json(['programs' => $programCards, 'tags' => $tags->pluck('name')->all(), 'sticky' => true])</script>
             </div>
         </div>
     </div>
@@ -436,9 +290,5 @@
 })();
 </script>
 @endpush
-
-<div data-vue-app="ProgramSearchModal">
-    <script type="application/json">@json(['programs' => $programCards, 'tags' => $tags->pluck('name')->all()])</script>
-</div>
 
 @endsection

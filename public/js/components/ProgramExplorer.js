@@ -6,7 +6,8 @@
     window.BerbagiComponents.ProgramExplorer = {
         props: {
             programs: { type: Array, default: function () { return []; } },
-            tags: { type: Array, default: function () { return []; } }
+            tags: { type: Array, default: function () { return []; } },
+            sticky: { type: Boolean, default: false }
         },
         data: function () {
             return { q: '', active: 'semua' };
@@ -37,7 +38,7 @@
             setFilter: function (f) { this.active = f; }
         },
         template: '<div>' +
-            '<div class="filter-bar">' +
+            '<div class="filter-bar" :class="{ \'filter-bar-sticky\': sticky }">' +
             '  <div class="search-box">' +
             '    <i class="fas fa-magnifying-glass"></i>' +
             '    <input type="search" v-model="q" placeholder="Cari program..." autocomplete="off">' +
