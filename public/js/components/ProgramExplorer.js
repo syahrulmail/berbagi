@@ -10,7 +10,7 @@
             sticky: { type: Boolean, default: false }
         },
         data: function () {
-            return { q: '', active: 'semua' };
+            return { q: '', active: 'semua', detail: null };
         },
         computed: {
             filtered: function () {
@@ -35,7 +35,24 @@
             }
         },
         methods: {
-            setFilter: function (f) { this.active = f; }
+            setFilter: function (f) { this.active = f; },
+            openDetail: function (p) { this.detail = p; },
+            closeDetail: function () { this.detail = null; },
+            onKey: function (e) {
+                if (e.key === 'Escape') this.closeDetail();
+            }
+        },
+        watch: {
+            detail: function (val) {
+                document.body.style.overflow = val ? 'hidden' : '';
+            }
+        },
+        mounted: function () {
+            document.addEventListener('keydown', this.onKey);
+        },
+        beforeUnmount: function () {
+            document.removeEventListener('keydown', this.onKey);
+            document.body.style.overflow = '';
         },
         template: '<div>' +
             '<div class="filter-bar" :class="{ \'filter-bar-sticky\': sticky }">' +
@@ -81,7 +98,7 @@
             '        </div>' +
             '        <div class="mt-4 flex gap-2">' +
             '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Donasi Sekarang</a>' +
-            '          <a :href="p.url" class="btn btn-outline btn-sm"><i class="fas fa-circle-info"></i> Detail</a>' +
+            '          <button type="button" class="btn btn-outline btn-sm" @click="openDetail(p)"><i class="fas fa-circle-info"></i> Detail</button>' +
             '        </div>' +
             '      </div>' +
             '    </div>' +
@@ -90,6 +107,48 @@
             '<div v-else class="empty-state">' +
             '  <i class="fas fa-magnifying-glass"></i>' +
             '  <p>Tidak ada program yang cocok.</p>' +
+            '</div>' +
+            '<div v-if="detail" class="pdetail-overlay" @click.self="closeDetail">' +
+            '  <div class="pdetail-modal" role="dialog" aria-modal="true">' +
+            '    <div class="pdetail-media">' +
+            '      <img v-if="detail.image" :src="detail.image" :alt="detail.name">' +
+            '      <div v-else class="pdetail-media-ph"><i class="fas fa-book-quran"></i></div>' +
+            '      <span class="pdetail-cat" :class="detail.category === \'penyaluran\' ? \'is-gold\' : \'\'">{{ detail.category }}</span>' +
+            '      <span v-if="detail.is_complete" class="pdetail-done"><i class="fas fa-check-circle"></i> Tercapai</span>' +
+            '      <span v-else-if="detail.progress >= 90" class="pdetail-hot"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
+            '      <button type="button" class="pdetail-close" @click="closeDetail" aria-label="Tutup"><i class="fas fa-xmark"></i></button>' +
+            '    </div>' +
+            '    <div class="pdetail-body">' +
+            '      <h3 class="pdetail-title">{{ detail.name }}</h3>' +
+            '      <div v-if="detail.tags.length" class="pdetail-tags">' +
+            '        <span v-for="(t, i) in detail.tags" :key="i" class="pdetail-tag" :class="i === 0 ? \'is-gold\' : \'\'">{{ t }}</span>' +
+            '      </div>' +
+            '      <p class="pdetail-desc">{{ detail.description }}</p>' +
+            '      <div class="pdetail-progress">' +
+            '        <div class="pdetail-progress-track"><div :style="{ width: Math.max(4, detail.progress) + \'%\' }"></div></div>' +
+            '        <div class="pdetail-progress-meta">' +
+            '          <span class="pdetail-pct">{{ detail.progress }}%</span>' +
+            '          <span v-if="detail.is_complete" class="pdetail-rem"><i class="fas fa-check-circle"></i> Target tercapai</span>' +
+            '          <span v-else-if="detail.remaining" class="pdetail-rem">Sisa <strong>{{ detail.remaining }}</strong></span>' +
+            '        </div>' +
+            '      </div>' +
+            '      <div class="pdetail-stats">' +
+            '        <div><span>Terkumpul</span><strong>{{ detail.collected }}</strong></div>' +
+            '        <div><span>Target</span><strong>{{ detail.goal }}</strong></div>' +
+            '        <div v-if="!detail.is_complete && detail.remaining"><span>Masih Perlu</span><strong class="is-gold">{{ detail.remaining }}</strong></div>' +
+            '      </div>' +
+            '      <div class="pdetail-trust">' +
+            '        <span><i class="fas fa-shield-halved"></i> Terdaftar &amp; Berizin</span>' +
+            '        <span><i class="fas fa-circle-check"></i> Penyaluran tercatat resmi</span>' +
+            '      </div>' +
+            '      <a :href="detail.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-block pdetail-cta" data-wa-log="1" :data-wa-source="detail.wa_source" :data-wa-program="detail.wa_program" :data-wa-agen="detail.wa_agen || null">' +
+            '        <i class="fab fa-whatsapp"></i> Donasi Sekarang' +
+            '      </a>' +
+            '      <a :href="detail.url" class="pdetail-more">' +
+            '        <i class="fas fa-circle-info"></i> Lihat halaman detail program lengkap <i class="fas fa-arrow-right pdetail-more-arrow"></i>' +
+            '      </a>' +
+            '    </div>' +
+            '  </div>' +
             '</div>' +
             '</div>'
     };
