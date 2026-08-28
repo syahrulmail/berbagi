@@ -107,60 +107,6 @@ class PublicController extends Controller
         return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback'));
     }
 
-    public function transparansi()
-    {
-        $totalCollected = Donation::sum('amount');
-        $totalGoal = (float) Setting::get('global_target', '1500000000');
-        $totalDonations = Donation::count();
-        $globalProgress = $totalGoal > 0 ? min(100, round(($totalCollected / $totalGoal) * 100, 1)) : 0;
-
-        $programs = Program::where('is_active', true)
-            ->withSum('donations as total_collected', 'amount')
-            ->orderBy('name')
-            ->get();
-
-        $perProgram = $programs->map(function ($p) {
-            $collected = (float) ($p->total_collected ?? 0);
-            $goal = (float) $p->goal_amount;
-
-            return [
-                'name'     => $p->name,
-                'collected' => $collected,
-                'goal'     => $goal,
-                'progress' => $goal > 0 ? min(100, round(($collected / $goal) * 100, 1)) : 0,
-            ];
-        })->values();
-
-        $yearly = Donation::selectRaw('YEAR(donation_date) as year, SUM(amount) as total')
-            ->whereNotNull('donation_date')
-            ->groupBy('year')
-            ->orderBy('year')
-            ->get()
-            ->map(function ($r) {
-                return ['label' => (string) $r->year, 'value' => (int) $r->total];
-            })
-            ->values()->all();
-
-        $waNumber = preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890'));
-
-        $recentDonors = $this->recentDonors(8);
-
-        return view('public.transparansi', compact(
-            'totalCollected', 'totalGoal', 'totalDonations', 'globalProgress',
-            'perProgram', 'yearly', 'waNumber', 'recentDonors'
-        ));
-    }
-
-    public function caraDonasi()
-    {
-        $waNumber = preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890'));
-        $waTemplate = Setting::get('wa_public_template', '');
-        $programs = Program::where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']);
-        $recentDonors = $this->recentDonors(4);
-
-        return view('public.cara-donasi', compact('waNumber', 'waTemplate', 'programs', 'recentDonors'));
-    }
-
     protected function maskName(string $name): string
     {
         $name = trim($name);
@@ -258,7 +204,7 @@ class PublicController extends Controller
     public function followup(Request $request)
     {
         $data = $request->validate([
-            'source' => ['required', 'in:home,program,agent,transparansi,cara-donasi'],
+            'source' => ['required', 'in:home,program,agent'],
             'program_id' => ['nullable', 'exists:programs,id'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'phone' => ['nullable', 'string', 'max:30'],

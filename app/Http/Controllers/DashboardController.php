@@ -96,8 +96,6 @@ class DashboardController extends Controller
             'home' => 'Home',
             'program' => 'Detail Program',
             'agent' => 'Halaman Agen',
-            'transparansi' => 'Transparansi',
-            'cara-donasi' => 'Cara Donasi',
         ];
 
         $waClicksBySource = \App\Models\WaFollowup::select('source', DB::raw('count(*) as total'))

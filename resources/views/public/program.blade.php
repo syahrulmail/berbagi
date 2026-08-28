@@ -113,7 +113,7 @@
                     <h2 class="text-xl font-bold text-primary-900">Tentang Program</h2>
                     <div class="mt-4 space-y-4 leading-relaxed text-gray-600">
                         <p>{{ $program->description }}</p>
-                        <p>Seluruh dana yang terhimpun dicatat resmi dan disalurkan melalui jaringan agen serta mitra Badan Wakaf Al Qur'an (BWA). Anda dapat memantau penyalurannya lewat halaman <a href="{{ route('public.transparansi') }}" class="font-medium text-primary-600 underline underline-offset-2 hover:text-primary-700">transparansi</a>.</p>
+                        <p>Seluruh dana yang terhimpun dicatat resmi dan disalurkan melalui jaringan agen serta mitra Badan Wakaf Al Qur'an (BWA).</p>
                     </div>
                 </section>
 

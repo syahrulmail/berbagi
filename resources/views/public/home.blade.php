@@ -93,39 +93,6 @@
     </div>
 </section>
 
-<section class="border-b border-black/5 bg-white" data-reveal>
-    <div class="container grid gap-x-6 gap-y-6 py-8 sm:grid-cols-2 lg:grid-cols-4">
-        <a href="{{ route('public.transparansi') }}" class="group flex items-center gap-3.5">
-            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-100 text-primary-600 transition group-hover:bg-primary-600 group-hover:text-white"><i class="fas fa-scale-balanced"></i></span>
-            <span>
-                <span class="block font-bold text-primary-900">Legalitas Resmi</span>
-                <span class="block text-xs text-gray-500">Terdaftar &amp; berizin</span>
-            </span>
-        </a>
-        <a href="{{ route('public.transparansi') }}" class="group flex items-center gap-3.5">
-            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gold-100 text-gold-600 transition group-hover:bg-gold-500 group-hover:text-white"><i class="fas fa-hand-holding-dollar"></i></span>
-            <span>
-                <span class="block font-bold text-primary-900">Penyaluran Transparan</span>
-                <span class="block text-xs text-gray-500">Tercatat &amp; dapat ditelusuri</span>
-            </span>
-        </a>
-        <a href="{{ route('public.transparansi') }}#laporan" class="group flex items-center gap-3.5">
-            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-600 transition group-hover:bg-emerald-500 group-hover:text-white"><i class="fas fa-file-invoice"></i></span>
-            <span>
-                <span class="block font-bold text-primary-900">Laporan Berkala</span>
-                <span class="block text-xs text-gray-500">Transparansi penyaluran</span>
-            </span>
-        </a>
-        <a href="{{ route('home') }}#program" class="group flex items-center gap-3.5">
-            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-100 text-primary-600 transition group-hover:bg-primary-600 group-hover:text-white"><i class="fas fa-users"></i></span>
-            <span>
-                <span class="block font-bold text-primary-900">{{ $totalAgents }} Mitra Agen</span>
-                <span class="block text-xs text-gray-500">Melayani di seluruh Nusantara</span>
-            </span>
-        </a>
-    </div>
-</section>
-
 <main class="section" id="program">
     <div class="container">
         <div class="section-head" data-reveal>
@@ -175,7 +142,6 @@
             <p class="mx-auto mt-3 max-w-xl text-sm text-primary-100/90">Gratis konsultasi. Tim BWA siap membantu Anda menyalurkan wakaf, infak, dan sedekah dengan amanah.</p>
             <div class="mt-7 flex flex-wrap justify-center gap-3">
                 <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Donasi Sekarang</a>
-                <a href="{{ route('public.cara-donasi') }}" class="btn btn-light">Cara Berdonasi</a>
             </div>
         </div>
     </div>

@@ -21,14 +21,6 @@
             <i class="fas fa-shield-heart text-gold-400"></i>
             Badan Wakaf Al Qur'an &middot; Terdaftar &amp; Berizin
         </span>
-        <div class="flex shrink-0 items-center gap-4">
-            <a href="{{ route('public.transparansi') }}" class="inline-flex items-center gap-1.5 transition hover:text-white">
-                <i class="fas fa-file-invoice"></i> Transparansi
-            </a>
-            <a href="{{ route('public.transparansi') }}#laporan" class="hidden items-center gap-1.5 transition hover:text-white sm:inline-flex">
-                Laporan
-            </a>
-        </div>
     </div>
 </div>
 
@@ -44,7 +36,6 @@
         <nav class="flex items-center gap-2">
             <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house mr-1.5"></i>Beranda</a>
             <a href="{{ route('home') }}#program" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700">Program</a>
-            <a href="{{ route('public.cara-donasi') }}" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700">Cara Donasi</a>
             <a href="{{ route('login') }}" class="btn btn-primary btn-sm"><i class="fas fa-right-to-bracket"></i>Masuk</a>
         </nav>
     </div>
@@ -69,7 +60,6 @@
                 <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Program</h4>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Semua Program</a></li>
-                    <li><a href="{{ route('public.cara-donasi') }}" class="text-primary-300 transition hover:text-white">Cara Berdonasi</a></li>
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Program Penggalangan</a></li>
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Program Penyaluran</a></li>
                 </ul>
@@ -78,7 +68,6 @@
                 <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Lembaga</h4>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="{{ route('home') }}" class="text-primary-300 transition hover:text-white">Beranda</a></li>
-                    <li><a href="{{ route('public.transparansi') }}" class="text-primary-300 transition hover:text-white"><i class="fas fa-file-invoice mr-1.5"></i>Transparansi</a></li>
                     <li><a href="{{ route('login') }}" class="text-primary-300 transition hover:text-white">Masuk Anggota</a></li>
                 </ul>
             </div>
