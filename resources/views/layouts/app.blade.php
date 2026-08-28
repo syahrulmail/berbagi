@@ -69,7 +69,7 @@
                 </a>
             @endif
 
-            @if(auth()->user()->isAdmin())
+            @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
                 <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                     <i class="fas fa-gear"></i><span class="nav-text">Pengaturan</span>
                 </a>

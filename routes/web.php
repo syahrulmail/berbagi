@@ -60,6 +60,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('branches', BranchController::class)->except('show');
         Route::resource('users', UserController::class)->except('show');
         Route::resource('campaign-tags', CampaignTagController::class)->except('show');
+    });
+
+    Route::middleware('role:admin,supervisor')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
     });
