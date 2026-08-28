@@ -108,6 +108,7 @@
             '  <i class="fas fa-magnifying-glass"></i>' +
             '  <p>Tidak ada program yang cocok.</p>' +
             '</div>' +
+            '<teleport to="body">' +
             '<div v-if="detail" class="pdetail-overlay" @click.self="closeDetail">' +
             '  <div class="pdetail-modal" role="dialog" aria-modal="true">' +
             '    <div class="pdetail-media">' +
@@ -150,6 +151,7 @@
             '    </div>' +
             '  </div>' +
             '</div>' +
+            '</teleport>' +
             '</div>'
     };
 })(window.Vue);

@@ -106,14 +106,15 @@
         background: rgba(2, 44, 41, .58);
         backdrop-filter: blur(3px);
         display: flex;
-        align-items: center;
-        justify-content: center;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         padding: 20px 16px;
     }
     .pdetail-modal {
+        margin: auto;
         width: 100%;
         max-width: 520px;
-        max-height: calc(100vh - 48px);
+        max-height: calc(100vh - 40px);
         background: #fff;
         border-radius: 22px;
         overflow: hidden;
@@ -126,6 +127,12 @@
         height: 210px;
         flex: none;
         background: linear-gradient(135deg, #08574f, #022321);
+    }
+    @media (max-width: 480px) {
+        .pdetail-media { height: 160px; }
+        .pdetail-body { padding: 16px 16px 18px; }
+        .pdetail-title { font-size: 17px; }
+        .pdetail-desc { font-size: 12.5px; }
     }
     .pdetail-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .pdetail-media-ph {
