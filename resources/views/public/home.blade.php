@@ -57,19 +57,6 @@
                 <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Donasi Sekarang</a>
                 <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener" class="btn btn-light" data-wa-log data-wa-source="home"><i class="fab fa-whatsapp"></i> Hubungi Kami</a>
             </div>
-            <div class="mt-6 max-w-md rounded-2xl bg-white/10 p-4 ring-1 ring-white/15">
-                <div class="flex items-center justify-between text-xs text-primary-100">
-                    <span>Progress nasional</span>
-                    <span class="font-bold text-gold-300">{{ $globalProgress }}%</span>
-                </div>
-                <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/15">
-                    <div class="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-500" style="width: {{ $globalProgress }}%"></div>
-                </div>
-                <div class="mt-2 flex items-center justify-between text-xs text-primary-100/80">
-                    <span>Terkumpul <strong class="text-white">Rp {{ number_format($totalCollected, 0, ',', '.') }}</strong></span>
-                    <span>Target Rp {{ number_format($globalTarget, 0, ',', '.') }}</span>
-                </div>
-            </div>
         </div>
         <div data-reveal>
             <div data-vue-app="BannerSlider">
@@ -95,31 +82,6 @@
         </div>
     </div>
 </main>
-
-@if(count($recentDonors))
-<section class="section bg-primary-50/40">
-    <div class="container">
-        <div class="section-head" data-reveal>
-            <div>
-                <h2>Donatur Terbaru</h2>
-                <p class="muted mt-1 text-sm">Sebagian dari mereka yang telah berdonasi (nama disamarkan).</p>
-            </div>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-reveal>
-            @foreach($recentDonors as $donor)
-                <div class="flex items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3 shadow-card">
-                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-100 font-bold text-primary-600">{{ $donor['initial'] }}</span>
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold text-primary-900">{{ $donor['name'] }}</p>
-                        <p class="truncate text-xs text-gray-500">{{ $donor['program'] }} · {{ $donor['date'] }}</p>
-                    </div>
-                    <span class="ml-auto shrink-0 text-sm font-bold text-primary-700">{{ $donor['amount'] }}</span>
-                </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-@endif
 
 <section class="section">
     <div class="container">

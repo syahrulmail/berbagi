@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Banner;
 use App\Models\CampaignTag;
-use App\Models\Donation;
 use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
@@ -36,16 +35,8 @@ class PublicController extends Controller
 
         $programCards = $this->cardifyPrograms($programs, $waNumber, $waTemplate, 'home');
 
-        $totalCollected = \App\Models\Donation::sum('amount');
-        $totalAgents = User::where('role', User::ROLE_AGEN)->where('is_active', true)->count();
-        $globalTarget = (float) Setting::get('global_target', '1500000000');
-        $globalProgress = $globalTarget > 0 ? min(100, round(($totalCollected / $globalTarget) * 100, 1)) : 0;
-
-        $recentDonors = $this->recentDonors(6);
-
         return view('public.home', compact(
-            'programs', 'banners', 'tags', 'waNumber', 'waTemplate',
-            'totalCollected', 'totalAgents', 'globalTarget', 'globalProgress', 'recentDonors'
+            'programs', 'banners', 'tags', 'waNumber', 'waTemplate'
         ));
     }
 
@@ -105,38 +96,6 @@ class PublicController extends Controller
         $waFallback = Setting::get('wa_public_number', '6281234567890');
 
         return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback'));
-    }
-
-    protected function maskName(string $name): string
-    {
-        $name = trim($name);
-
-        if ($name === '') {
-            return '';
-        }
-
-        return mb_substr($name, 0, 1) . str_repeat('*', max(2, mb_strlen($name) - 1));
-    }
-
-    protected function recentDonors(int $limit = 6): array
-    {
-        return Donation::with(['contact', 'program'])
-            ->latest('donation_date')
-            ->limit($limit)
-            ->get()
-            ->map(function ($d) {
-                $name = trim((string) optional($d->contact)->name);
-                $masked = $this->maskName($name);
-
-                return [
-                    'name'    => $name !== '' ? 'Sdr. ' . $masked : 'Donatur anonim',
-                    'initial' => $name !== '' ? mb_substr($name, 0, 1) : 'D',
-                    'amount'  => 'Rp ' . number_format((float) $d->amount, 0, ',', '.'),
-                    'program' => optional($d->program)->name ?? 'Wakaf umum',
-                    'date'    => $d->donation_date ? $d->donation_date->format('d M Y') : '',
-                ];
-            })
-            ->all();
     }
 
     protected function resolveAgent(string $slug): User
