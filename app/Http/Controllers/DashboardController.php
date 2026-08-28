@@ -86,6 +86,50 @@ class DashboardController extends Controller
         $totalPrograms = Program::where('is_active', true)->count();
         $totalAgents = User::where('role', 'agen')->where('is_active', true)->count();
 
+        // Funnel konversi WhatsApp
+        $waClicksTotal = \App\Models\WaFollowup::count();
+        $waClicksMonth = \App\Models\WaFollowup::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->count();
+
+        $waSourceLabels = [
+            'home' => 'Home',
+            'program' => 'Detail Program',
+            'agent' => 'Halaman Agen',
+            'transparansi' => 'Transparansi',
+            'cara-donasi' => 'Cara Donasi',
+        ];
+
+        $waClicksBySource = \App\Models\WaFollowup::select('source', DB::raw('count(*) as total'))
+            ->groupBy('source')
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($r) use ($waSourceLabels) {
+                return [
+                    'source' => $r->source,
+                    'label'  => $waSourceLabels[$r->source] ?? ucfirst($r->source),
+                    'total'  => (int) $r->total,
+                ];
+            })
+            ->values()->all();
+
+        $donationsMonthCount = Donation::whereYear('donation_date', $year)
+            ->whereMonth('donation_date', $month)
+            ->count();
+
+        $waConversionRate = $waClicksMonth > 0
+            ? round(($donationsMonthCount / $waClicksMonth) * 100, 1)
+            : 0;
+
+        $waTrend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i)->toDateString();
+            $waTrend[] = [
+                'date' => Carbon::parse($date)->format('d M'),
+                'total' => \App\Models\WaFollowup::whereDate('created_at', $date)->count(),
+            ];
+        }
+
         return view('dashboard.admin', compact(
             'todayTotal',
             'monthTotal',
@@ -97,7 +141,13 @@ class DashboardController extends Controller
             'totalDonationsToday',
             'trend',
             'totalPrograms',
-            'totalAgents'
+            'totalAgents',
+            'waClicksTotal',
+            'waClicksMonth',
+            'waClicksBySource',
+            'donationsMonthCount',
+            'waConversionRate',
+            'waTrend'
         ));
     }
 

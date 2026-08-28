@@ -51,7 +51,7 @@
                 Wakaf untuk Ummat,<br>Dari Anda untuk <em class="not-italic text-gold-300">Kebaikan</em>
             </h1>
             <p class="mt-5 max-w-lg text-base leading-relaxed text-primary-100/90">
-                Badan Wakaf Al Qur'an (BWA) hadir menghimpun dan menyalurkan wakaf, infak, dan sedekah untuk program Al-Qur'an serta kemanusiaan di seluruh Nusantara.
+                Wakaf, infak, dan sedekah untuk ummat — dihimpun dan disalurkan secara amanah oleh <strong class="font-semibold text-white">Badan Wakaf Al Qur'an (BWA)</strong>. Setiap rupiah tercatat resmi dan dapat Anda telusuri.
             </p>
             <div class="mt-8 flex flex-wrap gap-3">
                 <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Donasi Sekarang</a>

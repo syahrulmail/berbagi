@@ -113,4 +113,64 @@
         </div>
     </div>
 </div>
+
+<div class="layout-grid-admin">
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fab fa-whatsapp"></i> Funnel Konversi WhatsApp</h2>
+        </div>
+        <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="metric-card" style="box-shadow:none;border:none;">
+                <div class="metric-info">
+                    <div class="metric-label">Klik WA (Bulan Ini)</div>
+                    <div class="metric-value"><span data-vue-app="CountUp"><script type="application/json">{"value": {{ $waClicksMonth }}}</script></span></div>
+                    <div class="metric-sub">Total: {{ number_format($waClicksTotal) }} klik</div>
+                </div>
+            </div>
+            <div class="metric-card" style="box-shadow:none;border:none;">
+                <div class="metric-info">
+                    <div class="metric-label">Donasi Tercatat (Bulan Ini)</div>
+                    <div class="metric-value"><span data-vue-app="CountUp"><script type="application/json">{"value": {{ $donationsMonthCount }}}</script></span></div>
+                    <div class="metric-sub">Micro-conversion &rarr; donasi</div>
+                </div>
+            </div>
+            <div class="metric-card" style="box-shadow:none;border:none;">
+                <div class="metric-info">
+                    <div class="metric-label">Konversi Klik &rarr; Donasi</div>
+                    <div class="metric-value">{{ $waConversionRate }}%</div>
+                    <div class="metric-sub">Target hipotesis &ge; 25%</div>
+                </div>
+            </div>
+        </div>
+        <div class="card-header" style="margin-top:8px;">
+            <h2 style="font-size:14px;">Tren Klik WA 7 Hari Terakhir</h2>
+        </div>
+        <div data-vue-app="BarChart">
+            <script type="application/json">@json(['data' => array_map(fn($t) => ['label' => $t['date'], 'value' => (int) $t['total']], $waTrend)])</script>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-location-dot"></i> Sumber Klik WA</h2>
+        </div>
+        @forelse($waClicksBySource as $item)
+            @php($maxSource = max(1, collect($waClicksBySource)->max('total')))
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                    <span>{{ $item['label'] }} <span class="text-gray-400">({{ $item['source'] }})</span></span>
+                    <span class="progress-percent">{{ $item['total'] }} klik</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width: {{ round(($item['total'] / $maxSource) * 100) }}%"></div>
+                </div>
+            </div>
+        @empty
+            <p class="empty-state">Belum ada klik WhatsApp tercatat. Pastikan tombol WA memuat atribut data-wa-log.</p>
+        @endforelse
+        <div style="margin-top: 12px; padding: 12px; background: #eefaf8; border-radius: 12px; font-size: 12px; color: #08574f;">
+            <i class="fas fa-circle-info"></i> Klik WA = micro-conversion utama funnel. Target awal: &ge; 4 klik per 100 pengunjung, follow-up &ge; 60% klik, donasi &ge; 25% follow-up.
+        </div>
+    </div>
+</div>
 @endsection
