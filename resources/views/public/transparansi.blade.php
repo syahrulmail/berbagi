@@ -78,8 +78,35 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-2">
-                <div class="rounded-2xl border border-black/5 bg-primary-50/60 p-6">
+            <div class="mt-8 rounded-2xl border border-black/5 bg-white p-6 shadow-card">
+                <h3 class="mb-2 text-lg font-bold text-primary-900">Tren Penghimpunan per Tahun</h3>
+                @if(count($yearly))
+                    <div data-vue-app="BarChart">
+                        <script type="application/json">@json(['data' => $yearly])</script>
+                    </div>
+                @else
+                    <p class="text-sm text-gray-500">Belum ada data penghimpunan.</p>
+                @endif
+            </div>
+        </div>
+
+        <div class="lg:col-span-2">
+            <div class="rounded-2xl border border-black/5 bg-white p-6 shadow-card">
+                <h3 class="text-lg font-bold text-primary-900">Progress Nasional</h3>
+                <div class="mt-4" data-vue-app="DonutChart">
+                    <script type="application/json">{"value": {{ $globalProgress }}, "label": "Pencapaian target nasional"}</script>
+                </div>
+                <div class="mt-4 flex items-center justify-between rounded-xl bg-primary-50 px-4 py-3 text-sm">
+                    <span class="text-gray-500">Terkumpul</span>
+                    <strong class="text-primary-700">Rp {{ number_format($totalCollected, 0, ',', '.') }}</strong>
+                </div>
+                <div class="mt-2 flex items-center justify-between rounded-xl bg-primary-50 px-4 py-3 text-sm">
+                    <span class="text-gray-500">Target Nasional</span>
+                    <strong class="text-primary-700">Rp {{ number_format($totalGoal, 0, ',', '.') }}</strong>
+                </div>
+            </div>
+
+            <div class="mt-8 rounded-2xl border border-black/5 bg-primary-50/60 p-6">
                     <h3 class="mb-4 text-lg font-bold text-primary-900">Legalitas Lembaga</h3>
                     <ul class="space-y-4 text-sm">
                         <li class="flex items-start gap-3">
@@ -111,6 +138,25 @@
                 </div>
             </div>
         </div>
+
+        @if(count($recentDonors))
+            <div class="mt-14 rounded-3xl border border-black/5 bg-white p-7 shadow-card" data-reveal>
+                <h2 class="text-lg font-bold text-primary-900">Donatur Terbaru</h2>
+                <p class="muted mt-1 text-sm">Sebagian dari mereka yang telah berdonasi (nama disamarkan).</p>
+                <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    @foreach($recentDonors as $donor)
+                        <div class="flex items-center gap-3 rounded-2xl bg-primary-50/50 px-4 py-3">
+                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-100 font-bold text-primary-600">{{ $donor['initial'] }}</span>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-primary-900">{{ $donor['name'] }}</p>
+                                <p class="truncate text-xs text-gray-500">{{ $donor['program'] }} · {{ $donor['date'] }}</p>
+                            </div>
+                            <span class="ml-auto shrink-0 text-sm font-bold text-primary-700">{{ $donor['amount'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <div id="laporan" class="mt-14 scroll-mt-24 rounded-3xl border border-black/5 bg-white p-8 shadow-card" data-reveal>
             <div class="flex flex-wrap items-center justify-between gap-4">

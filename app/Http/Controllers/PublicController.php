@@ -41,9 +41,11 @@ class PublicController extends Controller
         $globalTarget = (float) Setting::get('global_target', '1500000000');
         $globalProgress = $globalTarget > 0 ? min(100, round(($totalCollected / $globalTarget) * 100, 1)) : 0;
 
+        $recentDonors = $this->recentDonors(6);
+
         return view('public.home', compact(
             'programs', 'banners', 'tags', 'waNumber', 'waTemplate',
-            'totalCollected', 'totalAgents', 'globalTarget', 'globalProgress'
+            'totalCollected', 'totalAgents', 'globalTarget', 'globalProgress', 'recentDonors'
         ));
     }
 
@@ -110,6 +112,7 @@ class PublicController extends Controller
         $totalCollected = Donation::sum('amount');
         $totalGoal = (float) Setting::get('global_target', '1500000000');
         $totalDonations = Donation::count();
+        $globalProgress = $totalGoal > 0 ? min(100, round(($totalCollected / $totalGoal) * 100, 1)) : 0;
 
         $programs = Program::where('is_active', true)
             ->withSum('donations as total_collected', 'amount')
@@ -128,9 +131,66 @@ class PublicController extends Controller
             ];
         })->values();
 
+        $yearly = Donation::selectRaw('YEAR(donation_date) as year, SUM(amount) as total')
+            ->whereNotNull('donation_date')
+            ->groupBy('year')
+            ->orderBy('year')
+            ->get()
+            ->map(function ($r) {
+                return ['label' => (string) $r->year, 'value' => (int) $r->total];
+            })
+            ->values()->all();
+
         $waNumber = preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890'));
 
-        return view('public.transparansi', compact('totalCollected', 'totalGoal', 'totalDonations', 'perProgram', 'waNumber'));
+        $recentDonors = $this->recentDonors(8);
+
+        return view('public.transparansi', compact(
+            'totalCollected', 'totalGoal', 'totalDonations', 'globalProgress',
+            'perProgram', 'yearly', 'waNumber', 'recentDonors'
+        ));
+    }
+
+    public function caraDonasi()
+    {
+        $waNumber = preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890'));
+        $waTemplate = Setting::get('wa_public_template', '');
+        $programs = Program::where('is_active', true)->orderBy('name')->get(['id', 'name', 'slug']);
+        $recentDonors = $this->recentDonors(4);
+
+        return view('public.cara-donasi', compact('waNumber', 'waTemplate', 'programs', 'recentDonors'));
+    }
+
+    protected function maskName(string $name): string
+    {
+        $name = trim($name);
+
+        if ($name === '') {
+            return '';
+        }
+
+        return mb_substr($name, 0, 1) . str_repeat('*', max(2, mb_strlen($name) - 1));
+    }
+
+    protected function recentDonors(int $limit = 6): array
+    {
+        return Donation::with(['contact', 'program'])
+            ->latest('donation_date')
+            ->limit($limit)
+            ->get()
+            ->map(function ($d) {
+                $name = trim((string) optional($d->contact)->name);
+                $masked = $this->maskName($name);
+
+                return [
+                    'name'    => $name !== '' ? 'Sdr. ' . $masked : 'Donatur anonim',
+                    'initial' => $name !== '' ? mb_substr($name, 0, 1) : 'D',
+                    'amount'  => 'Rp ' . number_format((float) $d->amount, 0, ',', '.'),
+                    'program' => optional($d->program)->name ?? 'Wakaf umum',
+                    'date'    => $d->donation_date ? $d->donation_date->format('d M Y') : '',
+                ];
+            })
+            ->all();
     }
 
     protected function resolveAgent(string $slug): User
@@ -198,7 +258,7 @@ class PublicController extends Controller
     public function followup(Request $request)
     {
         $data = $request->validate([
-            'source' => ['required', 'in:home,program,agent,transparansi'],
+            'source' => ['required', 'in:home,program,agent,transparansi,cara-donasi'],
             'program_id' => ['nullable', 'exists:programs,id'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'phone' => ['nullable', 'string', 'max:30'],

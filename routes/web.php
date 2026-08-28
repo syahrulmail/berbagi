@@ -26,6 +26,8 @@ Route::get('/', [PublicController::class, 'home'])->name('home');
 
 Route::get('/transparansi', [PublicController::class, 'transparansi'])->name('public.transparansi');
 
+Route::get('/cara-donasi', [PublicController::class, 'caraDonasi'])->name('public.cara-donasi');
+
 Route::get('/program/{program:slug}', [PublicController::class, 'program'])->name('public.program');
 
 Route::get('/cs/{agentSlug}/program/{program:slug}', [PublicController::class, 'agentProgram'])->name('public.agent-program');

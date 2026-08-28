@@ -44,6 +44,7 @@
         <nav class="flex items-center gap-2">
             <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house mr-1.5"></i>Beranda</a>
             <a href="{{ route('home') }}#program" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700">Program</a>
+            <a href="{{ route('public.cara-donasi') }}" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700">Cara Donasi</a>
             <a href="{{ route('login') }}" class="btn btn-primary btn-sm"><i class="fas fa-right-to-bracket"></i>Masuk</a>
         </nav>
     </div>
@@ -68,6 +69,7 @@
                 <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Program</h4>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Semua Program</a></li>
+                    <li><a href="{{ route('public.cara-donasi') }}" class="text-primary-300 transition hover:text-white">Cara Berdonasi</a></li>
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Program Penggalangan</a></li>
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Program Penyaluran</a></li>
                 </ul>
@@ -111,6 +113,8 @@
 <script src="{{ asset('js/components/BannerSlider.js') }}"></script>
 <script src="{{ asset('js/components/ProgramExplorer.js') }}"></script>
 <script src="{{ asset('js/components/CountUp.js') }}"></script>
+<script src="{{ asset('js/components/BarChart.js') }}"></script>
+<script src="{{ asset('js/components/DonutChart.js') }}"></script>
 <script src="{{ asset('js/app.js') }}"></script>
 
 <script>
