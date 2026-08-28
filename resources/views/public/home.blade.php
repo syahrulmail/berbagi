@@ -297,6 +297,17 @@
     .pdetail-more:hover { color: #08A899; }
     .pdetail-more-arrow { transition: transform .2s; }
     .pdetail-more:hover .pdetail-more-arrow { transform: translateX(3px); }
+    .pdetail-overlay,
+    .pdetail-body {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .pdetail-overlay::-webkit-scrollbar,
+    .pdetail-body::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
     @media (max-width: 520px) {
         .pdetail-stats { grid-template-columns: repeat(2, 1fr); }
         .pdetail-stats div:last-child { grid-column: span 2; }
