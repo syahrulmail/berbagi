@@ -5,6 +5,30 @@
 
 @section('content')
 @include('public.partials.funnel-styles')
+@push('styles')
+<style>
+    .agen-hero-photo {
+        width: 112px;
+        height: 112px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex: none;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, .2), 0 18px 30px rgba(2, 35, 33, .35);
+    }
+    .agen-hero-avatar {
+        width: 112px;
+        height: 112px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #3bb3ae, #08a899);
+        color: #fff;
+        font-size: 34px;
+        font-weight: 700;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, .2), 0 18px 30px rgba(2, 35, 33, .35);
+    }
+</style>
+@endpush
 @php
     $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
     $waNumber = $waNumber !== '' ? $waNumber : preg_replace('/\D/', '', $waFallback);
@@ -44,9 +68,9 @@
     <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-primary-500/20 blur-3xl"></div>
     <div class="container relative">
         @if($agenPhoto)
-        <img src="{{ $agenPhoto }}" alt="{{ $agen->name }}" class="mx-auto h-20 w-20 rounded-3xl object-cover shadow-xl shadow-primary-900/40 ring-2 ring-white/30">
+        <img src="{{ $agenPhoto }}" alt="{{ $agen->name }}" class="agen-hero-photo mx-auto">
         @else
-        <div class="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-primary-400 to-primary-600 text-3xl font-bold shadow-xl shadow-primary-900/40">
+        <div class="agen-hero-avatar mx-auto">
             {{ strtoupper(mb_substr($agen->name, 0, 1)) }}
         </div>
         @endif
