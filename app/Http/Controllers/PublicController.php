@@ -34,6 +34,8 @@ class PublicController extends Controller
         $waNumber = Setting::get('wa_public_number', '6281234567890');
         $waTemplate = Setting::get('wa_public_template', '');
 
+        $programCards = $this->cardifyPrograms($programs, $waNumber, $waTemplate, 'home');
+
         $totalCollected = \App\Models\Donation::sum('amount');
         $totalAgents = User::where('role', User::ROLE_AGEN)->where('is_active', true)->count();
         $globalTarget = (float) Setting::get('global_target', '1500000000');
@@ -51,12 +53,16 @@ class PublicController extends Controller
             abort(404);
         }
 
+        $program->loadMissing('campaignTags');
+
         $collected = $program->donations()->sum('amount');
         $waNumber = Setting::get('wa_public_number', '6281234567890');
         $waTemplate = Setting::get('wa_public_template', '');
         $agen = null;
 
-        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen'));
+        $relatedCards = $this->relatedProgramCards($program, $waNumber, $waTemplate, 'program');
+
+        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen', 'relatedCards'));
     }
 
     public function agentProgram(string $agentSlug, Program $program)
@@ -67,6 +73,8 @@ class PublicController extends Controller
             abort(404);
         }
 
+        $program->loadMissing('campaignTags');
+
         $collected = $program->donations()->sum('amount');
 
         $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
@@ -76,7 +84,9 @@ class PublicController extends Controller
 
         $waTemplate = Setting::get('wa_agent_template', '');
 
-        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen'));
+        $relatedCards = $this->relatedProgramCards($program, $waNumber, $waTemplate, 'agent');
+
+        return view('public.program', compact('program', 'collected', 'waNumber', 'waTemplate', 'agen', 'relatedCards'));
     }
 
     public function agent(string $slug)
@@ -132,6 +142,57 @@ class PublicController extends Controller
         }
 
         return $agen;
+    }
+
+    protected function cardifyPrograms($programs, string $waNumber, string $waTemplate, string $waSource): array
+    {
+        return $programs->map(function ($p) use ($waNumber, $waTemplate, $waSource) {
+            $collected = (float) ($p->total_collected ?? 0);
+            $goal = (float) $p->goal_amount;
+            $progress = $goal > 0 ? min(100, round(($collected / $goal) * 100, 1)) : 0;
+            $isComplete = $goal > 0 && $collected >= $goal;
+            $waMsg = str_replace('{program}', $p->name, $waTemplate ?: 'Assalamualaikum, saya ingin berdonasi untuk program {program}');
+
+            return [
+                'slug'        => $p->slug,
+                'name'        => $p->name,
+                'description' => $p->description,
+                'image'       => $p->image_url,
+                'category'    => $p->category ?? 'penggalangan',
+                'tags'        => $p->campaignTags->pluck('name')->all(),
+                'progress'    => $progress,
+                'collected'   => 'Rp ' . number_format($collected, 0, ',', '.'),
+                'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
+                'remaining'   => $isComplete ? null : 'Rp ' . number_format(max(0, $goal - $collected), 0, ',', '.'),
+                'is_complete' => $isComplete,
+                'url'         => route('public.program', $p->slug),
+                'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
+                'wa_source'   => $waSource,
+                'wa_program'  => $p->id,
+            ];
+        })->values()->all();
+    }
+
+    protected function relatedProgramCards(Program $program, string $waNumber, string $waTemplate, string $waSource): array
+    {
+        $tagIds = $program->campaignTags->pluck('id');
+
+        if ($tagIds->isEmpty()) {
+            return [];
+        }
+
+        $related = Program::where('is_active', true)
+            ->where('id', '!=', $program->id)
+            ->whereHas('campaignTags', function ($q) use ($tagIds) {
+                $q->whereIn('campaign_tags.id', $tagIds);
+            })
+            ->withSum('donations as total_collected', 'amount')
+            ->with('campaignTags')
+            ->orderByDesc('created_at')
+            ->limit(3)
+            ->get();
+
+        return $this->cardifyPrograms($related, $waNumber, $waTemplate, $waSource);
     }
 
     public function followup(Request $request)

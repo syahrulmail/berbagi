@@ -1141,13 +1141,13 @@
 }
 
 .donasi-bar-info {
-    @apply flex flex-col leading-tight;
+    @apply flex min-w-0 flex-1 flex-col leading-tight;
 }
 
 .donasi-bar-info strong {
-    @apply text-sm font-bold text-primary-900;
+    @apply truncate text-sm font-bold text-primary-900;
 }
 
 .donasi-bar-info span {
-    @apply text-[11px] text-gray-500;
+    @apply truncate text-[11px] text-gray-500;
 }
