@@ -44,8 +44,10 @@
             <input type="number" id="goal_amount" name="goal_amount" value="{{ old('goal_amount', $program->goal_amount) }}" min="0" step="0.01" required>
         </div>
         @include('partials.tag-input', [
-            'tagNamesValue' => old('tag_names', $program->campaignTags->pluck('name')->implode(', ')),
-            'tags' => $tags,
+            'defaultTags' => $defaultTags,
+            'extraTags' => $extraTags,
+            'defaultTagValue' => $defaultTagValue,
+            'tagNamesValue' => $tagNamesValue,
         ])
         <div class="form-group">
             <label class="checkbox-label">

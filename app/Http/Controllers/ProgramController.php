@@ -23,9 +23,12 @@ class ProgramController extends Controller
 
     public function create()
     {
-        $tags = CampaignTag::orderBy('name')->get();
+        $defaultTags = CampaignTag::whereIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
+        $extraTags = CampaignTag::whereNotIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
+        $defaultTagValue = old('default_tag', '');
+        $tagNamesValue = old('tag_names', '');
 
-        return view('programs.create', compact('tags'));
+        return view('programs.create', compact('defaultTags', 'extraTags', 'defaultTagValue', 'tagNamesValue'));
     }
 
     public function store(Request $request)
@@ -38,6 +41,7 @@ class ProgramController extends Controller
             'image' => ['nullable', 'url'],
             'goal_amount' => ['required', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
+            'default_tag' => ['required', 'string', 'in:' . implode(',', CampaignTag::DEFAULT_TAG_SLUGS)],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['exists:campaign_tags,id'],
             'tag_names' => ['nullable', 'string', 'max:1000'],
@@ -56,9 +60,24 @@ class ProgramController extends Controller
 
     public function edit(Program $program)
     {
-        $tags = CampaignTag::orderBy('name')->get();
+        $defaultTags = CampaignTag::whereIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
+        $extraTags = CampaignTag::whereNotIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
 
-        return view('programs.edit', compact('program', 'tags'));
+        $currentDefault = $program->campaignTags->first(function ($t) {
+            return in_array($t->slug, CampaignTag::DEFAULT_TAG_SLUGS, true);
+        });
+
+        $defaultTagValue = old('default_tag', $currentDefault ? $currentDefault->slug : '');
+
+        $extraNames = $program->campaignTags
+            ->reject(function ($t) {
+                return in_array($t->slug, CampaignTag::DEFAULT_TAG_SLUGS, true);
+            })
+            ->pluck('name')->implode(', ');
+
+        $tagNamesValue = old('tag_names', $extraNames);
+
+        return view('programs.edit', compact('program', 'defaultTags', 'extraTags', 'defaultTagValue', 'tagNamesValue'));
     }
 
     public function update(Request $request, Program $program)
@@ -71,6 +90,7 @@ class ProgramController extends Controller
             'image' => ['nullable', 'url'],
             'goal_amount' => ['required', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
+            'default_tag' => ['required', 'string', 'in:' . implode(',', CampaignTag::DEFAULT_TAG_SLUGS)],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['exists:campaign_tags,id'],
             'tag_names' => ['nullable', 'string', 'max:1000'],
@@ -90,6 +110,16 @@ class ProgramController extends Controller
     protected function resolveTagIds(Request $request): array
     {
         $ids = [];
+
+        $defaultSlug = (string) $request->input('default_tag', '');
+
+        if (in_array($defaultSlug, CampaignTag::DEFAULT_TAG_SLUGS, true)) {
+            $tag = CampaignTag::where('slug', $defaultSlug)->first();
+
+            if ($tag) {
+                $ids[$tag->id] = true;
+            }
+        }
 
         foreach ((array) $request->input('tags', []) as $id) {
             $ids[(int) $id] = true;

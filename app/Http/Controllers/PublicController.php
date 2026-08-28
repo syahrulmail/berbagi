@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\Cache;
 
 class PublicController extends Controller
 {
-    public const DEFAULT_TAG_SLUGS = ['bantuan-ummat', 'program-dai', 'wakaf-al-quran', 'wakaf-mushaf'];
-
     public function home()
     {
         $programs = Program::where('is_active', true)
@@ -210,7 +208,7 @@ class PublicController extends Controller
             return [
                 'name'       => $t->name,
                 'color'      => $t->color,
-                'is_default' => in_array($t->slug, self::DEFAULT_TAG_SLUGS, true),
+                'is_default' => in_array($t->slug, CampaignTag::DEFAULT_TAG_SLUGS, true),
             ];
         })->values()->all();
     }

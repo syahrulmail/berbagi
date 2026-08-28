@@ -9,6 +9,8 @@ class CampaignTag extends Model
 {
     use HasFactory;
 
+    public const DEFAULT_TAG_SLUGS = ['bantuan-ummat', 'program-dai', 'wakaf-al-quran', 'wakaf-mushaf'];
+
     protected $fillable = [
         'name',
         'slug',

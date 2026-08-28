@@ -33,7 +33,7 @@
     $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
     $waNumber = $waNumber !== '' ? $waNumber : preg_replace('/\D/', '', $waFallback);
 
-    $defaultTagSlugs = ['bantuan-ummat', 'program-dai', 'wakaf-al-quran', 'wakaf-mushaf'];
+    $defaultTagSlugs = \App\Models\CampaignTag::DEFAULT_TAG_SLUGS;
 
     $programCards = $programs->map(function ($p) use ($agen, $waNumber, $waTemplate, $defaultTagSlugs) {
         $collected = (float) ($p->total_collected ?? 0);
