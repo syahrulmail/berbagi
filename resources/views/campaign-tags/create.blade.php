@@ -16,7 +16,7 @@
         @csrf
         <div class="form-group">
             <label for="name">Nama Label (pisahkan dengan koma) *</label>
-            <textarea id="name" name="name" rows="3" placeholder="Wakaf Al-Quran, Donasi Hewan Qurban, Peduli Palestina" required>{{ old('name') }}</textarea>
+            <textarea id="name" name="name" rows="3" placeholder="Mendesak, Donasi Hewan Qurban, Peduli Palestina" required>{{ old('name') }}</textarea>
             <small style="color: var(--gray-500);">Pisahkan setiap label dengan koma (<code>,</code>). Label yang sudah ada akan dilewati otomatis.</small>
         </div>
         <div class="form-group">

@@ -20,7 +20,7 @@
 
 <div class="form-group">
     <label for="tag_names">Campaign Tags</label>
-    <input type="text" id="tag_names" name="tag_names" value="{{ $tagNamesValue }}" placeholder="Wakaf Al-Quran, Donasi Hewan Qurban" autocomplete="off">
+    <input type="text" id="tag_names" name="tag_names" value="{{ $tagNamesValue }}" placeholder="Mendesak, Donasi Hewan Qurban" autocomplete="off">
     <small style="color: var(--gray-500);">Pisahkan dengan koma (<code>,</code>). Tag baru akan dibuat otomatis. Klik label di bawah untuk menambah.</small>
     @if(count($tags) > 0)
     <div class="tag-suggest">

@@ -23,11 +23,11 @@
                             show = p.category === active;
                         } else if (active.indexOf('tag:') === 0) {
                             var t = active.slice(4);
-                            show = (p.tags || []).map(function (x) { return x.toLowerCase(); }).indexOf(t) !== -1;
+                            show = (p.tags || []).map(function (x) { return x.name.toLowerCase(); }).indexOf(t) !== -1;
                         }
                     }
                     if (show && q) {
-                        var hay = (p.name + ' ' + (p.description || '') + ' ' + (p.tags || []).join(' ')).toLowerCase();
+                        var hay = (p.name + ' ' + (p.description || '') + ' ' + (p.tags || []).map(function (x) { return x.name; }).join(' ')).toLowerCase();
                         show = hay.indexOf(q) !== -1;
                     }
                     return show;
@@ -40,6 +40,25 @@
             closeDetail: function () { this.detail = null; },
             onKey: function (e) {
                 if (e.key === 'Escape') this.closeDetail();
+            },
+            defaultTag: function (p) {
+                var arr = p.tags || [];
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i].is_default) return arr[i];
+                }
+                return null;
+            },
+            otherTags: function (p) {
+                return (p.tags || []).filter(function (t) { return !t.is_default; });
+            },
+            textColor: function (hex) {
+                if (!hex) return '#ffffff';
+                var h = String(hex).replace('#', '');
+                if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+                var n = parseInt(h, 16);
+                var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+                var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                return lum > 0.6 ? '#0b2f2d' : '#ffffff';
             }
         },
         watch: {
@@ -72,13 +91,16 @@
             '    <button type="button" class="relative block w-full aspect-[4/3] overflow-hidden cursor-pointer" @click="openDetail(p)" :aria-label="\'Lihat detail \' + p.name">' +
             '      <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105">' +
             '      <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-primary-100 to-primary-50 text-primary-400"><i class="fas fa-book-quran" style="font-size:40px;"></i></div>' +
-            '      <span class="absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white" :class="p.category === \'penyaluran\' ? \'bg-gold-500\' : \'bg-primary-500\'">{{ p.category }}</span>' +
+            '      <span class="absolute left-3 top-3 flex items-center gap-1.5">' +
+            '        <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white" :class="p.category === \'penyaluran\' ? \'bg-gold-500\' : \'bg-primary-500\'">{{ p.category }}</span>' +
+            '        <span v-if="defaultTag(p)" class="rounded-full px-3 py-1 text-xs font-bold text-white" :style="{ background: defaultTag(p).color, color: textColor(defaultTag(p).color) }">{{ defaultTag(p).name }}</span>' +
+            '      </span>' +
             '      <span v-if="p.is_complete" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-check-circle"></i> Tercapai</span>' +
             '      <span v-else-if="p.progress >= 90" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-gold-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
             '    </button>' +
             '    <div class="flex flex-1 flex-col p-5">' +
-            '      <div v-if="p.tags.length" class="mb-2 flex flex-wrap gap-1.5">' +
-            '        <span v-for="(t, i) in p.tags" :key="i" class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" :class="i === 0 ? \'bg-gold-100 text-gold-700\' : \'bg-primary-100 text-primary-700\'">{{ t }}</span>' +
+            '      <div v-if="otherTags(p).length" class="mb-2 flex flex-wrap gap-1.5">' +
+            '        <span v-for="(t, i) in otherTags(p)" :key="i" class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
             '      </div>' +
             '      <h3 class="mb-1.5 text-lg font-bold text-primary-900"><button type="button" class="cursor-pointer text-left transition-colors hover:text-primary-600" @click="openDetail(p)">{{ p.name }}</button></h3>' +
             '      <p class="mb-4 line-clamp-2 text-sm text-gray-600">{{ p.description }}</p>' +
@@ -100,6 +122,7 @@
             '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Donasi Sekarang</a>' +
             '          <button type="button" class="btn btn-outline btn-sm" @click="openDetail(p)"><i class="fas fa-circle-info"></i> Detail</button>' +
             '        </div>' +
+            '        <a v-if="p.edit_url" :href="p.edit_url" class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition-colors hover:text-primary-600"><i class="fas fa-pen-to-square"></i> Edit program</a>' +
             '      </div>' +
             '    </div>' +
             '  </article>' +
@@ -122,7 +145,7 @@
             '    <div class="pdetail-body">' +
             '      <h3 class="pdetail-title">{{ detail.name }}</h3>' +
             '      <div v-if="detail.tags.length" class="pdetail-tags">' +
-            '        <span v-for="(t, i) in detail.tags" :key="i" class="pdetail-tag" :class="i === 0 ? \'is-gold\' : \'\'">{{ t }}</span>' +
+            '        <span v-for="(t, i) in detail.tags" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
             '      </div>' +
             '      <p class="pdetail-desc">{{ detail.description }}</p>' +
             '      <div class="pdetail-progress">' +

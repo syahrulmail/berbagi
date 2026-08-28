@@ -15,7 +15,9 @@
         ];
     })->values();
 
-    $programCards = $programs->map(function ($p) use ($waNumber, $waTemplate) {
+    $defaultTagSlugs = ['bantuan-ummat', 'program-dai', 'wakaf-al-quran', 'wakaf-mushaf'];
+
+    $programCards = $programs->map(function ($p) use ($waNumber, $waTemplate, $defaultTagSlugs) {
         $collected = (float) ($p->total_collected ?? 0);
         $goal = (float) $p->goal_amount;
         $progress = $goal > 0 ? min(100, round(($collected / $goal) * 100, 1)) : 0;
@@ -27,7 +29,13 @@
             'description' => $p->description,
             'image'       => $p->image_url,
             'category'    => $p->category ?? 'penggalangan',
-            'tags'        => $p->campaignTags->pluck('name')->all(),
+            'tags'        => $p->campaignTags->map(function ($t) use ($defaultTagSlugs) {
+                return [
+                    'name'       => $t->name,
+                    'color'      => $t->color,
+                    'is_default' => in_array($t->slug, $defaultTagSlugs, true),
+                ];
+            })->values()->all(),
             'progress'    => $progress,
             'collected'   => 'Rp ' . number_format($collected, 0, ',', '.'),
             'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
@@ -37,6 +45,7 @@
             'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
             'wa_source'   => 'home',
             'wa_program'  => $p->id,
+            'edit_url'    => auth()->check() && auth()->user()->isAdmin() ? route('programs.edit', $p) : null,
         ];
     })->values();
 @endphp

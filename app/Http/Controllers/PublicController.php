@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 
 class PublicController extends Controller
 {
+    public const DEFAULT_TAG_SLUGS = ['bantuan-ummat', 'program-dai', 'wakaf-al-quran', 'wakaf-mushaf'];
+
     public function home()
     {
         $programs = Program::where('is_active', true)
@@ -187,7 +189,7 @@ class PublicController extends Controller
                 'description' => $p->description,
                 'image'       => $p->image_url,
                 'category'    => $p->category ?? 'penggalangan',
-                'tags'        => $p->campaignTags->pluck('name')->all(),
+                'tags'        => $this->cardifyTags($p),
                 'progress'    => $progress,
                 'collected'   => 'Rp ' . number_format($collected, 0, ',', '.'),
                 'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
@@ -197,6 +199,18 @@ class PublicController extends Controller
                 'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
                 'wa_source'   => $waSource,
                 'wa_program'  => $p->id,
+                'edit_url'    => auth()->check() && auth()->user()->isAdmin() ? route('programs.edit', $p) : null,
+            ];
+        })->values()->all();
+    }
+
+    protected function cardifyTags($program): array
+    {
+        return $program->campaignTags->map(function ($t) {
+            return [
+                'name'       => $t->name,
+                'color'      => $t->color,
+                'is_default' => in_array($t->slug, self::DEFAULT_TAG_SLUGS, true),
             ];
         })->values()->all();
     }

@@ -16,10 +16,10 @@ class ProgramSeeder extends Seeder
     public function run()
     {
         $tags = [
-            ['name' => 'Wakaf Al-Quran', 'slug' => 'wakaf-al-quran', 'color' => '#2ECC71'],
-            ['name' => 'Wakaf Mushaf', 'slug' => 'wakaf-mushaf', 'color' => '#1E3A5F'],
-            ['name' => 'Program Da\'i', 'slug' => 'program-dai', 'color' => '#E67E22'],
-            ['name' => 'Bantuan Ummat', 'slug' => 'bantuan-ummat', 'color' => '#E74C3C'],
+            ['name' => 'Diminati', 'slug' => 'wakaf-al-quran', 'color' => '#22C55E'],
+            ['name' => 'Istimewa', 'slug' => 'wakaf-mushaf', 'color' => '#38BDF8'],
+            ['name' => 'Prioritas', 'slug' => 'program-dai', 'color' => '#F97316'],
+            ['name' => 'Mendesak', 'slug' => 'bantuan-ummat', 'color' => '#EF4444'],
         ];
 
         foreach ($tags as $tag) {

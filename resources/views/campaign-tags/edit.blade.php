@@ -17,7 +17,7 @@
         @method('PUT')
         <div class="form-group">
             <label for="name">Nama Label (pisahkan dengan koma) *</label>
-            <textarea id="name" name="name" rows="3" placeholder="Wakaf Al-Quran, Donasi Hewan Qurban" required>{{ old('name', $campaignTag->name) }}</textarea>
+            <textarea id="name" name="name" rows="3" placeholder="Mendesak, Donasi Hewan Qurban" required>{{ old('name', $campaignTag->name) }}</textarea>
             <small style="color: var(--gray-500);">Label pertama akan mengganti nama label ini. Label lain setelah koma (<code>,</code>) akan dibuat sebagai label baru.</small>
         </div>
         <div class="form-group">
