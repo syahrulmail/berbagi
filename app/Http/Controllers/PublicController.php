@@ -35,6 +35,15 @@ class PublicController extends Controller
 
         $programCards = $this->cardifyPrograms($programs, $waNumber, $waTemplate, 'home');
 
+        $sections = $this->funnelSections();
+
+        return view('public.home', compact(
+            'programs', 'banners', 'tags', 'waNumber', 'waTemplate'
+        ) + $sections);
+    }
+
+    protected function funnelSections(): array
+    {
         $homeQuote = Setting::get('home_quote', '<p>&quot;Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.&quot; — <strong>HR. Ahmad &amp; Thabrani</strong></p>');
 
         $testimonials = array_values(array_filter(array_map(function ($item) {
@@ -62,9 +71,7 @@ class PublicController extends Controller
             return $path !== '' ? asset_photo_url($path) : null;
         }, json_decode(Setting::get('home_partner_logos', '[]'), true) ?: [])));
 
-        return view('public.home', compact(
-            'programs', 'banners', 'tags', 'waNumber', 'waTemplate', 'homeQuote', 'testimonials', 'partnerLogos'
-        ));
+        return compact('homeQuote', 'testimonials', 'partnerLogos');
     }
 
     public function program(Program $program)
@@ -122,7 +129,13 @@ class PublicController extends Controller
         $waTemplate = Setting::get('wa_agent_template', '');
         $waFallback = Setting::get('wa_public_number', '6281234567890');
 
-        return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback'));
+        $tags = Cache::remember('public_tags', 3600, function () {
+            return CampaignTag::withCount('programs')->orderBy('name')->get();
+        });
+
+        $sections = $this->funnelSections();
+
+        return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback', 'tags') + $sections);
     }
 
     protected function resolveAgent(string $slug): User

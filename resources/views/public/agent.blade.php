@@ -4,6 +4,7 @@
 @section('meta_description', 'Hubungi ' . $agen->name . ' — mitra agen Badan Wakaf Al Qur\'an untuk program wakaf dan sedekah.')
 
 @section('content')
+@include('public.partials.funnel-styles')
 @php
     $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
     $waNumber = $waNumber !== '' ? $waNumber : preg_replace('/\D/', '', $waFallback);
@@ -12,6 +13,7 @@
         $collected = (float) ($p->total_collected ?? 0);
         $goal = (float) $p->goal_amount;
         $progress = $goal > 0 ? min(100, round(($collected / $goal) * 100, 1)) : 0;
+        $isComplete = $goal > 0 && $collected >= $goal;
         $waMsg = str_replace(
             ['{agen}', '{program}'],
             [$agen->name, $p->name],
@@ -27,6 +29,8 @@
             'progress'    => $progress,
             'collected'   => 'Rp ' . number_format($collected, 0, ',', '.'),
             'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
+            'remaining'   => $isComplete ? null : 'Rp ' . number_format(max(0, $goal - $collected), 0, ',', '.'),
+            'is_complete' => $isComplete,
             'url'         => route('public.agent-program', ['agentSlug' => $agen->slug, 'program' => $p->slug]),
             'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
             'wa_source'   => 'agent',
@@ -61,6 +65,8 @@
     </div>
 </section>
 
+@include('public.partials.funnel-sections')
+
 <main class="section">
     <div class="container">
         <div class="section-head" data-reveal>
@@ -72,9 +78,11 @@
 
         <div data-reveal>
             <div data-vue-app="ProgramExplorer">
-                <script type="application/json">@json(['programs' => $programCards, 'tags' => []])</script>
+                <script type="application/json">@json(['programs' => $programCards, 'tags' => $tags->pluck('name')->all(), 'sticky' => true])</script>
             </div>
         </div>
     </div>
 </main>
+
+@include('public.partials.testimonial-slider-script')
 @endsection
