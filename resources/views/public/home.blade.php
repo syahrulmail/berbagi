@@ -57,20 +57,6 @@
                 <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Donasi Sekarang</a>
                 <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener" class="btn btn-light" data-wa-log data-wa-source="home"><i class="fab fa-whatsapp"></i> Hubungi Kami</a>
             </div>
-            <div class="mt-12 hidden max-w-md grid-cols-3 gap-4 sm:grid">
-                <div>
-                    <div class="text-2xl font-extrabold md:text-3xl" data-vue-app="CountUp"><script type="application/json">{"value": {{ $programs->count() }}, "suffix": ""}</script></div>
-                    <span class="mt-1 block text-xs text-primary-200">Program Aktif</span>
-                </div>
-                <div>
-                    <div class="text-2xl font-extrabold md:text-3xl" data-vue-app="CountUp"><script type="application/json">{"value": {{ (int) $totalCollected }}, "prefix": "Rp "}</script></div>
-                    <span class="mt-1 block text-xs text-primary-200">Total Terkumpul</span>
-                </div>
-                <div>
-                    <div class="text-2xl font-extrabold md:text-3xl" data-vue-app="CountUp"><script type="application/json">{"value": {{ $totalAgents }}}</script></div>
-                    <span class="mt-1 block text-xs text-primary-200">Mitra Agen</span>
-                </div>
-            </div>
             <div class="mt-6 max-w-md rounded-2xl bg-white/10 p-4 ring-1 ring-white/15">
                 <div class="flex items-center justify-between text-xs text-primary-100">
                     <span>Progress nasional</span>
