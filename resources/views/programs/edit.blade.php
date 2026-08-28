@@ -43,16 +43,10 @@
             <label for="goal_amount">Goal Keuangan (Rp) *</label>
             <input type="number" id="goal_amount" name="goal_amount" value="{{ old('goal_amount', $program->goal_amount) }}" min="0" step="0.01" required>
         </div>
-        <div class="form-group">
-            <label>Campaign Tags</label>
-            @foreach($tags as $tag)
-                <label class="checkbox-label" style="margin-bottom: 6px;">
-                    <input type="checkbox" name="tags[]" value="{{ $tag->id }}"
-                           {{ in_array($tag->id, old('tags', $program->campaignTags->pluck('id')->toArray())) ? 'checked' : '' }}>
-                    <span class="tag-pill" style="background: {{ $tag->color }}">{{ $tag->name }}</span>
-                </label>
-            @endforeach
-        </div>
+        @include('partials.tag-input', [
+            'tagNamesValue' => old('tag_names', $program->campaignTags->pluck('name')->implode(', ')),
+            'tags' => $tags,
+        ])
         <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', $program->is_active) ? 'checked' : '' }}> Aktif

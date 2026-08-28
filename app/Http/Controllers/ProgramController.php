@@ -40,13 +40,14 @@ class ProgramController extends Controller
             'is_active' => ['boolean'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['exists:campaign_tags,id'],
+            'tag_names' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
 
         $program = Program::create($data);
-        $program->campaignTags()->sync($data['tags'] ?? []);
+        $program->campaignTags()->sync($this->resolveTagIds($request));
 
         ActivityLog::record('program.create', 'Membuat program ' . $program->name);
 
@@ -72,17 +73,63 @@ class ProgramController extends Controller
             'is_active' => ['boolean'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['exists:campaign_tags,id'],
+            'tag_names' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
 
         $program->update($data);
-        $program->campaignTags()->sync($data['tags'] ?? []);
+        $program->campaignTags()->sync($this->resolveTagIds($request));
 
         ActivityLog::record('program.update', 'Memperbarui program ' . $program->name);
 
         return redirect()->route('programs.index')->with('success', 'Program berhasil diperbarui.');
+    }
+
+    protected function resolveTagIds(Request $request): array
+    {
+        $ids = [];
+
+        foreach ((array) $request->input('tags', []) as $id) {
+            $ids[(int) $id] = true;
+        }
+
+        $raw = trim((string) $request->input('tag_names', ''));
+
+        if ($raw !== '') {
+            $seen = [];
+
+            foreach (explode(',', $raw) as $part) {
+                $name = trim($part);
+
+                if ($name === '') {
+                    continue;
+                }
+
+                $key = mb_strtolower($name);
+
+                if (isset($seen[$key])) {
+                    continue;
+                }
+
+                $seen[$key] = true;
+
+                $tag = CampaignTag::where('slug', Str::slug($name))->first();
+
+                if (! $tag) {
+                    $tag = CampaignTag::create([
+                        'name' => $name,
+                        'slug' => Str::slug($name),
+                        'color' => '#08A899',
+                    ]);
+                }
+
+                $ids[$tag->id] = true;
+            }
+        }
+
+        return array_keys($ids);
     }
 
     public function destroy(Program $program)
