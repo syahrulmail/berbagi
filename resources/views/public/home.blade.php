@@ -2,6 +2,19 @@
 
 @section('title', 'Berbagi.or.id · Badan Wakaf Al Qur\'an')
 
+@push('styles')
+<style>
+    .quote-content blockquote {
+        margin: 0.5rem 0;
+        padding: 0.25rem 0 0.25rem 1rem;
+        border-left: 3px solid #d4911e;
+        text-align: left;
+        color: #086e66;
+        font-style: italic;
+    }
+</style>
+@endpush
+
 @section('content')
 
 @php
@@ -65,6 +78,15 @@
         </div>
     </div>
 </section>
+
+@if(trim(strip_tags($homeQuote)) !== '')
+<section class="border-b border-black/5 bg-white py-12" data-reveal>
+    <div class="container mx-auto max-w-3xl text-center">
+        <i class="fas fa-quote-left mb-4 text-3xl text-gold-400"></i>
+        <div class="quote-content text-xl font-light leading-relaxed text-primary-900 md:text-2xl">{!! $homeQuote !!}</div>
+    </div>
+</section>
+@endif
 
 <main class="section" id="program">
     <div class="container">

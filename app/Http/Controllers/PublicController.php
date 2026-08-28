@@ -35,8 +35,10 @@ class PublicController extends Controller
 
         $programCards = $this->cardifyPrograms($programs, $waNumber, $waTemplate, 'home');
 
+        $homeQuote = Setting::get('home_quote', '<p>&quot;Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.&quot; — <strong>HR. Ahmad &amp; Thabrani</strong></p>');
+
         return view('public.home', compact(
-            'programs', 'banners', 'tags', 'waNumber', 'waTemplate'
+            'programs', 'banners', 'tags', 'waNumber', 'waTemplate', 'homeQuote'
         ));
     }
 
