@@ -3,6 +3,7 @@
 @section('title', 'Berbagi.or.id · Badan Wakaf Al Qur\'an')
 
 @include('public.partials.funnel-styles')
+@include('public.partials.hero-styles')
 
 @section('content')
 
@@ -12,6 +13,21 @@
             'image' => $b->image_url,
             'title' => $b->title,
             'url'   => $b->url,
+        ];
+    })->values();
+
+    $heroStats = $achievements->filter(function ($a) {
+        return $a->numericParts()['number'] !== null;
+    })->take(4)->values()->map(function ($a) {
+        $parts = $a->numericParts();
+        return [
+            'icon'     => $a->icon ?: 'fa-hand-holding-heart',
+            'value'    => $a->value,
+            'label'    => $a->label,
+            'number'   => $parts['number'],
+            'prefix'   => $parts['prefix'],
+            'decimals' => $parts['decimals'],
+            'suffix'   => $parts['suffix'],
         ];
     })->values();
 
@@ -51,25 +67,34 @@
 @endphp
 
 <section class="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 text-white">
-    <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-primary-500/20 blur-3xl"></div>
-    <div class="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-gold-500/10 blur-3xl"></div>
+    <div class="hero-mesh"></div>
+    <div class="hero-blob-a"></div>
+    <div class="hero-blob-b"></div>
+    <div class="hero-blob-c"></div>
     <div class="container relative grid items-center gap-12 py-16 lg:grid-cols-2 lg:py-24">
         <div>
-            <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-primary-100 ring-1 ring-white/15">
+            <span class="hero-enter hero-enter-1 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-primary-100 ring-1 ring-white/15">
                 <i class="fas fa-book-quran"></i> Wakaf Al Qur'an & Kemanusiaan
             </span>
-            <h1 class="mt-6 text-4xl font-extrabold leading-tight md:text-5xl">
-                Wakaf untuk Ummat,<br>Dari Anda untuk <em class="not-italic text-gold-300">Kebaikan</em>
+            <h1 class="hero-enter hero-enter-2 mt-6 text-4xl font-extrabold leading-tight md:text-5xl">
+                Wakaf untuk Ummat,<br>Dari Anda untuk <em class="hero-shimmer-text not-italic">Kebaikan</em>
             </h1>
-            <p class="mt-5 max-w-lg text-base leading-relaxed text-primary-100/90">
+            <p class="hero-enter hero-enter-3 mt-5 max-w-lg text-base leading-relaxed text-primary-100/90">
                 Wakaf, infak, dan sedekah untuk ummat — dihimpun dan disalurkan secara amanah oleh <strong class="font-semibold text-white">Badan Wakaf Al Qur'an (BWA)</strong>. Setiap rupiah tercatat resmi dan dapat Anda telusuri.
             </p>
-            <div class="mt-8 flex flex-wrap gap-3">
+            <div class="hero-enter hero-enter-4 mt-8 flex flex-wrap gap-3">
                 <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Donasi Sekarang</a>
                 <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener" class="btn btn-light" data-wa-log data-wa-source="home"><i class="fab fa-whatsapp"></i> Hubungi Kami</a>
             </div>
+            @if($heroStats->isNotEmpty())
+            <div class="hero-enter hero-enter-5">
+                <div data-vue-app="HeroStats">
+                    <script type="application/json">@json(['stats' => $heroStats])</script>
+                </div>
+            </div>
+            @endif
         </div>
-        <div data-reveal>
+        <div class="hero-enter hero-enter-3" data-reveal>
             <div data-vue-app="BannerSlider">
                 <script type="application/json">@json(['slides' => $bannerSlides])</script>
             </div>

@@ -12,6 +12,54 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="{{ assetv('css/app.css') }}">
     @stack('styles')
+    <style>
+        #siteHeader .container { height: 64px; }
+        #siteHeader.header-scrolled .container { height: 56px; }
+        #siteHeader.header-scrolled {
+            background: rgba(255, 255, 255, .94);
+            box-shadow: 0 8px 24px -12px rgba(2, 35, 33, .22);
+        }
+        #siteHeader.header-scrolled .header-donate {
+            box-shadow: 0 8px 20px -6px rgba(212, 145, 30, .55);
+            transform: translateY(-1px);
+        }
+        .back-to-top {
+            position: fixed;
+            right: 18px;
+            bottom: 92px;
+            z-index: 60;
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #08A899, #04786f);
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 10px 24px -8px rgba(8, 168, 153, .55);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(14px);
+            transition: opacity .3s, transform .3s, visibility .3s;
+        }
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 28px -8px rgba(8, 168, 153, .65);
+        }
+        @media (min-width: 1024px) {
+            .back-to-top { bottom: 32px; right: 28px; }
+        }
+        #program {
+            scroll-margin-top: 84px;
+        }
+    </style>
 </head>
 <body class="bg-white text-primary-950">
 
@@ -24,19 +72,20 @@
     </div>
 </div>
 
-<header class="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-md">
-    <div class="container flex h-16 items-center justify-between">
+<header id="siteHeader" class="sticky top-0 z-40 border-b border-black/5 bg-white/85 backdrop-blur-md">
+    <div class="container flex h-16 items-center justify-between transition-all duration-300">
         <a href="{{ route('home') }}" class="flex items-center gap-3">
-            <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-bold text-white shadow-lg shadow-primary-500/25">BWA</span>
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-bold text-white shadow-lg shadow-primary-500/25 transition-all duration-300">BWA</span>
             <span class="leading-tight">
-                <span class="block text-base font-bold text-primary-900">Berbagi.or.id</span>
+                <span class="block text-base font-bold text-primary-900 transition-all duration-300">Berbagi.or.id</span>
                 <span class="block text-[11px] font-medium text-gray-500">Badan Wakaf Al Qur'an</span>
             </span>
         </a>
         <nav class="flex items-center gap-2">
             <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house mr-1.5"></i>Beranda</a>
-            <a href="{{ route('home') }}#program" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700">Program</a>
-            <a href="{{ route('login') }}" class="btn btn-primary btn-sm"><i class="fas fa-right-to-bracket"></i>Masuk</a>
+            <a href="{{ route('home') }}#program" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700 sm:block">Program</a>
+            <a href="@yield('headerDonasiUrl', '#program')" class="btn btn-gold btn-sm header-donate"><i class="fas fa-heart"></i> Donasi</a>
+            <a href="{{ route('login') }}" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700 sm:block"><i class="fas fa-right-to-bracket mr-1.5"></i>Masuk</a>
         </nav>
     </div>
 </header>
@@ -98,9 +147,12 @@
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<button type="button" id="backToTop" class="back-to-top" aria-label="Kembali ke atas"><i class="fas fa-arrow-up"></i></button>
+
 <script src="{{ assetv('js/vendor/vue.global.prod.js') }}"></script>
 <script src="{{ assetv('js/components/BannerSlider.js') }}"></script>
 <script src="{{ assetv('js/components/AchievementSlider.js') }}"></script>
+<script src="{{ assetv('js/components/HeroStats.js') }}"></script>
 <script src="{{ assetv('js/components/ProgramExplorer.js') }}"></script>
 <script src="{{ assetv('js/components/CountUp.js') }}"></script>
 <script src="{{ assetv('js/components/BarChart.js') }}"></script>
@@ -184,6 +236,21 @@
     });
 
     window.BerbagiToast = toast;
+
+    var header = document.getElementById('siteHeader');
+    var backTop = document.getElementById('backToTop');
+    function onScroll() {
+        var y = window.pageYOffset || document.documentElement.scrollTop;
+        if (header) header.classList.toggle('header-scrolled', y > 24);
+        if (backTop) backTop.classList.toggle('show', y > 400);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    if (backTop) {
+        backTop.addEventListener('click', function () {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 })();
 </script>
 @stack('scripts')

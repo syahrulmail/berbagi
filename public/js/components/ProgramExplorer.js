@@ -41,6 +41,15 @@
             onKey: function (e) {
                 if (e.key === 'Escape') this.closeDetail();
             },
+            popular: function (p) {
+                var arr = this.filtered;
+                if (!arr.length) return false;
+                var best = arr[0];
+                for (var i = 1; i < arr.length; i++) {
+                    if (arr[i].progress > best.progress) best = arr[i];
+                }
+                return p.slug === best.slug;
+            },
             defaultTag: function (p) {
                 var arr = p.tags || [];
                 for (var i = 0; i < arr.length; i++) {
@@ -88,9 +97,10 @@
             '</div>' +
             '<div v-if="filtered.length" class="program-grid">' +
             '  <article v-for="p in filtered" :key="p.slug" class="program-card group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">' +
-            '    <button type="button" class="relative block w-full aspect-[4/3] overflow-hidden cursor-pointer" @click="openDetail(p)" :aria-label="\'Lihat detail \' + p.name">' +
+            '    <button type="button" class="relative block w-full aspect-[4/3] overflow-hidden cursor-pointer card-shine" @click="openDetail(p)" :aria-label="\'Lihat detail \' + p.name">' +
             '      <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105">' +
             '      <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-primary-100 to-primary-50 text-primary-400"><i class="fas fa-book-quran" style="font-size:40px;"></i></div>' +
+            '      <span v-if="popular(p)" class="popular-badge"><i class="fas fa-fire"></i> Terpopuler</span>' +
             '      <span class="absolute left-3 top-3 flex items-center gap-1.5">' +
             '        <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white" :class="p.category === \'penyaluran\' ? \'bg-gold-500\' : \'bg-primary-500\'">{{ p.category }}</span>' +
             '        <span v-if="defaultTag(p)" class="rounded-full px-3 py-1 text-xs font-bold text-white" :style="{ background: defaultTag(p).color, color: textColor(defaultTag(p).color) }">{{ defaultTag(p).name }}</span>' +
@@ -110,7 +120,7 @@
             '          <span>Target {{ p.goal }}</span>' +
             '        </div>' +
             '        <div class="h-2 w-full overflow-hidden rounded-full bg-primary-100">' +
-            '          <div class="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400" :style="{ width: Math.max(4, p.progress) + \'%\' }"></div>' +
+            '          <div class="program-progress-anim h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400" :style="{ \'--p\': Math.max(4, p.progress) + \'%\', width: Math.max(4, p.progress) + \'%\' }"></div>' +
             '        </div>' +
             '        <div class="mt-1.5 flex items-center justify-between gap-2 text-[11px]">' +
             '          <span v-if="p.is_complete" class="font-semibold text-emerald-600"><i class="fas fa-check-circle"></i> Target tercapai</span>' +

@@ -95,6 +95,71 @@
         backdrop-filter: blur(10px);
         box-shadow: 0 10px 24px -12px rgba(2, 35, 33, .18);
     }
+    .popular-badge {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        padding: 5px 12px;
+        border-radius: 9999px;
+        box-shadow: 0 6px 16px -4px rgba(217, 119, 6, .55);
+        animation: badgePulse 2.2s ease-in-out infinite;
+    }
+    .popular-badge i {
+        animation: badgeFlame 1.1s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+        0%, 100% { box-shadow: 0 6px 16px -4px rgba(217, 119, 6, .55); }
+        50% { box-shadow: 0 6px 22px 0 rgba(245, 158, 11, .75); }
+    }
+    @keyframes badgeFlame {
+        0%, 100% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(-12deg) scale(1.18); }
+    }
+    .card-shine {
+        position: relative;
+    }
+    .card-shine::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .45) 48%, transparent 62%);
+        transform: translateX(-120%);
+        transition: transform .9s cubic-bezier(.22, .61, .36, 1);
+    }
+    .card-shine:hover::after {
+        transform: translateX(120%);
+    }
+    .program-progress-anim {
+        position: relative;
+        overflow: hidden;
+        animation: progressFill 1.4s cubic-bezier(.22, .61, .36, 1);
+    }
+    @keyframes progressFill {
+        from { width: 0; }
+        to { width: var(--p, 0); }
+    }
+    .program-progress-anim::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .5) 50%, transparent 70%);
+        background-size: 200% 100%;
+        animation: progressShimmer 2.4s linear infinite;
+    }
+    @keyframes progressShimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
     .pdetail-overlay {
         position: fixed;
         inset: 0;

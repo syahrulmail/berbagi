@@ -9,7 +9,7 @@
             interval: { type: Number, default: 4500 }
         },
         data: function () {
-            return { page: 0, perView: 3, timer: null, resizeHandler: null };
+            return { page: 0, perView: 3, timer: null, resizeHandler: null, observer: null, counts: {} };
         },
         computed: {
             count: function () { return this.items.length; },
@@ -49,6 +49,44 @@
                 var n = parseInt(h, 16);
                 var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
                 return ((0.299 * r + 0.587 * g + 0.114 * b) / 255) > 0.6 ? '#0b2f2d' : '#ffffff';
+            },
+            number: function (item) {
+                return (typeof item.number === 'number') ? item.number : null;
+            },
+            decimals: function (item) {
+                return typeof item.decimals === 'number' ? item.decimals : 0;
+            },
+            formatNumber: function (item, n) {
+                var d = this.decimals(item);
+                return n.toLocaleString('id-ID', { minimumFractionDigits: d, maximumFractionDigits: d });
+            },
+            valueText: function (item, i) {
+                var num = this.number(item);
+                if (num === null) { return item.value || ''; }
+                var val = (i in this.counts) ? this.counts[i] : 0;
+                var s = '';
+                if (item.prefix) { s += item.prefix + ' '; }
+                s += this.formatNumber(item, val);
+                if (item.suffix) { s += (/^[A-Za-z0-9]/.test(item.suffix) ? ' ' : '') + item.suffix; }
+                return s;
+            },
+            runCount: function (item, i) {
+                var num = this.number(item);
+                if (num === null) return;
+                var self = this;
+                var duration = 1500;
+                var start = null;
+                var from = 0;
+                var to = num;
+                function step(ts) {
+                    if (start === null) start = ts;
+                    var p = Math.min(1, (ts - start) / duration);
+                    var eased = 1 - Math.pow(1 - p, 3);
+                    self.counts[i] = from + (to - from) * eased;
+                    if (p < 1) { requestAnimationFrame(step); }
+                    else { self.counts[i] = to; }
+                }
+                requestAnimationFrame(step);
             }
         },
         mounted: function () {
@@ -57,10 +95,24 @@
             this.resizeHandler = function () { self.setPerView(); };
             window.addEventListener('resize', this.resizeHandler);
             this.start();
+            if ('IntersectionObserver' in window) {
+                this.observer = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            for (var i = 0; i < self.items.length; i++) { self.runCount(self.items[i], i); }
+                            if (self.observer) self.observer.disconnect();
+                        }
+                    });
+                }, { threshold: 0.25 });
+                this.observer.observe(this.$el);
+            } else {
+                for (var j = 0; j < this.items.length; j++) { this.counts[j] = this.number(this.items[j]) || 0; }
+            }
         },
         beforeUnmount: function () {
             this.stop();
             if (this.resizeHandler) { window.removeEventListener('resize', this.resizeHandler); }
+            if (this.observer) { this.observer.disconnect(); }
         },
         template: '<div class="achievement-carousel" @mouseenter="pause" @mouseleave="resume">' +
             '<div v-if="count" class="relative">' +
@@ -72,7 +124,7 @@
             '            <img v-if="item.image" :src="item.image" :alt="item.value" class="h-full w-full object-cover">' +
             '            <i v-else :class="\'fas \' + (item.icon || \'fa-trophy\')" class="ach-icon"></i>' +
             '          </div>' +
-            '          <div class="ach-value" :style="{ color: colorOf(item) }">{{ item.value }}</div>' +
+            '          <div class="ach-value" :style="{ color: colorOf(item) }">{{ valueText(item, i) }}</div>' +
             '          <div class="ach-label">{{ item.label }}</div>' +
             '        </div>' +
             '      </div>' +

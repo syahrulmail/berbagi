@@ -31,12 +31,17 @@
 
 @php
     $achievementSlides = $achievements->map(function ($a) {
+        $parts = $a->numericParts();
         return [
-            'icon'  => $a->icon,
-            'image' => $a->image_url,
-            'color' => $a->color ?: '#08A899',
-            'value' => $a->value,
-            'label' => $a->label,
+            'icon'     => $a->icon,
+            'image'    => $a->image_url,
+            'color'    => $a->color ?: '#08A899',
+            'value'    => $a->value,
+            'label'    => $a->label,
+            'number'   => $parts['number'],
+            'prefix'   => $parts['prefix'],
+            'decimals' => $parts['decimals'],
+            'suffix'   => $parts['suffix'],
         ];
     })->values();
 @endphp
