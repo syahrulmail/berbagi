@@ -99,6 +99,8 @@
     </div>
 </section>
 
+@include('public.partials.achievement-slider')
+
 @include('public.partials.funnel-sections')
 
 <main class="section">

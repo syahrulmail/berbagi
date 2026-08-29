@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Achievement;
 use App\Models\Banner;
 use App\Models\CampaignTag;
 use App\Models\Program;
@@ -26,6 +27,11 @@ class PublicController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $achievements = Achievement::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
         $tags = Cache::remember('public_tags', 3600, function () {
             return CampaignTag::withCount('programs')->orderBy('name')->get();
         });
@@ -38,7 +44,7 @@ class PublicController extends Controller
         $sections = $this->funnelSections();
 
         return view('public.home', compact(
-            'programs', 'banners', 'tags', 'waNumber', 'waTemplate'
+            'programs', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate'
         ) + $sections);
     }
 
@@ -132,6 +138,11 @@ class PublicController extends Controller
         $waTemplate = Setting::get('wa_agent_template', '');
         $waFallback = Setting::get('wa_public_number', '6281234567890');
 
+        $achievements = Achievement::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
         $tags = Cache::remember('public_tags', 3600, function () {
             return CampaignTag::withCount('programs')->orderBy('name')->get();
         });
@@ -144,7 +155,7 @@ class PublicController extends Controller
             ? $profile['intro']
             : 'Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.';
 
-        return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback', 'tags', 'agenPhoto', 'agenIntro') + $sections);
+        return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro') + $sections);
     }
 
     protected function agentProfile(User $user): array

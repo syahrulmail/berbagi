@@ -65,6 +65,9 @@
                 <a href="{{ route('banners.index') }}" class="nav-item {{ request()->routeIs('banners.*') ? 'active' : '' }}">
                     <i class="fas fa-images"></i><span class="nav-text">Banner & Label</span>
                 </a>
+                <a href="{{ route('achievements.index') }}" class="nav-item {{ request()->routeIs('achievements.*') ? 'active' : '' }}">
+                    <i class="fas fa-medal"></i><span class="nav-text">Pencapaian</span>
+                </a>
             @endif
 
             @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BannerController;
@@ -61,6 +62,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('branches', BranchController::class)->except('show');
         Route::resource('users', UserController::class)->except('show');
         Route::resource('campaign-tags', CampaignTagController::class)->except('show');
+        Route::resource('achievements', AchievementController::class)->except('show');
     });
 
     Route::middleware('role:admin,supervisor')->group(function () {
