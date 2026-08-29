@@ -1,5 +1,5 @@
 @if(trim(strip_tags($homeQuote)) !== '')
-<section class="border-b border-black/5 bg-white py-12" data-reveal>
+<section class="border-b border-black/5 bg-white py-16" data-reveal>
     <div class="container mx-auto max-w-3xl text-center">
         <i class="fas fa-quote-left mb-4 text-3xl text-gold-400"></i>
         <div class="quote-content text-xl font-light leading-relaxed text-primary-900 md:text-2xl">{!! $homeQuote !!}</div>
@@ -35,7 +35,7 @@
 @endif
 
 @if(count($partnerLogos) > 0)
-<section class="border-b border-black/5 bg-white py-10" data-reveal>
+<section class="border-b border-black/5 bg-white py-14" data-reveal>
     <div class="container mx-auto max-w-6xl">
         <div class="logo-marquee">
             <div class="logo-track">

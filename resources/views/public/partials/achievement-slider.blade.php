@@ -41,7 +41,7 @@
 @endphp
 
 @if($achievementSlides->isNotEmpty())
-<section class="border-b border-black/5 bg-primary-50/40 py-10" data-reveal>
+<section class="border-b border-black/5 bg-primary-50/40 py-14" data-reveal>
     <div class="container">
         <div class="mx-auto max-w-5xl">
             <div data-vue-app="AchievementSlider">
