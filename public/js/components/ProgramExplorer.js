@@ -137,7 +137,7 @@
             '          <span class="shrink-0 font-semibold text-primary-700">{{ p.progress }}%</span>' +
             '        </div>' +
             '        <div class="mt-4 flex gap-2">' +
-            '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Donasi Sekarang</a>' +
+            '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Berbagi</a>' +
             '          <button type="button" class="btn btn-outline btn-sm" @click="openDetail(p)"><i class="fas fa-circle-info"></i> Detail</button>' +
             '        </div>' +
             '        <a v-if="p.edit_url" :href="p.edit_url" class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition-colors hover:text-primary-600"><i class="fas fa-pen-to-square"></i> Edit program</a>' +

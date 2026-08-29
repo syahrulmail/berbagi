@@ -101,7 +101,7 @@
             <blockquote class="cta-quote">"Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya."</blockquote>
             <p class="mt-2 text-sm font-bold text-gold-300">HR. Ahmad &amp; Thabrani</p>
             <div class="mt-7 flex flex-wrap justify-center gap-3">
-                <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Mulai kebaikan sekarang</a>
+                <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener" class="btn btn-gold" data-wa-log data-wa-source="home"><i class="fab fa-whatsapp"></i> Mulai kebaikan sekarang</a>
             </div>
         </div>
     </div>
