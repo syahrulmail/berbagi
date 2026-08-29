@@ -106,7 +106,12 @@
         </a>
         <nav class="flex items-center gap-2">
             <a href="{{ route('home') }}" aria-label="Beranda" class="grid h-9 w-9 place-items-center rounded-lg text-sm text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house"></i></a>
-            <a href="@yield('headerDonasiUrl', '#program')" class="btn btn-gold btn-sm header-donate"><i class="fas fa-heart"></i> Tanya kami?</a>
+            @php
+                $headerWaNumber = (isset($agen) && $agen->phone)
+                    ? preg_replace('/\D/', '', $agen->phone)
+                    : preg_replace('/\D/', '', ($waFallback ?? $waNumber ?? '6281234567890'));
+            @endphp
+            <a href="@yield('headerDonasiUrl', 'https://wa.me/' . $headerWaNumber)" target="_blank" rel="noopener" class="btn btn-gold btn-sm header-donate" data-wa-log data-wa-source="header"><i class="fas fa-heart"></i> Tanya kami?</a>
             <a href="{{ route('login') }}" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700 sm:block"><i class="fas fa-right-to-bracket mr-1.5"></i>Masuk</a>
         </nav>
     </div>
