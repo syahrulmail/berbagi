@@ -95,6 +95,20 @@
         backdrop-filter: blur(10px);
         box-shadow: 0 10px 24px -12px rgba(2, 35, 33, .18);
     }
+    .filter-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+    }
+    .filter-bar-row .search-box {
+        min-width: 0;
+        flex: 1;
+    }
+    .filter-bar-row .filter-toggle {
+        flex: none;
+    }
     .filter-toggle {
         display: inline-flex;
         align-items: center;

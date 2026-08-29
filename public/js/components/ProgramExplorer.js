@@ -10,7 +10,7 @@
             sticky: { type: Boolean, default: false }
         },
         data: function () {
-            return { q: '', active: 'semua', detail: null, showFilters: true };
+            return { q: '', active: 'semua', detail: null, showFilters: false };
         },
         computed: {
             filtered: function () {
@@ -85,13 +85,15 @@
         },
         template: '<div>' +
             '<div class="filter-bar" :class="{ \'filter-bar-sticky\': sticky }">' +
-            '  <div class="search-box">' +
-            '    <i class="fas fa-magnifying-glass"></i>' +
-            '    <input type="search" v-model="q" placeholder="Cari program..." autocomplete="off">' +
+            '  <div class="filter-bar-row">' +
+            '    <div class="search-box">' +
+            '      <i class="fas fa-magnifying-glass"></i>' +
+            '      <input type="search" v-model="q" placeholder="Cari program..." autocomplete="off">' +
+            '    </div>' +
+            '    <button type="button" class="filter-toggle" :class="{ active: showFilters }" @click="toggleFilters" :aria-expanded="showFilters ? \'true\' : \'false\'" aria-label="Tampilkan atau sembunyikan filter">' +
+            '      <i class="fas fa-sliders"></i> <span>Filter</span> <i class="fas" :class="showFilters ? \'fa-chevron-up\' : \'fa-chevron-down\'"></i>' +
+            '    </button>' +
             '  </div>' +
-            '  <button type="button" class="filter-toggle" :class="{ active: showFilters }" @click="toggleFilters" :aria-expanded="showFilters ? \'true\' : \'false\'" aria-label="Tampilkan atau sembunyikan filter">' +
-            '    <i class="fas fa-sliders"></i> <span>Filter</span> <i class="fas" :class="showFilters ? \'fa-chevron-up\' : \'fa-chevron-down\'"></i>' +
-            '  </button>' +
             '  <transition name="filter-fade">' +
             '  <div v-show="showFilters" class="filter-pills">' +
             '    <button type="button" class="pill" :class="{ active: active === \'semua\' }" @click="setFilter(\'semua\')">Semua</button>' +
