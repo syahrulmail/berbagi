@@ -96,9 +96,9 @@
 
 <section class="section">
     <div class="container">
-        <div class="rounded-3xl bg-gradient-to-br from-primary-700 to-primary-950 p-10 text-center text-white" data-reveal>
+        <div class="cta-box rounded-3xl bg-gradient-to-br from-primary-700 to-primary-950 text-center text-white" data-reveal>
             <h2 class="text-2xl font-extrabold md:text-3xl">Wujudkan buah taqwamu dengan amal ibadah maal terbaik</h2>
-            <blockquote class="mx-auto mt-5 max-w-xl text-lg italic leading-relaxed text-primary-100">"Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya."</blockquote>
+            <blockquote class="cta-quote">"Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya."</blockquote>
             <p class="mt-2 text-sm font-bold text-gold-300">HR. Ahmad &amp; Thabrani</p>
             <div class="mt-7 flex flex-wrap justify-center gap-3">
                 <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Mulai kebaikan sekarang</a>

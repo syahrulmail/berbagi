@@ -426,5 +426,18 @@
         .pdetail-stats { grid-template-columns: repeat(2, 1fr); }
         .pdetail-stats div:last-child { grid-column: span 2; }
     }
+    .cta-quote {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 20px;
+        white-space: nowrap;
+        font-size: clamp(9.2px, 2.35vw, 18px);
+        line-height: 1.4;
+        font-style: italic;
+        color: rgba(255,255,255,0.95);
+    }
+    .cta-box { padding: 2.5rem 0.75rem; }
+    @media (min-width: 640px) { .cta-box { padding: 2.5rem; } }
 </style>
 @endpush
