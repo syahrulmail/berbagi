@@ -16,21 +16,6 @@
         ];
     })->values();
 
-    $heroStats = $achievements->filter(function ($a) {
-        return $a->numericParts()['number'] !== null;
-    })->take(4)->values()->map(function ($a) {
-        $parts = $a->numericParts();
-        return [
-            'icon'     => $a->icon ?: 'fa-hand-holding-heart',
-            'value'    => $a->value,
-            'label'    => $a->label,
-            'number'   => $parts['number'],
-            'prefix'   => $parts['prefix'],
-            'decimals' => $parts['decimals'],
-            'suffix'   => $parts['suffix'],
-        ];
-    })->values();
-
     $defaultTagSlugs = \App\Models\CampaignTag::DEFAULT_TAG_SLUGS;
 
     $programCards = $programs->map(function ($p) use ($waNumber, $waTemplate, $defaultTagSlugs) {
@@ -86,13 +71,6 @@
                 <a href="#program" class="btn btn-gold"><i class="fas fa-arrow-down"></i> Donasi Sekarang</a>
                 <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener" class="btn btn-light" data-wa-log data-wa-source="home"><i class="fab fa-whatsapp"></i> Hubungi Kami</a>
             </div>
-            @if($heroStats->isNotEmpty())
-            <div class="hero-enter hero-enter-5">
-                <div data-vue-app="HeroStats">
-                    <script type="application/json">@json(['stats' => $heroStats])</script>
-                </div>
-            </div>
-            @endif
         </div>
         <div class="hero-enter hero-enter-3" data-reveal>
             <div data-vue-app="BannerSlider">

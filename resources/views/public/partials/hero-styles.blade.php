@@ -101,57 +101,5 @@
             animation: none;
         }
     }
-
-    .hero-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 32px;
-        max-width: 560px;
-    }
-    @media (min-width: 640px) {
-        .hero-stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    }
-    .hero-stat {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        padding: 12px 10px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, .08);
-        border: 1px solid rgba(255, 255, 255, .14);
-        backdrop-filter: blur(6px);
-        text-align: center;
-    }
-    .hero-stat-icon {
-        display: grid;
-        place-items: center;
-        width: 30px;
-        height: 30px;
-        border-radius: 10px;
-        background: rgba(255, 196, 87, .22);
-        color: #ffd98a;
-        font-size: 13px;
-        margin-bottom: 2px;
-    }
-    .hero-stat-value {
-        font-size: 16px;
-        font-weight: 800;
-        color: #fff;
-        line-height: 1.15;
-        letter-spacing: .2px;
-        font-variant-numeric: tabular-nums;
-    }
-    .hero-stat-label {
-        font-size: 10.5px;
-        font-weight: 500;
-        color: rgba(255, 255, 255, .75);
-        line-height: 1.25;
-    }
-    @media (min-width: 768px) {
-        .hero-stat-value { font-size: 19px; }
-        .hero-stat-label { font-size: 11.5px; }
-    }
 </style>
 @endpush

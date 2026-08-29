@@ -152,7 +152,6 @@
 <script src="{{ assetv('js/vendor/vue.global.prod.js') }}"></script>
 <script src="{{ assetv('js/components/BannerSlider.js') }}"></script>
 <script src="{{ assetv('js/components/AchievementSlider.js') }}"></script>
-<script src="{{ assetv('js/components/HeroStats.js') }}"></script>
 <script src="{{ assetv('js/components/ProgramExplorer.js') }}"></script>
 <script src="{{ assetv('js/components/CountUp.js') }}"></script>
 <script src="{{ assetv('js/components/BarChart.js') }}"></script>

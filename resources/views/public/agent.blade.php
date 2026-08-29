@@ -72,21 +72,6 @@
             'edit_url'    => auth()->check() && auth()->user()->isAdmin() ? route('programs.edit', $p) : null,
         ];
     })->values();
-
-    $heroStats = $achievements->filter(function ($a) {
-        return $a->numericParts()['number'] !== null;
-    })->take(4)->values()->map(function ($a) {
-        $parts = $a->numericParts();
-        return [
-            'icon'     => $a->icon ?: 'fa-hand-holding-heart',
-            'value'    => $a->value,
-            'label'    => $a->label,
-            'number'   => $parts['number'],
-            'prefix'   => $parts['prefix'],
-            'decimals' => $parts['decimals'],
-            'suffix'   => $parts['suffix'],
-        ];
-    })->values();
 @endphp
 
 <section class="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 py-16 text-center text-white">
@@ -114,13 +99,6 @@
             </a>
         </div>
         <p class="hero-enter hero-enter-5 mx-auto mt-7 max-w-xl text-sm leading-relaxed text-primary-100/90">{{ $agenIntro }}</p>
-        @if($heroStats->isNotEmpty())
-        <div class="hero-enter hero-enter-5">
-            <div class="mx-auto flex justify-center" data-vue-app="HeroStats">
-                <script type="application/json">@json(['stats' => $heroStats])</script>
-            </div>
-        </div>
-        @endif
     </div>
 </section>
 
