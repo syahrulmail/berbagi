@@ -25,7 +25,7 @@
 @endphp
 
 @section('donasiBarTitle', $program->name)
-@section('donasiBarSub', $isComplete ? 'Target tercapai · Terima kasih' : 'Progress ' . $progress . '% · ' . ($remaining !== null ? 'Masih perlu Rp ' . number_format($remaining, 0, ',', '.') : 'Target tercapai'))
+@section('donasiBarSub', $isComplete ? 'Target tercapai · Terima kasih' : 'Progress ' . $progress . '% · ' . ($remaining !== null ? 'Dibutuhkan Rp ' . number_format($remaining, 0, ',', '.') : 'Target tercapai'))
 @section('donasiBarUrl', $waUrl)
 @section('donasiBarSource', $waSource)
 @section('donasiBarProgram', $program->id)
@@ -88,7 +88,7 @@
                                 @if($isComplete)
                                     <span class="font-semibold text-emerald-600"><i class="fas fa-check-circle"></i> Target tercapai</span>
                                 @else
-                                    Masih perlu <strong class="text-primary-700">Rp {{ number_format($remaining, 0, ',', '.') }}</strong>
+                                    Dibutuhkan <strong class="text-primary-700">Rp {{ number_format($remaining, 0, ',', '.') }}</strong>
                                 @endif
                             </span>
                             <span class="font-semibold text-primary-700">{{ $progress }}%</span>
@@ -170,7 +170,7 @@
                             @if($isComplete)
                                 <span class="font-semibold text-emerald-600"><i class="fas fa-check-circle"></i> Target program tercapai. Terima kasih atas dukungan Anda.</span>
                             @else
-                                Masih perlu <strong class="text-primary-700">Rp {{ number_format($remaining, 0, ',', '.') }}</strong> untuk mencapai target.
+                                Dibutuhkan <strong class="text-primary-700">Rp {{ number_format($remaining, 0, ',', '.') }}</strong> untuk mencapai target.
                             @endif
                         </div>
                     </div>
