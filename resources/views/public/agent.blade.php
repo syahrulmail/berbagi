@@ -105,13 +105,6 @@
 
 <main class="section">
     <div class="container">
-        <div class="section-head" data-reveal>
-            <div>
-                <h2>Program yang Saya Bantu</h2>
-                <p class="muted mt-1 text-sm">Program wakaf aktif yang dapat Anda dukung melalui {{ $agen->name }}.</p>
-            </div>
-        </div>
-
         <div data-reveal>
             <div data-vue-app="ProgramExplorer">
                 <script type="application/json">@json(['programs' => $programCards, 'tags' => $tags->pluck('name')->all(), 'sticky' => true])</script>
