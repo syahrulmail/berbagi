@@ -10,7 +10,7 @@
             sticky: { type: Boolean, default: false }
         },
         data: function () {
-            return { q: '', active: 'semua', detail: null };
+            return { q: '', active: 'semua', detail: null, showFilters: true };
         },
         computed: {
             filtered: function () {
@@ -36,6 +36,7 @@
         },
         methods: {
             setFilter: function (f) { this.active = f; },
+            toggleFilters: function () { this.showFilters = !this.showFilters; },
             openDetail: function (p) { this.detail = p; },
             closeDetail: function () { this.detail = null; },
             onKey: function (e) {
@@ -88,12 +89,17 @@
             '    <i class="fas fa-magnifying-glass"></i>' +
             '    <input type="search" v-model="q" placeholder="Cari program..." autocomplete="off">' +
             '  </div>' +
-            '  <div class="filter-pills">' +
+            '  <button type="button" class="filter-toggle" :class="{ active: showFilters }" @click="toggleFilters" :aria-expanded="showFilters ? \'true\' : \'false\'" aria-label="Tampilkan atau sembunyikan filter">' +
+            '    <i class="fas fa-sliders"></i> <span>Filter</span> <i class="fas" :class="showFilters ? \'fa-chevron-up\' : \'fa-chevron-down\'"></i>' +
+            '  </button>' +
+            '  <transition name="filter-fade">' +
+            '  <div v-show="showFilters" class="filter-pills">' +
             '    <button type="button" class="pill" :class="{ active: active === \'semua\' }" @click="setFilter(\'semua\')">Semua</button>' +
             '    <button type="button" class="pill" :class="{ active: active === \'penggalangan\' }" @click="setFilter(\'penggalangan\')"><i class="fas fa-hand-holding-dollar"></i> Penggalangan</button>' +
             '    <button type="button" class="pill" :class="{ active: active === \'penyaluran\' }" @click="setFilter(\'penyaluran\')"><i class="fas fa-box-open"></i> Penyaluran</button>' +
             '    <button v-for="t in tags" :key="t" type="button" class="pill" :class="{ active: active === \'tag:\' + t.toLowerCase() }" @click="setFilter(\'tag:\' + t.toLowerCase())">{{ t }}</button>' +
             '  </div>' +
+            '  </transition>' +
             '</div>' +
             '<div v-if="filtered.length" class="program-grid">' +
             '  <article v-for="p in filtered" :key="p.slug" class="program-card group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">' +

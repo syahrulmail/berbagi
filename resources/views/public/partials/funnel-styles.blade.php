@@ -95,6 +95,45 @@
         backdrop-filter: blur(10px);
         box-shadow: 0 10px 24px -12px rgba(2, 35, 33, .18);
     }
+    .filter-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        align-self: center;
+        padding: 10px 14px;
+        border: 1px solid rgba(0, 0, 0, .1);
+        border-radius: 12px;
+        background: #fff;
+        color: #4b5563;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .filter-toggle:hover {
+        border-color: rgba(8, 168, 153, .4);
+        color: #086e66;
+    }
+    .filter-toggle.active {
+        border-color: #08A899;
+        background: #e7f4f2;
+        color: #086e66;
+    }
+    .filter-toggle i.fa-chevron-up,
+    .filter-toggle i.fa-chevron-down {
+        font-size: 11px;
+        margin-left: 2px;
+    }
+    .filter-fade-enter-active,
+    .filter-fade-leave-active {
+        transition: opacity .22s ease, transform .22s ease;
+        transform-origin: top center;
+    }
+    .filter-fade-enter-from,
+    .filter-fade-leave-to {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
     .popular-badge {
         position: absolute;
         left: 12px;
