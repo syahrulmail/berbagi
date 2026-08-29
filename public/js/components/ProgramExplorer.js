@@ -61,6 +61,9 @@
             otherTags: function (p) {
                 return (p.tags || []).filter(function (t) { return !t.is_default; });
             },
+            defaultTags: function (p) {
+                return (p.tags || []).filter(function (t) { return t.is_default; });
+            },
             textColor: function (hex) {
                 if (!hex) return '#ffffff';
                 var h = String(hex).replace('#', '');
@@ -157,7 +160,7 @@
             '      <div v-else class="pdetail-media-ph"><i class="fas fa-book-quran"></i></div>' +
             '      <div class="pdetail-badges">' +
             '        <span class="pdetail-cat" :class="detail.category === \'penyaluran\' ? \'is-gold\' : \'\'">{{ detail.category }}</span>' +
-            '        <span v-for="(t, i) in detail.tags" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
+            '        <span v-for="(t, i) in defaultTags(detail)" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
             '      </div>' +
             '      <span v-if="detail.is_complete" class="pdetail-done"><i class="fas fa-check-circle"></i> Tercapai</span>' +
             '      <span v-else-if="detail.progress >= 90" class="pdetail-hot"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
@@ -165,6 +168,9 @@
             '    </div>' +
             '    <div class="pdetail-body">' +
             '      <h3 class="pdetail-title">{{ detail.name }}</h3>' +
+            '      <div v-if="otherTags(detail).length" class="pdetail-tags">' +
+            '        <span v-for="(t, i) in otherTags(detail)" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
+            '      </div>' +
             '      <p class="pdetail-desc">{{ detail.description }}</p>' +
             '      <div class="pdetail-progress">' +
             '        <div class="pdetail-progress-track"><div :style="{ width: Math.max(4, detail.progress) + \'%\' }"></div></div>' +
