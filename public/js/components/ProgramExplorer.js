@@ -155,16 +155,16 @@
             '    <div class="pdetail-media">' +
             '      <img v-if="detail.image" :src="detail.image" :alt="detail.name">' +
             '      <div v-else class="pdetail-media-ph"><i class="fas fa-book-quran"></i></div>' +
-            '      <span class="pdetail-cat" :class="detail.category === \'penyaluran\' ? \'is-gold\' : \'\'">{{ detail.category }}</span>' +
+            '      <div class="pdetail-badges">' +
+            '        <span class="pdetail-cat" :class="detail.category === \'penyaluran\' ? \'is-gold\' : \'\'">{{ detail.category }}</span>' +
+            '        <span v-for="(t, i) in detail.tags" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
+            '      </div>' +
             '      <span v-if="detail.is_complete" class="pdetail-done"><i class="fas fa-check-circle"></i> Tercapai</span>' +
             '      <span v-else-if="detail.progress >= 90" class="pdetail-hot"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
             '      <button type="button" class="pdetail-close" @click="closeDetail" aria-label="Tutup"><i class="fas fa-xmark"></i></button>' +
             '    </div>' +
             '    <div class="pdetail-body">' +
             '      <h3 class="pdetail-title">{{ detail.name }}</h3>' +
-            '      <div v-if="detail.tags.length" class="pdetail-tags">' +
-            '        <span v-for="(t, i) in detail.tags" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
-            '      </div>' +
             '      <p class="pdetail-desc">{{ detail.description }}</p>' +
             '      <div class="pdetail-progress">' +
             '        <div class="pdetail-progress-track"><div :style="{ width: Math.max(4, detail.progress) + \'%\' }"></div></div>' +
@@ -184,7 +184,7 @@
             '        <span><i class="fas fa-circle-check"></i> Penyaluran tercatat resmi</span>' +
             '      </div>' +
             '      <a :href="detail.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-block pdetail-cta" data-wa-log="1" :data-wa-source="detail.wa_source" :data-wa-program="detail.wa_program" :data-wa-agen="detail.wa_agen || null">' +
-            '        <i class="fab fa-whatsapp"></i> Donasi Sekarang' +
+            '        <i class="fab fa-whatsapp"></i> Berbagi Sekarang' +
             '      </a>' +
             '      <a :href="detail.url" class="pdetail-more">' +
             '        <i class="fas fa-circle-info"></i> Lihat halaman detail program lengkap <i class="fas fa-arrow-right pdetail-more-arrow"></i>' +

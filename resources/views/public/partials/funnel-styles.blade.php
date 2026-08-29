@@ -279,10 +279,7 @@
     }
     .pdetail-close:hover { background: rgba(2, 35, 33, .7); }
     .pdetail-cat {
-        position: absolute;
-        top: 14px;
-        left: 14px;
-        z-index: 2;
+        flex: none;
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
@@ -293,6 +290,21 @@
         border-radius: 9999px;
     }
     .pdetail-cat.is-gold { background: #D4911E; }
+    .pdetail-badges {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        right: 60px;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+    }
+    .pdetail-badges .pdetail-tag {
+        border: 1px solid rgba(255, 255, 255, .55);
+        box-shadow: 0 2px 8px rgba(2, 35, 33, .35);
+    }
     .pdetail-done {
         position: absolute;
         right: 56px;
