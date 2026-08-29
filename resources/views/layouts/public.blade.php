@@ -147,9 +147,10 @@
             <span>&copy; {{ date('Y') }} Badan Wakaf Al Qur'an (BWA) · berbagi.or.id</span>
             <span>Wakaf untuk ummat, dari Anda untuk kebaikan.</span>
         </div>
-        <p class="mt-4 border-t border-white/10 pt-4 text-[11px] leading-relaxed text-primary-400/80">
-            DISKLAIMER: Berbagi.or.id adalah bagian dari Badan Wakaf Al Qur'an (BWA) tunduk dan patuh pada ketentuan dan kebijakan lembaga. Badan Wakaf Al Quran adalah Lembaga Filantropi Islam berdiri sejak 2005 KEMENKUMHAM AHU-003186.AH.01.04, Yayasan 4/F.3/31.74.01.1001.01.005.R.4/4/-1.848/e/2021.
-        </p>
+        <div class="mt-4 border-t border-white/10 pt-4 text-center text-[11px] leading-relaxed text-primary-300">
+            <p>DISKLAIMER: Berbagi.or.id adalah bagian dari Badan Wakaf Al Qur'an (BWA) tunduk dan patuh pada ketentuan dan kebijakan lembaga.</p>
+            <p>Badan Wakaf Al Quran adalah Lembaga Filantropi Islam berdiri sejak 2005 KEMENKUMHAM AHU-003186.AH.01.04, Yayasan 4/F.3/31.74.01.1001.01.005.R.4/4/-1.848/e/2021.</p>
+        </div>
     </div>
 </footer>
 
