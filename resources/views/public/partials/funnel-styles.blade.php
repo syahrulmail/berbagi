@@ -109,6 +109,10 @@
     .filter-bar-row .filter-toggle {
         flex: none;
     }
+    .filter-pills {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
     .filter-toggle {
         display: inline-flex;
         align-items: center;
