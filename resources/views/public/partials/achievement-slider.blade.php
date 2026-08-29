@@ -16,6 +16,7 @@
     }
     .achievement-card {
         min-width: 0;
+        padding: 10px 12px;
     }
     @media (min-width: 768px) {
         .ach-value {

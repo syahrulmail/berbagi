@@ -67,7 +67,7 @@
             '  <div class="overflow-hidden rounded-3xl border border-black/5 bg-white/70 shadow-card">' +
             '    <div class="flex transition-transform duration-500 ease-out" :style="{ transform: \'translateX(-\' + trackOffset() + \'%)\' }">' +
             '      <div v-for="(item, i) in items" :key="i" class="achievement-card" :style="{ flex: \'0 0 calc(100% / \' + perView + \')\' }">' +
-            '        <div class="mx-1.5 my-2.5 flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-black/5 bg-white p-4 text-center shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-xl md:mx-2">' +
+            '        <div class="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-black/5 bg-white p-4 text-center shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-xl">' +
             '          <div class="grid h-12 w-12 place-items-center overflow-hidden rounded-xl text-white shadow-md" :style="{ background: colorOf(item) }">' +
             '            <img v-if="item.image" :src="item.image" :alt="item.value" class="h-full w-full object-cover">' +
             '            <i v-else :class="\'fas \' + (item.icon || \'fa-trophy\')" class="ach-icon"></i>' +
