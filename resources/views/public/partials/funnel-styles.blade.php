@@ -447,9 +447,8 @@
         margin-left: auto;
         margin-right: auto;
         margin-top: 20px;
-        white-space: nowrap;
-        font-size: clamp(9.2px, 2.35vw, 18px);
-        line-height: 1.4;
+        font-size: clamp(15px, 4.2vw, 18px);
+        line-height: 1.45;
         font-style: italic;
         color: rgba(255,255,255,0.95);
     }

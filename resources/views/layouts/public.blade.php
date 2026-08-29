@@ -164,14 +164,14 @@
 <div class="donasi-bar lg:hidden">
     <div class="donasi-bar-inner">
         <div class="donasi-bar-info">
-            <strong>@yield('donasiBarTitle', 'Wakaf untuk Ummat')</strong>
-            <span>@yield('donasiBarSub', 'Gratis konsultasi · Tanpa kewajiban')</span>
+            <strong>@yield('donasiBarTitle', 'Catatkan kebaikan hari ini')</strong>
+            <span>@yield('donasiBarSub', 'Ungkapkan rasa syukur dengan berbagi kebaikan')</span>
         </div>
         <a href="@yield('donasiBarUrl', $siteWaNumber ? 'https://wa.me/' . $siteWaNumber . '?text=' . urlencode('Assalamualaikum, saya ingin berdonasi untuk program wakaf Berbagi.or.id. Mohon info selanjutnya.') : '#')"
            target="_blank" rel="noopener"
            class="btn btn-wa"
            data-wa-log data-wa-source="@yield('donasiBarSource', 'home')" data-wa-program="@yield('donasiBarProgram', '')">
-            <i class="fab fa-whatsapp"></i> @yield('donasiBarCta', 'Donasi')
+            <i class="fab fa-whatsapp"></i> @yield('donasiBarCta', 'Berbagi')
         </a>
     </div>
 </div>
