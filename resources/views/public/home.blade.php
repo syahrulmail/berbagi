@@ -77,9 +77,9 @@
     </div>
 </section>
 
-@include('public.partials.achievement-slider')
-
 @include('public.partials.funnel-sections')
+
+@include('public.partials.achievement-slider')
 
 <main class="section" id="program">
     <div class="container">
