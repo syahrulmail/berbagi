@@ -15,11 +15,11 @@
     }
     .ach-enter-from {
         opacity: 0;
-        transform: translateY(12px);
+        transform: translateX(48px);
     }
     .ach-leave-to {
         opacity: 0;
-        transform: translateY(-12px);
+        transform: translateX(-48px);
     }
     @media (min-width: 768px) {
         .ach-value {
