@@ -183,7 +183,7 @@
             '      <div class="pdetail-stats">' +
             '        <div><span>Terkumpul</span><strong>{{ detail.collected }}</strong></div>' +
             '        <div><span>Target</span><strong>{{ detail.goal }}</strong></div>' +
-            '        <div v-if="!detail.is_complete && detail.remaining"><span>Masih Perlu</span><strong class="is-gold">{{ detail.remaining }}</strong></div>' +
+            '        <div v-if="!detail.is_complete && detail.remaining"><span>Dibutuhkan</span><strong class="is-gold">{{ detail.remaining }}</strong></div>' +
             '      </div>' +
             '      <div class="pdetail-trust">' +
             '        <span><i class="fas fa-shield-halved"></i> Terdaftar &amp; Berizin</span>' +
