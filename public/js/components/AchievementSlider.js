@@ -23,7 +23,7 @@
             },
             trackOffset: function () {
                 if (!this.count) return 0;
-                return (this.page * this.perView * 100) / this.count;
+                return this.page * 100;
             },
             go: function (i) { this.page = (i + this.pageCount) % this.pageCount; },
             next: function () { this.go(this.page + 1); this.restart(); },
