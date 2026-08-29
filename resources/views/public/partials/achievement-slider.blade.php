@@ -7,13 +7,15 @@
         letter-spacing: .2px;
     }
     .ach-icon {
-        font-size: 18px;
+        font-size: 20px;
     }
     .ach-label {
-        margin-top: 2px;
         font-size: 12px;
         color: #6b7280;
         line-height: 1.3;
+    }
+    .achievement-card {
+        min-width: 0;
     }
     @media (min-width: 768px) {
         .ach-value {
@@ -39,9 +41,9 @@
 @endphp
 
 @if($achievementSlides->isNotEmpty())
-<section class="border-b border-black/5 bg-primary-50/40 py-8" data-reveal>
+<section class="border-b border-black/5 bg-primary-50/40 py-10" data-reveal>
     <div class="container">
-        <div class="mx-auto max-w-4xl">
+        <div class="mx-auto max-w-5xl">
             <div data-vue-app="AchievementSlider">
                 <script type="application/json">@json(['items' => $achievementSlides])</script>
             </div>
