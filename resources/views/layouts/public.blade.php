@@ -59,16 +59,39 @@
         #program {
             scroll-margin-top: 84px;
         }
+        .trustbar {
+            overflow: hidden;
+        }
+        .trustbar-track {
+            display: flex;
+            align-items: center;
+            width: max-content;
+            height: 36px;
+            animation: trustbarScroll 32s linear infinite;
+        }
+        .trustbar:hover .trustbar-track {
+            animation-play-state: paused;
+        }
+        .trustbar-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding-right: 48px;
+            white-space: nowrap;
+        }
+        @keyframes trustbarScroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
     </style>
 </head>
 <body class="bg-white text-primary-950">
 
 <div class="trustbar">
-    <div class="container flex h-9 items-center justify-between gap-3">
-        <span class="inline-flex items-center gap-1.5 truncate">
-            <i class="fas fa-shield-heart text-gold-400"></i>
-            {{ $trustbarText }}
-        </span>
+    <div class="trustbar-track">
+        @for($i = 0; $i < 4; $i++)
+        <span class="trustbar-item"><i class="fas fa-shield-heart text-gold-400"></i>&nbsp;{{ $trustbarText }}</span>
+        @endfor
     </div>
 </div>
 
@@ -82,8 +105,7 @@
             </span>
         </a>
         <nav class="flex items-center gap-2">
-            <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house mr-1.5"></i>Beranda</a>
-            <a href="{{ route('home') }}#program" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700 sm:block">Program</a>
+            <a href="{{ route('home') }}" aria-label="Beranda" class="grid h-9 w-9 place-items-center rounded-lg text-sm text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house"></i></a>
             <a href="@yield('headerDonasiUrl', '#program')" class="btn btn-gold btn-sm header-donate"><i class="fas fa-heart"></i> Donasi</a>
             <a href="{{ route('login') }}" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700 sm:block"><i class="fas fa-right-to-bracket mr-1.5"></i>Masuk</a>
         </nav>
@@ -125,6 +147,9 @@
             <span>&copy; {{ date('Y') }} Badan Wakaf Al Qur'an (BWA) · berbagi.or.id</span>
             <span>Wakaf untuk ummat, dari Anda untuk kebaikan.</span>
         </div>
+        <p class="mt-4 border-t border-white/10 pt-4 text-[11px] leading-relaxed text-primary-400/80">
+            DISKLAIMER: Berbagi.or.id adalah bagian dari Badan Wakaf Al Qur'an (BWA) tunduk dan patuh pada ketentuan dan kebijakan lembaga. Badan Wakaf Al Quran adalah Lembaga Filantropi Islam berdiri sejak 2005 KEMENKUMHAM AHU-003186.AH.01.04, Yayasan 4/F.3/31.74.01.1001.01.005.R.4/4/-1.848/e/2021.
+        </p>
     </div>
 </footer>
 
