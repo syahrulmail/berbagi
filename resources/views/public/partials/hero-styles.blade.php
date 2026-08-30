@@ -77,6 +77,142 @@
         100% { background-position: -200% 0; }
     }
 
+    .hero-cutout-shell {
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 420px;
+    }
+    .hero-cutout-glow {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 340px;
+        height: 340px;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, rgba(255, 200, 90, .28) 0%, rgba(8, 142, 132, .18) 45%, transparent 70%);
+        filter: blur(18px);
+        border-radius: 9999px;
+        pointer-events: none;
+        animation: cutoutGlow 6s ease-in-out infinite;
+    }
+    @keyframes cutoutGlow {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: .9; }
+        50% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
+    }
+    .hero-cutout-stage {
+        position: relative;
+        width: 100%;
+        display: grid;
+        place-items: center;
+        transform-style: preserve-3d;
+        will-change: transform;
+        transition: transform .25s ease-out;
+    }
+    .hero-cutout-slide {
+        grid-area: 1 / 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        opacity: 0;
+        transform: translateY(24px) scale(.94);
+        transition: opacity .7s ease, transform .7s cubic-bezier(.22, .61, .36, 1);
+        pointer-events: none;
+    }
+    .hero-cutout-slide.active {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+    }
+    .hero-cutout-imgwrap {
+        display: block;
+        line-height: 0;
+        animation: cutoutFloat 6s ease-in-out infinite;
+        transform: translateZ(30px);
+    }
+    @keyframes cutoutFloat {
+        0%, 100% { transform: translateZ(30px) translateY(0); }
+        50% { transform: translateZ(30px) translateY(-14px); }
+    }
+    .hero-cutout-img {
+        display: block;
+        width: auto;
+        max-width: 320px;
+        max-height: 340px;
+        filter: drop-shadow(0 24px 40px rgba(2, 35, 33, .35));
+        object-fit: contain;
+    }
+    .hero-cutout-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, .12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, .18);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: .02em;
+        box-shadow: 0 8px 24px rgba(2, 35, 33, .25);
+    }
+    .hero-cutout-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 3;
+        display: grid;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, .1);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, .18);
+        color: #fff;
+        font-size: 14px;
+        transition: all .2s ease;
+    }
+    .hero-cutout-nav:hover {
+        background: rgba(255, 255, 255, .22);
+        border-color: rgba(255, 255, 255, .35);
+        transform: translateY(-50%) scale(1.08);
+    }
+    .hero-cutout-prev { left: 0; }
+    .hero-cutout-next { right: 0; }
+    .hero-cutout-dots {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        z-index: 3;
+    }
+    .hero-cutout-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, .45);
+        transition: all .25s ease;
+        padding: 0;
+    }
+    .hero-cutout-dot.active {
+        width: 26px;
+        background: #f6c86a;
+    }
+    @media (max-width: 640px) {
+        .hero-cutout-shell { min-height: 360px; }
+        .hero-cutout-img { max-width: 260px; max-height: 280px; }
+        .hero-cutout-glow { width: 280px; height: 280px; }
+    }
+
     .hero-enter {
         opacity: 0;
         transform: translateY(18px);
@@ -92,9 +228,15 @@
         to { opacity: 1; transform: none; }
     }
     @media (prefers-reduced-motion: reduce) {
-        .hero-mesh::before, .hero-shimmer-text, .hero-blob-a, .hero-blob-b, .hero-blob-c {
+        .hero-mesh::before, .hero-shimmer-text, .hero-blob-a, .hero-blob-b, .hero-blob-c,
+        .hero-cutout-glow, .hero-cutout-imgwrap, .hero-cutout-slide {
             animation: none;
         }
+        .hero-cutout-slide {
+            opacity: 1;
+            transform: none;
+        }
+        .hero-cutout-slide:not(.active) { display: none; }
         .hero-enter {
             opacity: 1;
             transform: none;
