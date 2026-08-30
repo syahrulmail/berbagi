@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
-@section('title', $agen->name . ' · Agen Berbagi.or.id')
-@section('meta_description', 'Hubungi ' . $agen->name . ' — mitra agen Badan Wakaf Al Qur\'an untuk program wakaf dan sedekah.')
+@section('title', $agen->name . ' · CS Berbagi.or.id')
+@section('meta_description', 'Hubungi ' . $agen->name . ' — mitra CS Badan Wakaf Al Qur\'an untuk program wakaf dan sedekah.')
 
 @section('content')
 @include('public.partials.funnel-styles')
@@ -87,7 +87,7 @@
         </div>
         @endif
         <h1 class="hero-enter hero-enter-2 mt-5 text-3xl font-extrabold md:text-4xl">{{ $agen->name }}</h1>
-        <p class="hero-enter hero-enter-3 mt-2 text-primary-100">Agen Wakaf & Sedekah · Badan Wakaf Al Qur'an</p>
+        <p class="hero-enter hero-enter-3 mt-2 text-primary-100">CS Wakaf & Sedekah · Badan Wakaf Al Qur'an</p>
         <div class="hero-enter hero-enter-3 mt-5 flex flex-wrap justify-center gap-2">
             @if($agen->branch)<span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm ring-1 ring-white/15"><i class="fas fa-location-dot"></i> {{ $agen->branch->name }}</span>@endif
             <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm ring-1 ring-white/15"><i class="fas fa-at"></i> {{ $agen->username }}</span>
