@@ -217,6 +217,10 @@
                         <a href="https://api.whatsapp.com/send?text={{ $shareText }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke WhatsApp" title="Bagikan ke WhatsApp"><i class="fab fa-whatsapp"></i></a>
                         <a href="https://t.me/share/url?url={{ urlencode($shareUrl) }}&text={{ $shareTitle }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke Telegram" title="Bagikan ke Telegram"><i class="fab fa-telegram"></i></a>
                         <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode($shareUrl) }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke LinkedIn" title="Bagikan ke LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="Instagram" aria-label="Bagikan ke Instagram" title="Bagikan ke Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="TikTok" aria-label="Bagikan ke TikTok" title="Bagikan ke TikTok"><i class="fab fa-tiktok"></i></a>
+                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="Threads" aria-label="Bagikan ke Threads" title="Bagikan ke Threads"><i class="fab fa-threads"></i></a>
+                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="Discord" aria-label="Bagikan ke Discord" title="Bagikan ke Discord"><i class="fab fa-discord"></i></a>
                     </div>
 
                     <div class="mt-5 border-t border-black/5 pt-4 text-xs text-gray-500">
@@ -237,13 +241,8 @@
 <script>
 (function () {
     'use strict';
-    var btn = document.querySelector('[data-copy-link]');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
+    function copyUrl(done) {
         var url = window.location.href;
-        function done() {
-            if (window.BerbagiToast) window.BerbagiToast('Link berhasil disalin.');
-        }
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(url).then(done, done);
         } else {
@@ -257,6 +256,23 @@
             document.body.removeChild(ta);
             done();
         }
+    }
+    var btn = document.querySelector('[data-copy-link]');
+    if (btn) {
+        btn.addEventListener('click', function () {
+            copyUrl(function () {
+                if (window.BerbagiToast) window.BerbagiToast('Link berhasil disalin.');
+            });
+        });
+    }
+    document.querySelectorAll('[data-share-copy]').forEach(function (icon) {
+        icon.addEventListener('click', function (e) {
+            e.preventDefault();
+            var platform = icon.getAttribute('data-share-copy');
+            copyUrl(function () {
+                if (window.BerbagiToast) window.BerbagiToast('Link disalin. Tempel di ' + platform + '.');
+            });
+        });
     });
 })();
 </script>
