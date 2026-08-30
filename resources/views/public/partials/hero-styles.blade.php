@@ -145,68 +145,6 @@
         filter: drop-shadow(0 24px 40px rgba(2, 35, 33, .35));
         object-fit: contain;
     }
-    .hero-cutout-title {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 18px;
-        border-radius: 9999px;
-        background: rgba(255, 255, 255, .12);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, .18);
-        color: #fff;
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: .02em;
-        box-shadow: 0 8px 24px rgba(2, 35, 33, .25);
-    }
-    .hero-cutout-nav {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 3;
-        display: grid;
-        width: 44px;
-        height: 44px;
-        place-items: center;
-        border-radius: 9999px;
-        background: rgba(255, 255, 255, .1);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, .18);
-        color: #fff;
-        font-size: 14px;
-        transition: all .2s ease;
-    }
-    .hero-cutout-nav:hover {
-        background: rgba(255, 255, 255, .22);
-        border-color: rgba(255, 255, 255, .35);
-        transform: translateY(-50%) scale(1.08);
-    }
-    .hero-cutout-prev { left: 0; }
-    .hero-cutout-next { right: 0; }
-    .hero-cutout-dots {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 8px;
-        z-index: 3;
-    }
-    .hero-cutout-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 9999px;
-        background: rgba(255, 255, 255, .45);
-        transition: all .25s ease;
-        padding: 0;
-    }
-    .hero-cutout-dot.active {
-        width: 26px;
-        background: #f6c86a;
-    }
     @media (max-width: 640px) {
         .hero-cutout-shell { min-height: 360px; }
         .hero-cutout-img { max-width: 260px; max-height: 280px; }

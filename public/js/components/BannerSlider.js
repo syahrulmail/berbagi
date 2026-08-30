@@ -74,18 +74,12 @@
             '    <div v-else class="hero-cutout-imgwrap">' +
             '      <img :src="s.image" :alt="s.title" class="hero-cutout-img" draggable="false">' +
             '    </div>' +
-            '    <span v-if="s.title" class="hero-cutout-title">{{ s.title }}</span>' +
             '  </div>' +
             '  <div v-if="!count" class="hero-cutout-imgwrap">' +
             '    <div class="grid h-64 w-64 place-items-center rounded-full bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-glow">' +
             '      <i class="fas fa-hand-holding-heart" style="font-size:56px;"></i>' +
             '    </div>' +
             '  </div>' +
-            '</div>' +
-            '<button v-if="count > 1" type="button" class="hero-cutout-nav hero-cutout-prev" @click="prev" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>' +
-            '<button v-if="count > 1" type="button" class="hero-cutout-nav hero-cutout-next" @click="next" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>' +
-            '<div v-if="count > 1" class="hero-cutout-dots">' +
-            '  <button v-for="(s, i) in slides" :key="i" type="button" class="hero-cutout-dot" :class="{ active: i === current }" @click="go(i)" :aria-label="\'Slide \' + (i + 1)"></button>' +
             '</div>' +
             '</div>'
     };
