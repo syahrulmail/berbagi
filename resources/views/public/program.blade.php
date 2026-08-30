@@ -3,6 +3,28 @@
 @section('title', $program->name . ' · Berbagi.or.id')
 @section('meta_description', mb_substr(strip_tags($program->description ?? ''), 0, 155))
 
+@push('styles')
+<style>
+    .share-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 9999px;
+        border: 1px solid #d2e2e0;
+        color: #086e66;
+        font-size: 15px;
+        transition: all 0.15s ease;
+    }
+    .share-icon:hover {
+        background: #086e66;
+        border-color: #086e66;
+        color: #fff;
+    }
+</style>
+@endpush
+
 @php
     $progress = $program->goal_amount > 0 ? min(100, round(((float) $collected / (float) $program->goal_amount) * 100, 1)) : 0;
     $isComplete = $program->goal_amount > 0 && (float) $collected >= (float) $program->goal_amount;
@@ -21,7 +43,10 @@
     }
 
     $waUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg);
-    $shareText = urlencode('Bantu wakaf & sedekah: ' . $program->name . ' — ' . route('public.program', $program->slug));
+    $shareUrl = route('public.program', $program->slug);
+    $shareTitle = urlencode('Bantu wakaf & sedekah: ' . $program->name);
+    $shareText = urlencode('Bantu wakaf & sedekah: ' . $program->name . ' — ' . $shareUrl);
+    $ctaHelpName = $agen ? $agen->name : 'Tim BWA';
 @endphp
 
 @section('donasiBarTitle', $program->name)
@@ -52,7 +77,7 @@
                 <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-lg font-bold text-white">{{ strtoupper(mb_substr($agen->name, 0, 1)) }}</div>
                 @endif
                 <div class="flex-1">
-                    <p class="text-sm text-gray-500">Mendukung melalui agen</p>
+                    <p class="text-sm text-gray-500">CS Badan Wakaf Al Quran</p>
                     <p class="font-semibold text-primary-900">{{ $agen->name }}</p>
                 </div>
                 <a href="{{ route('public.agent', $agen->slug) }}" class="btn btn-outline btn-sm">Lihat Program Lainnya</a>
@@ -95,7 +120,7 @@
                         </div>
                         <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-wa mt-4 w-full"
                            data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
-                            <i class="fab fa-whatsapp"></i> Donasi via WhatsApp
+                            <i class="fab fa-whatsapp"></i> Berbagi sekarang
                         </a>
                     </div>
                 </div>
@@ -139,10 +164,10 @@
 
                 <section class="mt-14 rounded-3xl bg-gradient-to-br from-primary-700 to-primary-950 p-8 text-center text-white md:p-10" data-reveal>
                     <h2 class="text-2xl font-extrabold md:text-3xl">Wujudkan kebaikan, mulai dari {{ $program->name }}</h2>
-                    <p class="mx-auto mt-3 max-w-xl text-sm text-primary-100/90">Setiap rupiah Anda berarti. Tim BWA siap membantu Anda berdonasi dengan amanah dan terekam resmi.</p>
+                    <p class="mx-auto mt-3 max-w-xl text-sm text-primary-100/90">Setiap rupiah sangat berarti. {{ $ctaHelpName }} siap membantu sepenuh hati.</p>
                     <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-wa mt-7 !px-8 !py-3.5 !text-base"
                        data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
-                        <i class="fab fa-whatsapp"></i> Donasi via WhatsApp
+                        <i class="fab fa-whatsapp"></i> Berbagi Sekarang
                     </a>
                 </section>
             </div>
@@ -177,13 +202,21 @@
 
                     <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-wa mt-5 w-full !py-3.5"
                        data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
-                        <i class="fab fa-whatsapp"></i> Donasi via WhatsApp
+                        <i class="fab fa-whatsapp"></i> Berbagi sekarang
                     </a>
-                    <p class="mt-2 text-center text-xs text-gray-400">Pesan terisi otomatis · Tim kami membalas &lt; 1×24 jam</p>
+                    <p class="mt-2 text-center text-xs text-gray-400">Mari berbagi, CS BWA siap melayani sepenuh hati</p>
 
                     <div class="mt-5 flex gap-2">
                         <a href="https://api.whatsapp.com/send?text={{ $shareText }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm flex-1"><i class="fab fa-whatsapp"></i> Bagikan</a>
                         <button type="button" class="btn btn-outline btn-sm flex-1" data-copy-link><i class="fas fa-link"></i> Salin Link</button>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-center gap-3">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($shareUrl) }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke Facebook" title="Bagikan ke Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url={{ urlencode($shareUrl) }}&text={{ $shareTitle }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke X" title="Bagikan ke X"><i class="fab fa-x-twitter"></i></a>
+                        <a href="https://api.whatsapp.com/send?text={{ $shareText }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke WhatsApp" title="Bagikan ke WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://t.me/share/url?url={{ urlencode($shareUrl) }}&text={{ $shareTitle }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke Telegram" title="Bagikan ke Telegram"><i class="fab fa-telegram"></i></a>
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode($shareUrl) }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke LinkedIn" title="Bagikan ke LinkedIn"><i class="fab fa-linkedin-in"></i></a>
                     </div>
 
                     <div class="mt-5 border-t border-black/5 pt-4 text-xs text-gray-500">

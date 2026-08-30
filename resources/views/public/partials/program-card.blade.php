@@ -58,7 +58,7 @@
             </div>
             <div class="mt-4 flex gap-2">
                 <a href="{{ $p['wa_url'] }}" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1"
-                   data-wa-log="1" data-wa-source="{{ $p['wa_source'] }}" data-wa-program="{{ $p['wa_program'] }}"><i class="fab fa-whatsapp"></i> Donasi Sekarang</a>
+                   data-wa-log="1" data-wa-source="{{ $p['wa_source'] }}" data-wa-program="{{ $p['wa_program'] }}"><i class="fab fa-whatsapp"></i> Berbagi sekarang</a>
                 <a href="{{ $p['url'] }}" class="btn btn-outline btn-sm"><i class="fas fa-circle-info"></i> Detail</a>
             </div>
             @if(!empty($p['edit_url']))
