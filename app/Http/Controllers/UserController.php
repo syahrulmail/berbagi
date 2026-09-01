@@ -30,7 +30,15 @@ class UserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('users.index', compact('users'));
+        $stats = [
+            'total'      => User::count(),
+            'admin'      => User::where('role', 'admin')->count(),
+            'supervisor' => User::where('role', 'supervisor')->count(),
+            'agen'       => User::where('role', 'agen')->count(),
+            'active'     => User::where('is_active', true)->count(),
+        ];
+
+        return view('users.index', compact('users', 'stats'));
     }
 
     public function create()
@@ -57,6 +65,8 @@ class UserController extends Controller
         $data['slug'] = User::uniqueSlug($data['username']);
 
         $user = User::create($data);
+
+        $this->syncSupervisorBranch($user, $data);
 
         ActivityLog::record('user.create', 'Membuat user ' . $user->name);
 
@@ -101,11 +111,34 @@ class UserController extends Controller
 
         $user->update($data);
 
+        $this->syncSupervisorBranch($user, $data);
+
         $this->saveProfile($request, $user, $oldSlug);
 
         ActivityLog::record('user.update', 'Memperbarui user ' . $user->name);
 
         return redirect()->route('users.index')->with('success', 'Pengguna berhasil diperbarui.');
+    }
+
+    /**
+     * Jaga relasi supervisor <-> cabang agar konsisten dua arah:
+     * saat user supervisor diberi branch_id, cabang terkait ikut
+     * menunjuk user tsb sebagai supervisor.
+     *
+     * @param  User  $user
+     * @param  array  $data
+     */
+    protected function syncSupervisorBranch(User $user, array $data)
+    {
+        if ($user->role === User::ROLE_SUPERVISOR) {
+            if (!empty($data['branch_id'])) {
+                Branch::where('id', $data['branch_id'])->update(['supervisor_id' => $user->id]);
+                Branch::where('supervisor_id', $user->id)->where('id', '!=', $data['branch_id'])->update(['supervisor_id' => null]);
+            }
+        } else {
+            // Role bukan supervisor: cabang tidak boleh menunjuk user ini.
+            Branch::where('supervisor_id', $user->id)->update(['supervisor_id' => null]);
+        }
     }
 
     protected function saveProfile(Request $request, User $user, string $oldSlug): void

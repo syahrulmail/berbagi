@@ -88,9 +88,9 @@
         @csrf
         @method('PUT')
         <div class="form-group">
-            <label for="global_target">Target Global BWA (Rp)</label>
-            <input type="number" id="global_target" name="global_target" value="{{ old('global_target', $settings['global_target']) }}" min="0" step="0.01">
-            <small style="color: var(--gray-500);">Total target fundraising secara keseluruhan.</small>
+            <label for="global_target_bulanan">Target Global BWA Bulanan (Rp)</label>
+            <input type="text" id="global_target_bulanan" value="Rp {{ number_format($totalGlobalTarget, 0, ',', '.') }}" readonly>
+            <small style="color: var(--gray-500);">Otomatis dihitung dari total "Target Donasi (Rp)" seluruh cabang aktif. Ubah di menu Cabang → Tambah/Edit Cabang.</small>
         </div>
 
         <div class="form-group">

@@ -14,9 +14,11 @@ class Donation extends Model
         'agen_id',
         'program_id',
         'contact_id',
+        'donor_info',
         'amount',
         'donation_date',
         'payment_method',
+        'payment_proof',
         'note',
         'created_by',
     ];
@@ -39,6 +41,11 @@ class Donation extends Model
     public function program()
     {
         return $this->belongsTo(Program::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(DonationItem::class);
     }
 
     public function contact()

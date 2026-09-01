@@ -17,7 +17,7 @@ class PublicController extends Controller
     public function home()
     {
         $programs = Program::where('is_active', true)
-            ->withSum('donations as total_collected', 'amount')
+            ->withSum('donationItems as total_collected', 'amount')
             ->with('campaignTags')
             ->orderByDesc('created_at')
             ->get();
@@ -88,7 +88,7 @@ class PublicController extends Controller
 
         $program->loadMissing('campaignTags');
 
-        $collected = $program->donations()->sum('amount');
+        $collected = $program->donationItems()->sum('amount');
         $waNumber = Setting::get('wa_public_number', '6281234567890');
         $waTemplate = Setting::get('wa_public_template', '');
         $agen = null;
@@ -108,7 +108,7 @@ class PublicController extends Controller
 
         $program->loadMissing('campaignTags');
 
-        $collected = $program->donations()->sum('amount');
+        $collected = $program->donationItems()->sum('amount');
 
         $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
         $waNumber = $waNumber !== ''
@@ -130,7 +130,7 @@ class PublicController extends Controller
         $agen = $this->resolveAgent($slug);
 
         $programs = Program::where('is_active', true)
-            ->withSum('donations as total_collected', 'amount')
+            ->withSum('donationItems as total_collected', 'amount')
             ->with('campaignTags')
             ->orderByDesc('created_at')
             ->get();
@@ -195,8 +195,9 @@ class PublicController extends Controller
             return [
                 'slug'        => $p->slug,
                 'name'        => $p->name,
-                'description' => $p->description,
+                'description' => \Illuminate\Support\Str::limit(strip_tags((string) $p->description), 160),
                 'image'       => $p->image_url,
+                'media'       => $p->media_slides,
                 'category'    => $p->category ?? 'penggalangan',
                 'tags'        => $this->cardifyTags($p),
                 'progress'    => $progress,
@@ -204,6 +205,7 @@ class PublicController extends Controller
                 'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
                 'remaining'   => $isComplete ? null : 'Rp ' . number_format(max(0, $goal - $collected), 0, ',', '.'),
                 'is_complete' => $isComplete,
+                'show_goal'   => (bool) $p->show_goal,
                 'url'         => route('public.program', $p->slug),
                 'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
                 'wa_source'   => $waSource,
@@ -237,7 +239,7 @@ class PublicController extends Controller
             ->whereHas('campaignTags', function ($q) use ($tagIds) {
                 $q->whereIn('campaign_tags.id', $tagIds);
             })
-            ->withSum('donations as total_collected', 'amount')
+            ->withSum('donationItems as total_collected', 'amount')
             ->with('campaignTags')
             ->orderByDesc('created_at')
             ->limit(3)

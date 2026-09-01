@@ -6,7 +6,7 @@
     window.BerbagiComponents.BannerSlider = {
         props: {
             slides: { type: Array, default: function () { return []; } },
-            interval: { type: Number, default: 5000 }
+            interval: { type: Number, default: 3000 }
         },
         data: function () {
             return { current: 0, timer: null, startX: null, tilt: null };

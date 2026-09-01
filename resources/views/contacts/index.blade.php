@@ -19,10 +19,10 @@
         <div class="form-group">
             <select name="status">
                 <option value="">Semua Status</option>
-                <option value="prospect" {{ request('status') == 'prospect' ? 'selected' : '' }}>Prospect</option>
-                <option value="contacted" {{ request('status') == 'contacted' ? 'selected' : '' }}>Contacted</option>
-                <option value="donated" {{ request('status') == 'donated' ? 'selected' : '' }}>Donated</option>
-                <option value="churned" {{ request('status') == 'churned' ? 'selected' : '' }}>Churned</option>
+                <option value="prospect" {{ request('status') == 'prospect' ? 'selected' : '' }}>Prospek</option>
+                <option value="contacted" {{ request('status') == 'contacted' ? 'selected' : '' }}>Simpan</option>
+                <option value="donated" {{ request('status') == 'donated' ? 'selected' : '' }}>Wakif</option>
+                <option value="churned" {{ request('status') == 'churned' ? 'selected' : '' }}>Stop</option>
             </select>
         </div>
         <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
@@ -64,6 +64,9 @@
                         </td>
                         <td>
                             <div class="actions">
+                                <button type="button" class="btn btn-sm btn-icon" data-contact-detail="{{ $contact->id }}" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                                 <a href="{{ route('contacts.edit', $contact) }}" class="btn btn-sm btn-icon" title="Edit">
                                     <i class="fas fa-pen"></i>
                                 </a>
@@ -91,4 +94,10 @@
     </div>
     {{ $contacts->links() }}
 </div>
+
+@include('partials.contact-detail-modal')
 @endsection
+
+@push('scripts')
+<script src="{{ assetv('js/contact-detail.js') }}"></script>
+@endpush

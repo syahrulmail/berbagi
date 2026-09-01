@@ -33,9 +33,9 @@
             <span class="rounded-full px-3 py-1 text-xs font-bold text-white" style="background: {{ $defaultTag['color'] }}; color: {{ $tagTextColor($defaultTag['color']) }};">{{ $defaultTag['name'] }}</span>
             @endif
         </span>
-        @if($p['is_complete'])
+        @if(!empty($p['show_goal']) && $p['is_complete'])
             <span class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-check-circle"></i> Tercapai</span>
-        @elseif($p['progress'] >= 90)
+        @elseif(!empty($p['show_goal']) && $p['progress'] >= 90)
             <span class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-gold-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-fire"></i> Hampir Tercapai</span>
         @endif
     </a>
@@ -49,6 +49,7 @@
         @endif
         <h3 class="mb-1.5 text-lg font-bold text-primary-900"><a href="{{ $p['url'] }}" class="transition-colors hover:text-primary-600">{{ $p['name'] }}</a></h3>
         <div class="mt-auto">
+            @if(!empty($p['show_goal']))
             <div class="mb-1.5 flex items-center justify-between gap-2 text-xs text-gray-500">
                 <span>Terkumpul <strong class="text-primary-700">{{ $p['collected'] }}</strong></span>
                 <span>Target {{ $p['goal'] }}</span>
@@ -56,6 +57,7 @@
             <div class="h-2 w-full overflow-hidden rounded-full bg-primary-100">
                 <div class="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400" style="width: {{ max(4, $p['progress']) }}%"></div>
             </div>
+            @endif
             <div class="mt-4 flex gap-2">
                 <a href="{{ $p['wa_url'] }}" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1"
                    data-wa-log="1" data-wa-source="{{ $p['wa_source'] }}" data-wa-program="{{ $p['wa_program'] }}"><i class="fab fa-whatsapp"></i> Berbagi sekarang</a>

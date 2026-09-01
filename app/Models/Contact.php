@@ -46,10 +46,10 @@ class Contact extends Model
     public function statusLabel(): string
     {
         $labels = [
-            self::STATUS_PROSPECT => 'Prospect',
-            self::STATUS_CONTACTED => 'Contacted',
-            self::STATUS_DONATED => 'Donated',
-            self::STATUS_CHURNED => 'Churned',
+            self::STATUS_PROSPECT => 'Prospek',
+            self::STATUS_CONTACTED => 'Simpan',
+            self::STATUS_DONATED => 'Wakif',
+            self::STATUS_CHURNED => 'Stop',
         ];
 
         return $labels[$this->status] ?? $this->status;

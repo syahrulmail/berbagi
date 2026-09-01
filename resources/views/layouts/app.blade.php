@@ -25,25 +25,14 @@
                 <i class="fas fa-gauge-high"></i><span class="nav-text">Dashboard</span>
             </a>
 
-            @if(auth()->user()->isAdmin())
-                <a href="{{ route('branches.index') }}" class="nav-item {{ request()->routeIs('branches.*') ? 'active' : '' }}">
-                    <i class="fas fa-building"></i><span class="nav-text">Cabang</span>
-                </a>
-                <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i><span class="nav-text">Pengguna</span>
-                </a>
-            @endif
+            <div class="nav-section">Operasional</div>
 
-            <a href="{{ route('profile.edit') }}" class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                <i class="fas fa-user-circle"></i><span class="nav-text">Profil Saya</span>
+            <a href="{{ route('donations.index') }}" class="nav-item {{ request()->routeIs('donations.*') ? 'active' : '' }}">
+                <i class="fas fa-hand-holding-dollar"></i><span class="nav-text">Donasi</span>
             </a>
 
             <a href="{{ route('contacts.index') }}" class="nav-item {{ request()->routeIs('contacts.*') ? 'active' : '' }}">
                 <i class="fas fa-address-book"></i><span class="nav-text">Kontak</span>
-            </a>
-
-            <a href="{{ route('donations.index') }}" class="nav-item {{ request()->routeIs('donations.*') ? 'active' : '' }}">
-                <i class="fas fa-hand-holding-dollar"></i><span class="nav-text">Donasi</span>
             </a>
 
             <a href="{{ route('programs.index') }}" class="nav-item {{ request()->routeIs('programs.*') ? 'active' : '' }}">
@@ -59,11 +48,19 @@
             </a>
 
             @if(auth()->user()->isAdmin())
+                <div class="nav-section">Manajemen</div>
+
+                <a href="{{ route('branches.index') }}" class="nav-item {{ request()->routeIs('branches.*') ? 'active' : '' }}">
+                    <i class="fas fa-building"></i><span class="nav-text">Cabang</span>
+                </a>
+                <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                    <i class="fas fa-users"></i><span class="nav-text">Pengguna</span>
+                </a>
                 <a href="{{ route('campaign-tags.index') }}" class="nav-item {{ request()->routeIs('campaign-tags.*') ? 'active' : '' }}">
                     <i class="fas fa-tags"></i><span class="nav-text">Label Kampanye</span>
                 </a>
                 <a href="{{ route('banners.index') }}" class="nav-item {{ request()->routeIs('banners.*') ? 'active' : '' }}">
-                    <i class="fas fa-images"></i><span class="nav-text">Banner & Label</span>
+                    <i class="fas fa-images"></i><span class="nav-text">Banner &amp; Label</span>
                 </a>
                 <a href="{{ route('achievements.index') }}" class="nav-item {{ request()->routeIs('achievements.*') ? 'active' : '' }}">
                     <i class="fas fa-medal"></i><span class="nav-text">Pencapaian</span>
@@ -71,12 +68,11 @@
             @endif
 
             @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
+                <div class="nav-section">Sistem</div>
+
                 <a href="{{ route('activity-logs.index') }}" class="nav-item {{ request()->routeIs('activity-logs.*') ? 'active' : '' }}">
                     <i class="fas fa-clipboard-list"></i><span class="nav-text">Log Aktivitas</span>
                 </a>
-            @endif
-
-            @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
                 <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                     <i class="fas fa-gear"></i><span class="nav-text">Pengaturan</span>
                 </a>
@@ -115,6 +111,16 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="user-dropdown" id="user-dropdown">
+                        <div class="dropdown-head">
+                            <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+                            <div class="user-info">
+                                <strong>{{ auth()->user()->name }}</strong>
+                                <span>{{ auth()->user()->roleLabel() }}</span>
+                            </div>
+                        </div>
+                        <a href="{{ route('profile.edit') }}" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> Profil Saya
+                        </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="dropdown-item text-danger">
@@ -127,25 +133,30 @@
         </header>
 
         <main class="content">
-            @if(session('success'))
-                <div class="alert alert-success">
-                    <i class="fas fa-circle-check"></i> {{ session('success') }}
-                </div>
-            @endif
+            @hasSection('hideAlerts')
+            @else
+                @if(session('success'))
+                    <div class="alert alert-success">
+                        <i class="fas fa-circle-check"></i> {{ session('success') }}
+                    </div>
+                @endif
 
-            @if(session('error'))
-                <div class="alert alert-error">
-                    <i class="fas fa-circle-exclamation"></i> {{ session('error') }}
-                </div>
-            @endif
+                @if(session('error'))
+                    <div class="alert alert-error">
+                        <i class="fas fa-circle-exclamation"></i> {{ session('error') }}
+                    </div>
+                @endif
 
-            @if($errors->any())
-                <div class="alert alert-error">
-                    <i class="fas fa-circle-exclamation"></i>
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
+                @if($errors->any())
+                    <div class="alert alert-error">
+                        <i class="fas fa-circle-exclamation"></i>
+                        <div class="alert-msgs">
+                            @foreach($errors->all() as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             @endif
 
             @yield('content')

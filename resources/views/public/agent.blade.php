@@ -49,8 +49,9 @@
         return [
             'slug'        => $p->slug,
             'name'        => $p->name,
-            'description' => $p->description,
+            'description' => \Illuminate\Support\Str::limit(strip_tags((string) $p->description), 160),
             'image'       => $p->image_url,
+            'media'       => $p->media_slides,
             'category'    => $p->category ?? 'penggalangan',
             'tags'        => $p->campaignTags->map(function ($t) use ($defaultTagSlugs) {
                 return [
@@ -64,6 +65,7 @@
             'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
             'remaining'   => $isComplete ? null : 'Rp ' . number_format(max(0, $goal - $collected), 0, ',', '.'),
             'is_complete' => $isComplete,
+            'show_goal'   => (bool) $p->show_goal,
             'url'         => route('public.agent-program', ['agentSlug' => $agen->slug, 'program' => $p->slug]),
             'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
             'wa_source'   => 'agent',

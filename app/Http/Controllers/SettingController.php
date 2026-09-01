@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\Branch;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,6 @@ class SettingController extends Controller
     public function index()
     {
         $settings = [
-            'global_target' => Setting::get('global_target', '1500000000'),
             'trustbar_text' => Setting::get('trustbar_text', 'Badan Wakaf Al Qur\'an · Terdaftar & Berizin'),
             'home_quote' => Setting::get('home_quote', '<p>&quot;Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.&quot; — <strong>HR. Ahmad &amp; Thabrani</strong></p>'),
             'home_testimonials' => $this->decodeTestimonials(Setting::get('home_testimonials', '[]')),
@@ -23,13 +23,14 @@ class SettingController extends Controller
             'wa_agent_template' => Setting::get('wa_agent_template', 'Assalamualaikum {agen}, saya ingin berdonasi untuk program {program} melalui Anda.'),
         ];
 
-        return view('settings.index', compact('settings'));
+        $totalGlobalTarget = Branch::where('is_active', true)->sum('target_amount');
+
+        return view('settings.index', compact('settings', 'totalGlobalTarget'));
     }
 
     public function update(Request $request)
     {
         $data = $request->validate([
-            'global_target' => ['required', 'numeric', 'min:0'],
             'trustbar_text' => ['nullable', 'string', 'max:160'],
             'home_quote' => ['nullable', 'string', 'max:2000'],
             'wa_reminder_enabled' => ['nullable'],
@@ -49,7 +50,8 @@ class SettingController extends Controller
             'logos.*.photo_remove' => ['nullable', 'string', 'in:0,1'],
         ]);
 
-        Setting::set('global_target', (string) $data['global_target']);
+        Setting::where('key', 'global_target')->delete();
+
         Setting::set('trustbar_text', trim($data['trustbar_text'] ?? ''));
         Setting::set('home_quote', $this->sanitizeRichText($data['home_quote'] ?? ''));
         Setting::set('wa_reminder_enabled', $request->boolean('wa_reminder_enabled') ? '1' : '0');

@@ -2,6 +2,29 @@
 
 @section('title', 'Manajemen Program')
 
+@php
+    $sort = request('sort', 'name');
+    $dir = request('dir', 'asc');
+    $sortUrl = function ($key) use ($sort, $dir) {
+        $query = request()->except(['page']);
+        $query['sort'] = $key;
+        if ($sort === $key) {
+            $query['dir'] = $dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $query['dir'] = in_array($key, ['collected', 'donations'], true) ? 'desc' : 'asc';
+        }
+        return route('programs.index', $query);
+    };
+    $sortIcon = function ($key) use ($sort, $dir) {
+        if ($sort !== $key) {
+            return '<i class="fas fa-sort" style="opacity:.4; font-size:11px;"></i>';
+        }
+        return $dir === 'asc'
+            ? '<i class="fas fa-sort-up"></i>'
+            : '<i class="fas fa-sort-down"></i>';
+    };
+@endphp
+
 @section('content')
 <div class="page-header">
     <div>
@@ -12,16 +35,54 @@
 </div>
 
 <div class="card">
+    <form method="GET" action="{{ route('programs.index') }}" class="filter-bar">
+        <div class="form-group">
+            <div class="input-icon">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="search" name="search" placeholder="Cari nama program..." value="{{ request('search') }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <select name="program_category">
+                <option value="">Semua Kategori</option>
+                @foreach(\App\Models\Program::CATEGORIES as $code => $label)
+                    <option value="{{ $code }}" {{ request('program_category') == $code ? 'selected' : '' }}>{{ $label }} ({{ $code }})</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
+            <select name="tag">
+                <option value="">Semua Tags</option>
+                @foreach($allTags as $tag)
+                    <option value="{{ $tag->id }}" {{ request('tag') == $tag->id ? 'selected' : '' }}>{{ $tag->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
+            <select name="status">
+                <option value="">Semua Status</option>
+                <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Aktif</option>
+                <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Nonaktif</option>
+            </select>
+        </div>
+        <input type="hidden" name="sort" value="{{ $sort }}">
+        <input type="hidden" name="dir" value="{{ $dir }}">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+        @if(request()->exists('search') || request()->exists('program_category') || request()->exists('tag') || request()->exists('status'))
+            <a href="{{ route('programs.index') }}" class="btn btn-outline"><i class="fas fa-rotate-left"></i> Reset</a>
+        @endif
+    </form>
+
     <div class="table-responsive">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Program</th>
+                    <th><a href="{{ $sortUrl('name') }}" class="sort-link">Program {!! $sortIcon('name') !!}</a></th>
+                    <th>Kategori Program</th>
                     <th>Tags</th>
-                    <th>Goal</th>
-                    <th>Terkumpul</th>
+                    <th><a href="{{ $sortUrl('collected') }}" class="sort-link">Terkumpul {!! $sortIcon('collected') !!}</a></th>
                     <th>Progress</th>
-                    <th>Donasi</th>
+                    <th><a href="{{ $sortUrl('donations') }}" class="sort-link">Donasi {!! $sortIcon('donations') !!}</a></th>
                     <th>Status</th>
                     <th class="text-right">Aksi</th>
                 </tr>
@@ -34,6 +95,14 @@
                     <tr>
                         <td><strong>{{ $program->name }}</strong></td>
                         <td>
+                            @if($program->program_category)
+                                <span class="badge">{{ $program->category_label }}</span>
+                                <small style="display:block; color: var(--gray-500);">{{ $program->program_category }}</small>
+                            @else
+                                <span class="badge badge-gray">-</span>
+                            @endif
+                        </td>
+                        <td>
                             @foreach($program->campaignTags as $tag)
                                 <span class="tag-pill" style="background: {{ $tag->color }}; margin-bottom:2px;">{{ $tag->name }}</span>
                             @endforeach
@@ -41,15 +110,9 @@
                                 <span class="badge badge-gray">-</span>
                             @endif
                         </td>
-                        <td>Rp {{ number_format($program->goal_amount, 0, ',', '.') }}</td>
                         <td>Rp {{ number_format($program->total_collected, 0, ',', '.') }}</td>
-                        <td style="min-width: 160px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="progress-track" style="flex:1;"><div class="progress-fill" style="width: {{ $progress }}%"></div></div>
-                                <span class="progress-percent">{{ $progress }}%</span>
-                            </div>
-                        </td>
-                        <td>{{ $program->donations_count }}</td>
+                        <td><span class="progress-percent">{{ $progress }}%</span></td>
+                        <td>{{ $program->donation_items_count }}</td>
                         <td>
                             <span class="badge {{ $program->is_active ? 'badge-green' : 'badge-gray' }}">
                                 {{ $program->is_active ? 'Aktif' : 'Nonaktif' }}

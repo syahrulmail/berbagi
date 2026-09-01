@@ -83,14 +83,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 420px;
+        min-height: 520px;
     }
     .hero-cutout-glow {
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 340px;
-        height: 340px;
+        width: 460px;
+        height: 460px;
         transform: translate(-50%, -50%);
         background: radial-gradient(circle, rgba(255, 200, 90, .28) 0%, rgba(8, 142, 132, .18) 45%, transparent 70%);
         filter: blur(18px);
@@ -105,6 +105,7 @@
     .hero-cutout-stage {
         position: relative;
         width: 100%;
+        height: 460px;
         display: grid;
         place-items: center;
         transform-style: preserve-3d;
@@ -116,15 +117,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: 18px;
+        width: 100%;
+        height: 100%;
         opacity: 0;
-        transform: translateY(24px) scale(.94);
-        transition: opacity .7s ease, transform .7s cubic-bezier(.22, .61, .36, 1);
+        transform: scale(1.08);
+        transition: opacity .5s ease, transform .7s cubic-bezier(.22, .61, .36, 1);
         pointer-events: none;
     }
     .hero-cutout-slide.active {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: scale(1);
         pointer-events: auto;
     }
     .hero-cutout-imgwrap {
@@ -140,15 +144,16 @@
     .hero-cutout-img {
         display: block;
         width: auto;
-        max-width: 320px;
-        max-height: 340px;
+        max-width: 460px;
+        max-height: 460px;
         filter: drop-shadow(0 24px 40px rgba(2, 35, 33, .35));
         object-fit: contain;
     }
     @media (max-width: 640px) {
-        .hero-cutout-shell { min-height: 360px; }
-        .hero-cutout-img { max-width: 260px; max-height: 280px; }
-        .hero-cutout-glow { width: 280px; height: 280px; }
+        .hero-cutout-shell { min-height: 420px; }
+        .hero-cutout-stage { height: 360px; }
+        .hero-cutout-img { max-width: 340px; max-height: 340px; }
+        .hero-cutout-glow { width: 340px; height: 340px; }
     }
 
     .hero-enter {
@@ -173,6 +178,7 @@
         .hero-cutout-slide {
             opacity: 1;
             transform: none;
+            transition: none;
         }
         .hero-cutout-slide:not(.active) { display: none; }
         .hero-enter {

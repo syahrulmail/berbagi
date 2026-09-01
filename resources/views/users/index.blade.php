@@ -11,10 +11,45 @@
     <a href="{{ route('users.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Pengguna</a>
 </div>
 
+<div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 20px;">
+    <div class="metric-card">
+        <div class="metric-icon blue"><i class="fas fa-users"></i></div>
+        <div class="metric-info">
+            <div class="metric-label">Total Pengguna</div>
+            <div class="metric-value">{{ $stats['total'] }}</div>
+            <div class="metric-sub">{{ $stats['active'] }} aktif</div>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon red"><i class="fas fa-user-shield"></i></div>
+        <div class="metric-info">
+            <div class="metric-label">Admin Super</div>
+            <div class="metric-value">{{ $stats['admin'] }}</div>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon orange"><i class="fas fa-user-tie"></i></div>
+        <div class="metric-info">
+            <div class="metric-label">Supervisor</div>
+            <div class="metric-value">{{ $stats['supervisor'] }}</div>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon green"><i class="fas fa-user-check"></i></div>
+        <div class="metric-info">
+            <div class="metric-label">Agen</div>
+            <div class="metric-value">{{ $stats['agen'] }}</div>
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <form method="GET" action="{{ route('users.index') }}" class="filter-bar">
         <div class="form-group">
-            <input type="search" name="search" placeholder="Cari nama / email / username..." value="{{ request('search') }}">
+            <div class="input-icon">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="search" name="search" placeholder="Cari nama / email / username..." value="{{ request('search') }}">
+            </div>
         </div>
         <div class="form-group">
             <select name="role">
@@ -26,6 +61,9 @@
             </select>
         </div>
         <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+        @if(request('search') || request('role'))
+            <a href="{{ route('users.index') }}" class="btn btn-outline"><i class="fas fa-rotate-left"></i> Reset</a>
+        @endif
     </form>
 
     <div class="table-responsive">
@@ -45,7 +83,14 @@
             <tbody>
                 @forelse($users as $user)
                     <tr>
-                        <td><strong>{{ $user->name }}</strong></td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="user-avatar" style="width:34px;height:34px;font-size:13px;flex-shrink:0;">
+                                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                                </div>
+                                <strong>{{ $user->name }}</strong>
+                            </div>
+                        </td>
                         <td>{{ $user->username }}</td>
                         <td>{{ $user->email }}</td>
                         <td>

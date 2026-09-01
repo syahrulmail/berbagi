@@ -76,8 +76,16 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,supervisor,agen')->group(function () {
         Route::resource('contacts', ContactController::class)->except('show');
+        Route::post('contacts/quick', [ContactController::class, 'storeQuick'])->name('contacts.quick');
+        Route::post('contacts/paste', [ContactController::class, 'storePaste'])->name('contacts.paste');
+        Route::post('contacts/import', [ContactController::class, 'import'])->name('contacts.import');
+        Route::get('contacts/{contact}/detail', [ContactController::class, 'detail'])->name('contacts.detail');
+        Route::get('contacts/{contact}/edit-fields', [ContactController::class, 'editFields'])->name('contacts.edit-fields');
         Route::resource('donations', DonationController::class)->except('show');
+        Route::get('donations/{donation}/detail', [DonationController::class, 'detail'])->name('donations.detail');
+        Route::get('donations/{donation}/edit-fields', [DonationController::class, 'editFields'])->name('donations.edit-fields');
         Route::resource('programs', ProgramController::class)->except('show');
+        Route::post('/uploads/rich-image', [ProgramController::class, 'uploadRichImage'])->name('uploads.rich-image');
         Route::resource('whatsapp', WhatsAppController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::resource('followups', WaFollowupController::class)->only(['index']);
         Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');

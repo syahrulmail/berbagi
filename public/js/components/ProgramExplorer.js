@@ -10,7 +10,7 @@
             sticky: { type: Boolean, default: false }
         },
         data: function () {
-            return { q: '', active: 'semua', detail: null, showFilters: false };
+            return { q: '', active: 'semua', detail: null, showFilters: false, slide: 0, slideTimer: null };
         },
         computed: {
             filtered: function () {
@@ -39,8 +39,37 @@
             toggleFilters: function () { this.showFilters = !this.showFilters; },
             openDetail: function (p) { this.detail = p; },
             closeDetail: function () { this.detail = null; },
+            slidesFor: function (p) {
+                if (!p) return [];
+                if (p.media && p.media.length) return p.media;
+                return p.image ? [{ type: 'image', url: p.image }] : [];
+            },
+            nextSlide: function (p) {
+                var n = this.slidesFor(p).length;
+                if (n > 1) { this.slide = (this.slide + 1) % n; this.resetSlideTimer(p); }
+            },
+            prevSlide: function (p) {
+                var n = this.slidesFor(p).length;
+                if (n > 1) { this.slide = (this.slide - 1 + n) % n; this.resetSlideTimer(p); }
+            },
+            resetSlideTimer: function (p) {
+                var self = this;
+                if (this.slideTimer) { clearInterval(this.slideTimer); this.slideTimer = null; }
+                var n = this.slidesFor(p).length;
+                if (n <= 1) return;
+                this.slideTimer = setInterval(function () {
+                    var s = self.slidesFor(self.detail);
+                    var cur = s[self.slide];
+                    if (cur && cur.type === 'video') return;
+                    self.slide = (self.slide + 1) % n;
+                }, 4500);
+            },
             onKey: function (e) {
                 if (e.key === 'Escape') this.closeDetail();
+                else if (this.detail && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                    if (e.key === 'ArrowLeft') this.prevSlide(this.detail);
+                    else this.nextSlide(this.detail);
+                }
             },
             popular: function (p) {
                 var arr = this.filtered;
@@ -77,6 +106,9 @@
         watch: {
             detail: function (val) {
                 document.body.style.overflow = val ? 'hidden' : '';
+                this.slide = 0;
+                if (this.slideTimer) { clearInterval(this.slideTimer); this.slideTimer = null; }
+                if (val) this.resetSlideTimer(val);
             }
         },
         mounted: function () {
@@ -84,6 +116,7 @@
         },
         beforeUnmount: function () {
             document.removeEventListener('keydown', this.onKey);
+            if (this.slideTimer) { clearInterval(this.slideTimer); this.slideTimer = null; }
             document.body.style.overflow = '';
         },
         template: '<div>' +
@@ -116,8 +149,8 @@
             '        <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-white" :class="p.category === \'penyaluran\' ? \'bg-gold-500\' : \'bg-primary-500\'">{{ p.category }}</span>' +
             '        <span v-if="defaultTag(p)" class="rounded-full px-3 py-1 text-xs font-bold text-white" :style="{ background: defaultTag(p).color, color: textColor(defaultTag(p).color) }">{{ defaultTag(p).name }}</span>' +
             '      </span>' +
-            '      <span v-if="p.is_complete" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-check-circle"></i> Tercapai</span>' +
-            '      <span v-else-if="p.progress >= 90" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-gold-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
+            '      <span v-if="p.show_goal && p.is_complete" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-check-circle"></i> Tercapai</span>' +
+            '      <span v-else-if="p.show_goal && p.progress >= 90" class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-gold-500 px-3 py-1 text-xs font-bold text-white"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
             '    </button>' +
             '    <div class="flex flex-1 flex-col p-5">' +
             '      <div v-if="otherTags(p).length" class="mb-2 flex flex-wrap gap-1.5">' +
@@ -126,14 +159,14 @@
             '      <h3 class="mb-1.5 text-lg font-bold text-primary-900"><button type="button" class="cursor-pointer text-left transition-colors hover:text-primary-600" @click="openDetail(p)">{{ p.name }}</button></h3>' +
             '      <p class="mb-4 line-clamp-2 text-sm text-gray-600">{{ p.description }}</p>' +
             '      <div class="mt-auto">' +
-            '        <div class="mb-1.5 flex items-center justify-between gap-2 text-xs text-gray-500">' +
+            '      <div v-if="p.show_goal" class="mb-1.5 flex items-center justify-between gap-2 text-xs text-gray-500">' +
             '          <span>Terkumpul <strong class="text-primary-700">{{ p.collected }}</strong></span>' +
             '          <span>Target {{ p.goal }}</span>' +
             '        </div>' +
-            '        <div class="h-2 w-full overflow-hidden rounded-full bg-primary-100">' +
+            '        <div v-if="p.show_goal" class="h-2 w-full overflow-hidden rounded-full bg-primary-100">' +
             '          <div class="program-progress-anim h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-400" :style="{ \'--p\': Math.max(4, p.progress) + \'%\', width: Math.max(4, p.progress) + \'%\' }"></div>' +
             '        </div>' +
-            '        <div class="mt-1.5 flex items-center justify-between gap-2 text-[11px]">' +
+            '        <div v-if="p.show_goal" class="mt-1.5 flex items-center justify-between gap-2 text-[11px]">' +
             '          <span v-if="p.is_complete" class="font-semibold text-emerald-600"><i class="fas fa-check-circle"></i> Target tercapai</span>' +
             '          <span v-else-if="p.remaining" class="truncate font-semibold text-gray-500">Masih perlu <strong class="text-primary-700">{{ p.remaining }}</strong></span>' +
             '          <span v-else></span>' +
@@ -155,15 +188,28 @@
             '<teleport to="body">' +
             '<div v-if="detail" class="pdetail-overlay" @click.self="closeDetail">' +
             '  <div class="pdetail-modal" role="dialog" aria-modal="true">' +
-            '    <div class="pdetail-media">' +
-            '      <img v-if="detail.image" :src="detail.image" :alt="detail.name">' +
-            '      <div v-else class="pdetail-media-ph"><i class="fas fa-book-quran"></i></div>' +
-            '      <div class="pdetail-badges">' +
+            '<div class="pdetail-media">' +
+            '  <div v-if="slidesFor(detail).length > 1" class="pdetail-slider">' +
+            '    <div class="pdetail-track" :style="{ transform: \'translateX(-\' + (slide * 100) + \'%)\' }">' +
+            '      <div v-for="(s, i) in slidesFor(detail)" :key="i" class="pdetail-slide" :class="s.type === \'video\' ? \'pdetail-slide-video\' : \'\'">' +
+            '        <img v-if="s.type === \'image\'" :src="s.url" :alt="detail.name">' +
+            '        <div v-else class="pdetail-video-box"><iframe :src="slide === i ? s.url : \'\'" :title="\'Video \' + detail.name" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>' +
+            '      </div>' +
+            '    </div>' +
+            '    <button type="button" class="pdetail-nav pdetail-nav-prev" @click="prevSlide(detail)" aria-label="Slide sebelumnya"><i class="fas fa-chevron-left"></i></button>' +
+            '    <button type="button" class="pdetail-nav pdetail-nav-next" @click="nextSlide(detail)" aria-label="Slide berikutnya"><i class="fas fa-chevron-right"></i></button>' +
+            '    <div class="pdetail-dots">' +
+            '      <button v-for="(s, i) in slidesFor(detail)" :key="\'d\' + i" type="button" class="pdetail-dot" :class="{ active: slide === i }" :aria-label="\'Pergi ke slide \' + (i + 1)" @click="slide = i"></button>' +
+            '    </div>' +
+            '  </div>' +
+            '  <img v-else-if="detail.image" :src="detail.image" :alt="detail.name">' +
+            '  <div v-else class="pdetail-media-ph"><i class="fas fa-book-quran"></i></div>' +
+            '  <div class="pdetail-badges">' +
             '        <span class="pdetail-cat" :class="detail.category === \'penyaluran\' ? \'is-gold\' : \'\'">{{ detail.category }}</span>' +
             '        <span v-for="(t, i) in defaultTags(detail)" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
             '      </div>' +
-            '      <span v-if="detail.is_complete" class="pdetail-done"><i class="fas fa-check-circle"></i> Tercapai</span>' +
-            '      <span v-else-if="detail.progress >= 90" class="pdetail-hot"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
+            '      <span v-if="detail.show_goal && detail.is_complete" class="pdetail-done"><i class="fas fa-check-circle"></i> Tercapai</span>' +
+            '      <span v-else-if="detail.show_goal && detail.progress >= 90" class="pdetail-hot"><i class="fas fa-fire"></i> Hampir Tercapai</span>' +
             '      <button type="button" class="pdetail-close" @click="closeDetail" aria-label="Tutup"><i class="fas fa-xmark"></i></button>' +
             '    </div>' +
             '    <div class="pdetail-body">' +
@@ -172,7 +218,7 @@
             '        <span v-for="(t, i) in otherTags(detail)" :key="i" class="pdetail-tag" :style="{ background: t.color, color: textColor(t.color) }">{{ t.name }}</span>' +
             '      </div>' +
             '      <p class="pdetail-desc">{{ detail.description }}</p>' +
-            '      <div class="pdetail-progress">' +
+            '      <div v-if="detail.show_goal" class="pdetail-progress">' +
             '        <div class="pdetail-progress-track"><div :style="{ width: Math.max(4, detail.progress) + \'%\' }"></div></div>' +
             '        <div class="pdetail-progress-meta">' +
             '          <span class="pdetail-pct">{{ detail.progress }}%</span>' +
@@ -180,7 +226,7 @@
             '          <span v-else-if="detail.remaining" class="pdetail-rem">Sisa <strong>{{ detail.remaining }}</strong></span>' +
             '        </div>' +
             '      </div>' +
-            '      <div class="pdetail-stats">' +
+            '      <div v-if="detail.show_goal" class="pdetail-stats">' +
             '        <div><span>Terkumpul</span><strong>{{ detail.collected }}</strong></div>' +
             '        <div><span>Target</span><strong>{{ detail.goal }}</strong></div>' +
             '        <div v-if="!detail.is_complete && detail.remaining"><span>Dibutuhkan</span><strong class="is-gold">{{ detail.remaining }}</strong></div>' +

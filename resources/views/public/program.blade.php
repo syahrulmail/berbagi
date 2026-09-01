@@ -22,10 +22,135 @@
         border-color: #086e66;
         color: #fff;
     }
+    .program-cat-badge {
+        background: #08574f;
+    }
+    .gallery-thumb {
+        border-color: rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+        transition: border-color 0.15s ease, opacity 0.15s ease;
+    }
+    .gallery-thumb:hover {
+        border-color: #08a899;
+        opacity: 0.9;
+    }
+    .gallery-thumb-active {
+        border-color: #08a899;
+        box-shadow: 0 0 0 3px rgba(8, 168, 153, 0.18);
+    }
+    .media-slider { position: relative; overflow: hidden; }
+    .media-slides-track { display: flex; transition: transform .5s ease; }
+    .media-slide { flex: 0 0 100%; min-width: 0; }
+    .media-slide-img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+    .media-slide-video .media-slide-inner { position: relative; width: 100%; aspect-ratio: 4/3; background: #022321; }
+    .media-slide-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .media-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 3;
+        width: 38px;
+        height: 38px;
+        border: none;
+        border-radius: 9999px;
+        background: rgba(2, 35, 33, .5);
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transition: opacity .2s, background .2s;
+    }
+    .media-arrow:hover { background: rgba(2, 35, 33, .75); }
+    .media-arrow-prev { left: 12px; }
+    .media-arrow-next { right: 12px; }
+    .media-slider:hover .media-arrow { opacity: 1; }
+    @media (max-width: 640px) {
+        .media-arrow { opacity: 1; width: 32px; height: 32px; }
+        .media-arrow-prev { left: 8px; }
+        .media-arrow-next { right: 8px; }
+    }
+    .media-dots {
+        position: absolute;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        z-index: 3;
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+    }
+    .media-dot {
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border: none;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, .55);
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .media-dot-active { width: 22px; background: #fff; }
+    .media-counter {
+        position: absolute;
+        bottom: 10px;
+        right: 14px;
+        z-index: 3;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: rgba(2, 35, 33, .5);
+        padding: 4px 10px;
+        border-radius: 9999px;
+        pointer-events: none;
+    }
+    .media-thumb { position: relative; }
+    .media-thumb-video-badge {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 20px;
+        background: rgba(2, 35, 33, .35);
+    }
+    /* Donasi Cepat sticky/melayang saat discroll — hanya mode desktop (layar tinggi) */
+    @media (min-width: 1024px) and (min-height: 640px) {
+        .donasi-cepat-aside {
+            position: sticky;
+            top: 96px;
+            align-self: start;
+        }
+        .donasi-cepat-card {
+            box-shadow: 0 2px 8px rgba(2, 35, 33, .05), 0 12px 28px -8px rgba(2, 35, 33, .1);
+        }
+    }
+    .rich-text { color: var(--gray-700); }
+    .rich-text p { margin: 8px 0; }
+    .rich-text h2, .rich-text h3 { margin: 16px 0 8px; color: #043d3a; font-weight: 700; }
+    .rich-text h2 { font-size: 1.25rem; }
+    .rich-text h3 { font-size: 1.1rem; }
+    .rich-text ul, .rich-text ol { margin: 8px 0; padding-left: 24px; }
+    .rich-text blockquote {
+        margin: 12px 0;
+        padding: 10px 16px;
+        border-left: 4px solid #3bb3ae;
+        background: #f0faf8;
+        color: var(--gray-700);
+        border-radius: 0 10px 10px 0;
+    }
+    .rich-text a { color: #086e66; text-decoration: underline; }
+    .rich-text img { max-width: 100%; border-radius: 12px; margin: 8px 0; }
+    /* Swipe untuk galeri media */
+    .media-slider { touch-action: pan-y; }
+    .media-slides-track.media-dragging { transition: none !important; }
+    .media-slider.media-dragging * { user-select: none; -webkit-user-select: none; }
 </style>
 @endpush
 
 @php
+    $showGoal = (bool) $program->show_goal;
     $progress = $program->goal_amount > 0 ? min(100, round(((float) $collected / (float) $program->goal_amount) * 100, 1)) : 0;
     $isComplete = $program->goal_amount > 0 && (float) $collected >= (float) $program->goal_amount;
     $remaining = $isComplete ? null : max(0, (float) $program->goal_amount - (float) $collected);
@@ -50,7 +175,7 @@
 @endphp
 
 @section('donasiBarTitle', $program->name)
-@section('donasiBarSub', $isComplete ? 'Target tercapai · Terima kasih' : 'Progress ' . $progress . '% · ' . ($remaining !== null ? 'Dibutuhkan Rp ' . number_format($remaining, 0, ',', '.') : 'Target tercapai'))
+@section('donasiBarSub', $showGoal ? ($isComplete ? 'Target tercapai · Terima kasih' : 'Progress ' . $progress . '% · ' . ($remaining !== null ? 'Dibutuhkan Rp ' . number_format($remaining, 0, ',', '.') : 'Target tercapai')) : 'Bantu wujudkan program kebaikan ini bersama BWA')
 @section('donasiBarUrl', $waUrl)
 @section('donasiBarSource', $waSource)
 @section('donasiBarProgram', $program->id)
@@ -86,43 +211,67 @@
 
         <div class="grid items-start gap-8 lg:grid-cols-2">
             <div class="min-w-0">
+                @php $slides = $program->media_slides; $slideCount = count($slides); @endphp
                 <div class="relative overflow-hidden rounded-3xl border border-black/5 shadow-card" data-reveal>
-                    @if($program->image)
-                        <img src="{{ $program->image_url }}" alt="{{ $program->name }}" class="aspect-[4/3] w-full object-cover">
+                    @if($slideCount > 0)
+                    <div class="media-slider" id="mediaSlider">
+                        <div class="media-slides-track" id="mediaSliderTrack">
+                            @foreach($slides as $idx => $slide)
+                                @if($slide['type'] === 'video')
+                                <div class="media-slide media-slide-video">
+                                    <div class="media-slide-inner">
+                                        <iframe data-src="{{ $slide['url'] }}" title="Video {{ $program->name }}"
+                                                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowfullscreen loading="lazy" class="h-full w-full"></iframe>
+                                    </div>
+                                </div>
+                                @else
+                                <div class="media-slide">
+                                    <img src="{{ $slide['url'] }}" alt="{{ $program->name }} {{ $idx + 1 }}" class="media-slide-img" loading="lazy">
+                                </div>
+                                @endif
+                            @endforeach
+                        </div>
+                        @if($slideCount > 1)
+                        <button type="button" class="media-arrow media-arrow-prev" data-media-prev aria-label="Slide sebelumnya"><i class="fas fa-chevron-left"></i></button>
+                        <button type="button" class="media-arrow media-arrow-next" data-media-next aria-label="Slide berikutnya"><i class="fas fa-chevron-right"></i></button>
+                        <div class="media-dots" id="mediaDots" role="tablist" aria-label="Navigasi slide"></div>
+                        <span class="media-counter" id="mediaCounter">1 / {{ $slideCount }}</span>
+                        @endif
+                        @if($program->category)
+                            <span class="cat-badge {{ $program->category }} absolute left-4 top-4 !text-[12px] !px-3 !py-1.5">{{ $program->category }}</span>
+                        @endif
+                        @if($program->program_category)
+                            <span class="cat-badge program-cat-badge absolute right-4 top-4 !text-[12px] !px-3 !py-1.5">{{ $program->category_label }}</span>
+                        @endif
+                    </div>
                     @else
                         <div class="grid aspect-[4/3] w-full place-items-center bg-gradient-to-br from-primary-100 to-primary-50 text-primary-400">
                             <i class="fas fa-book-quran" style="font-size:72px;"></i>
                         </div>
                     @endif
-                    @if($program->category)
-                        <span class="cat-badge {{ $program->category }} absolute left-4 top-4 !text-[12px] !px-3 !py-1.5">{{ $program->category }}</span>
+
+                    @if($slideCount > 1)
+                    <div class="mt-4 grid grid-cols-4 gap-3" id="mediaSliderThumbs" data-reveal>
+                        @foreach($slides as $idx => $slide)
+                            <button type="button"
+                                    class="gallery-thumb media-thumb {{ $idx === 0 ? 'gallery-thumb-active' : '' }} aspect-[4/3] overflow-hidden rounded-xl border transition"
+                                    data-media-thumb="{{ $idx }}"
+                                    aria-label="Tampilkan media {{ $idx + 1 }}">
+                                @if($slide['type'] === 'video')
+                                    <img src="{{ $slide['thumb'] ?? '' }}" alt="Video {{ $program->name }}" class="h-full w-full object-cover">
+                                    <span class="media-thumb-video-badge"><i class="fab fa-youtube"></i></span>
+                                @else
+                                    <img src="{{ $slide['url'] }}" alt="{{ $program->name }} {{ $idx + 1 }}" class="h-full w-full object-cover" loading="lazy">
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
                     @endif
                 </div>
 
                 <div class="mt-6 lg:hidden" data-reveal>
-                    <div class="rounded-2xl border border-black/5 bg-primary-50/50 p-5">
-                        <div class="mb-2 flex items-center justify-between text-sm">
-                            <span class="text-gray-500">Terkumpul <strong class="text-primary-700">Rp {{ number_format($collected, 0, ',', '.') }}</strong></span>
-                            <span class="text-gray-500">Target Rp {{ number_format($program->goal_amount, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="progress-track" style="height:12px;">
-                            <div class="progress-fill" data-percent="{{ $progress }}" style="width:0;height:100%;"></div>
-                        </div>
-                        <div class="mt-1.5 flex items-center justify-between text-xs">
-                            <span class="text-gray-500">
-                                @if($isComplete)
-                                    <span class="font-semibold text-emerald-600"><i class="fas fa-check-circle"></i> Target tercapai</span>
-                                @else
-                                    Dibutuhkan <strong class="text-primary-700">Rp {{ number_format($remaining, 0, ',', '.') }}</strong>
-                                @endif
-                            </span>
-                            <span class="font-semibold text-primary-700">{{ $progress }}%</span>
-                        </div>
-                        <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-wa mt-4 w-full"
-                           data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
-                            <i class="fab fa-whatsapp"></i> Berbagi sekarang
-                        </a>
-                    </div>
+                    @include('public.partials.donasi-cepat-card')
                 </div>
 
                 <div class="mt-8" data-reveal>
@@ -135,16 +284,8 @@
                         @endforeach
                     </div>
                     <h1 class="text-3xl font-extrabold text-primary-900 md:text-4xl">{{ $program->name }}</h1>
-                    <p class="lead mt-4">{{ $program->description }}</p>
+                    <div class="rich-text lead mt-4">{!! $program->description !!}</div>
                 </div>
-
-                <section class="mt-12" data-reveal>
-                    <h2 class="text-xl font-bold text-primary-900">Tentang Program</h2>
-                    <div class="mt-4 space-y-4 leading-relaxed text-gray-600">
-                        <p>{{ $program->description }}</p>
-                        <p>Seluruh dana yang terhimpun dicatat resmi dan disalurkan melalui jaringan agen serta mitra Badan Wakaf Al Qur'an (BWA).</p>
-                    </div>
-                </section>
 
                 @if(count($relatedCards))
                     <section class="mt-14" data-reveal>
@@ -172,65 +313,8 @@
                 </section>
             </div>
 
-            <aside class="hidden lg:block" data-reveal>
-                <div class="rounded-3xl border border-black/5 bg-white p-6 shadow-card lg:sticky lg:top-24">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-bolt text-gold-500"></i>
-                        <h2 class="text-sm font-bold uppercase tracking-wide text-primary-900">Donasi Cepat</h2>
-                    </div>
-
-                    <div class="mt-5">
-                        <div class="mb-1.5 flex items-baseline justify-between gap-2 text-sm">
-                            <span class="text-gray-500">Terkumpul</span>
-                            <strong class="text-primary-700">Rp {{ number_format($collected, 0, ',', '.') }}</strong>
-                        </div>
-                        <div class="progress-track" style="height:12px;">
-                            <div class="progress-fill" data-percent="{{ $progress }}" style="width:0;height:100%;"></div>
-                        </div>
-                        <div class="mt-1.5 flex items-center justify-between gap-2 text-xs text-gray-500">
-                            <span>Target Rp {{ number_format($program->goal_amount, 0, ',', '.') }}</span>
-                            <span class="font-semibold text-primary-700">{{ $progress }}%</span>
-                        </div>
-                        <div class="mt-3 rounded-xl bg-primary-50 px-4 py-3 text-xs text-gray-600">
-                            @if($isComplete)
-                                <span class="font-semibold text-emerald-600"><i class="fas fa-check-circle"></i> Target program tercapai. Terima kasih atas dukungan Anda.</span>
-                            @else
-                                Dibutuhkan <strong class="text-primary-700">Rp {{ number_format($remaining, 0, ',', '.') }}</strong> untuk mencapai target.
-                            @endif
-                        </div>
-                    </div>
-
-                    <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-wa mt-5 w-full !py-3.5"
-                       data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
-                        <i class="fab fa-whatsapp"></i> Berbagi sekarang
-                    </a>
-                    <p class="mt-2 text-center text-xs text-gray-400">Mari berbagi, CS BWA siap melayani sepenuh hati</p>
-
-                    <div class="mt-5 flex gap-2">
-                        <a href="https://api.whatsapp.com/send?text={{ $shareText }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm flex-1"><i class="fab fa-whatsapp"></i> Bagikan</a>
-                        <button type="button" class="btn btn-outline btn-sm flex-1" data-copy-link><i class="fas fa-link"></i> Salin Link</button>
-                    </div>
-
-                    <div class="mt-4 flex items-center justify-center gap-3">
-                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($shareUrl) }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke Facebook" title="Bagikan ke Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="https://twitter.com/intent/tweet?url={{ urlencode($shareUrl) }}&text={{ $shareTitle }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke X" title="Bagikan ke X"><i class="fab fa-x-twitter"></i></a>
-                        <a href="https://api.whatsapp.com/send?text={{ $shareText }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke WhatsApp" title="Bagikan ke WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                        <a href="https://t.me/share/url?url={{ urlencode($shareUrl) }}&text={{ $shareTitle }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke Telegram" title="Bagikan ke Telegram"><i class="fab fa-telegram"></i></a>
-                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode($shareUrl) }}" target="_blank" rel="noopener" class="share-icon" aria-label="Bagikan ke LinkedIn" title="Bagikan ke LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="Instagram" aria-label="Bagikan ke Instagram" title="Bagikan ke Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="TikTok" aria-label="Bagikan ke TikTok" title="Bagikan ke TikTok"><i class="fab fa-tiktok"></i></a>
-                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="Threads" aria-label="Bagikan ke Threads" title="Bagikan ke Threads"><i class="fab fa-threads"></i></a>
-                        <a href="{{ $shareUrl }}" target="_blank" rel="noopener" class="share-icon" data-share-copy="Discord" aria-label="Bagikan ke Discord" title="Bagikan ke Discord"><i class="fab fa-discord"></i></a>
-                    </div>
-
-                    <div class="mt-5 border-t border-black/5 pt-4 text-xs text-gray-500">
-                        <p>Butuh bantuan? Hubungi</p>
-                        <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener" class="mt-1 inline-flex items-center gap-1.5 font-semibold text-primary-600 hover:text-primary-700"
-                           data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
-                            <i class="fab fa-whatsapp"></i> {{ $waNumber }}
-                        </a>
-                    </div>
-                </div>
+            <aside class="hidden lg:block donasi-cepat-aside" data-reveal>
+                @include('public.partials.donasi-cepat-card')
             </aside>
         </div>
     </div>
@@ -257,14 +341,13 @@
             done();
         }
     }
-    var btn = document.querySelector('[data-copy-link]');
-    if (btn) {
+    document.querySelectorAll('[data-copy-link]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             copyUrl(function () {
                 if (window.BerbagiToast) window.BerbagiToast('Link berhasil disalin.');
             });
         });
-    }
+    });
     document.querySelectorAll('[data-share-copy]').forEach(function (icon) {
         icon.addEventListener('click', function (e) {
             e.preventDefault();
@@ -274,6 +357,129 @@
             });
         });
     });
+
+    // ---- Auto slideshow media (gambar + video di belakang) ----
+    var slider = document.getElementById('mediaSlider');
+    if (!slider) return;
+    var track = document.getElementById('mediaSliderTrack');
+    var slides = track ? Array.prototype.slice.call(track.children) : [];
+    var count = slides.length;
+    if (count < 1) return;
+
+    var index = 0;
+    var timer = null;
+    var INTERVAL = 4500;
+
+    var prevBtn = slider.querySelector('[data-media-prev]');
+    var nextBtn = slider.querySelector('[data-media-next]');
+    var thumbs = Array.prototype.slice.call(document.querySelectorAll('[data-media-thumb]'));
+    var dotsWrap = document.getElementById('mediaDots');
+    var counter = document.getElementById('mediaCounter');
+    var dots = [];
+
+    function isVideo(i) {
+        return slides[i] && slides[i].classList.contains('media-slide-video');
+    }
+
+    function loadVideo(i) {
+        var iframe = slides[i] ? slides[i].querySelector('iframe[data-src]') : null;
+        if (iframe && !iframe.getAttribute('src')) {
+            iframe.setAttribute('src', iframe.getAttribute('data-src'));
+        }
+    }
+
+    function go(i) {
+        index = (i + count) % count;
+        if (track) track.style.transform = 'translateX(-' + (index * 100) + '%)';
+        thumbs.forEach(function (t, k) { t.classList.toggle('gallery-thumb-active', k === index); });
+        dots.forEach(function (d, k) { d.classList.toggle('media-dot-active', k === index); });
+        if (counter) counter.textContent = (index + 1) + ' / ' + count;
+        loadVideo(index);
+        restart();
+    }
+
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    function restart() {
+        stop();
+        timer = setInterval(function () {
+            if (isVideo(index)) return;
+            go(index + 1);
+        }, INTERVAL);
+    }
+
+    if (dotsWrap) {
+        for (var k = 0; k < count; k++) {
+            (function (k) {
+                var d = document.createElement('button');
+                d.type = 'button';
+                d.className = 'media-dot' + (k === 0 ? ' media-dot-active' : '');
+                d.setAttribute('aria-label', 'Pergi ke slide ' + (k + 1));
+                d.addEventListener('click', function () { go(k); });
+                dotsWrap.appendChild(d);
+                dots.push(d);
+            })(k);
+        }
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', function () { go(index - 1); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { go(index + 1); });
+    thumbs.forEach(function (t) {
+        t.addEventListener('click', function () { go(parseInt(t.getAttribute('data-media-thumb'), 10)); });
+    });
+
+    slider.addEventListener('mouseenter', stop);
+    slider.addEventListener('mouseleave', restart);
+
+    // Swipe / drag galeri media (jari & mouse)
+    var drag = null;
+    var SWIPE_THRESHOLD = 50;
+    function dragStart(x, pointerId) {
+        if (drag) return;
+        drag = { id: pointerId, startX: x, dx: 0, active: false };
+        track.classList.add('media-dragging');
+        stop();
+    }
+    function dragMove(x, pointerId) {
+        if (!drag || pointerId !== drag.id) return;
+        drag.dx = x - drag.startX;
+        if (Math.abs(drag.dx) > 8) drag.active = true;
+        track.style.transform = 'translateX(calc(-' + (index * 100) + '% + ' + drag.dx + 'px))';
+    }
+    function dragEnd(pointerId) {
+        if (!drag || pointerId !== drag.id) return;
+        var d = drag;
+        drag = null;
+        track.classList.remove('media-dragging');
+        if (d.active && Math.abs(d.dx) > SWIPE_THRESHOLD) {
+            go(index + (d.dx < 0 ? 1 : -1));
+        } else {
+            go(index);
+        }
+    }
+    function dragCancel(pointerId) {
+        if (!drag || pointerId !== drag.id) return;
+        drag = null;
+        track.classList.remove('media-dragging');
+        go(index);
+    }
+    slider.addEventListener('pointerdown', function (e) {
+        if (e.target.closest('button')) return;
+        dragStart(e.clientX, e.pointerId);
+    });
+    window.addEventListener('pointermove', function (e) { dragMove(e.clientX, e.pointerId); });
+    window.addEventListener('pointerup', function (e) { dragEnd(e.pointerId); });
+    window.addEventListener('pointercancel', function (e) { dragCancel(e.pointerId); });
+
+    document.addEventListener('keydown', function (e) {
+        if (document.activeElement && slider.contains(document.activeElement)) {
+            if (e.key === 'ArrowLeft') { e.preventDefault(); go(index - 1); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); go(index + 1); }
+        }
+    });
+
+    loadVideo(0);
+    restart();
 })();
 </script>
 @endpush
