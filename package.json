@@ -1,8 +1,8 @@
 {
     "private": true,
     "scripts": {
-        "build": "tailwindcss -i resources/css/app.css -o public/css/app.css --minify",
-        "watch": "tailwindcss -i resources/css/app.css -o public/css/app.css --watch"
+        "build": "tailwindcss -i resources/css/app.css -o public/css/app.css --minify && tailwindcss -i resources/css/mobile.css -o public/css/mobile.css --minify",
+        "watch": "tailwindcss -i resources/css/app.css -o public/css/app.css --watch && tailwindcss -i resources/css/mobile.css -o public/css/mobile.css --watch"
     },
     "dependencies": {
         "axios": "^0.21",

@@ -9,6 +9,7 @@ use App\Http\Controllers\CampaignTagController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonationController;
+use App\Http\Controllers\MobileAppController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
@@ -95,5 +96,24 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,supervisor')->group(function () {
         Route::resource('banners', BannerController::class)->except('show');
         Route::delete('followups/{followup}', [WaFollowupController::class, 'destroy'])->name('followups.destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mobile App (Berbagi Mobile) — desain mobile-first, kelak jadi app native.
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('mo')->name('mo.')->middleware('role:admin,supervisor,agen')->group(function () {
+        Route::get('/', [MobileAppController::class, 'home'])->name('home');
+        Route::get('/donasi', [MobileAppController::class, 'donations'])->name('donations');
+        Route::get('/kontak', [MobileAppController::class, 'contacts'])->name('contacts');
+        Route::get('/program', [MobileAppController::class, 'programs'])->name('programs');
+        Route::get('/lainnya', [MobileAppController::class, 'more'])->name('more');
+        Route::get('/cabang', [MobileAppController::class, 'branches'])->name('branches')->middleware('role:admin');
+        Route::get('/pengguna', [MobileAppController::class, 'users'])->name('users')->middleware('role:admin');
+
+        Route::get('/api/donasi/{donation}/detail', [MobileAppController::class, 'donationDetail'])->name('api.donation-detail');
+        Route::get('/api/kontak/{contact}/detail', [MobileAppController::class, 'contactDetail'])->name('api.contact-detail');
+        Route::get('/api', fn () => url('/mo/api'))->name('api');
     });
 });
