@@ -109,7 +109,7 @@
     @endforelse
 </div>
 
-<a href="{{ route('mo.donations') }}" class="mo-fab" title="Catat Donasi" data-href="{{ route('donations.create') }}" aria-label="Catat Donasi">
+<a href="{{ route('mo.donations') }}" class="mo-fab" title="Catat Donasi" data-href="{{ route('mo.donation.create') }}" aria-label="Catat Donasi">
     <i class="fas fa-plus"></i>
 </a>
 @endsection

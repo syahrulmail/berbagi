@@ -53,6 +53,7 @@ class MobileAppController extends Controller
             ->sum('amount');
 
         return [
+            'id' => $branch->id,
             'name' => $branch->name,
             'city' => $branch->city,
             'target' => (float) $branch->target_amount,
@@ -83,9 +84,10 @@ class MobileAppController extends Controller
             ->whereMonth('donation_date', $month)
             ->sum('amount');
 
+        $prevDate = now()->subMonth();
         $prevMonthTotal = (clone $donationsQuery)
-            ->whereYear('donation_date', $year)
-            ->whereMonth('donation_date', now()->subMonth()->month)
+            ->whereYear('donation_date', $prevDate->year)
+            ->whereMonth('donation_date', $prevDate->month)
             ->sum('amount');
 
         $growthPercent = $prevMonthTotal > 0
@@ -201,7 +203,9 @@ class MobileAppController extends Controller
      */
     public function contacts(Request $request)
     {
-        $query = Contact::with(['agen', 'branch']);
+        $query = Contact::with(['agen', 'branch'])
+            ->withCount('donations as donation_count')
+            ->withSum('donations as donation_total', 'amount');
         $this->scopeContacts($query);
 
         $query->when($request->search, function ($q, $search) {
@@ -216,8 +220,8 @@ class MobileAppController extends Controller
         $contacts = $query->orderByDesc('created_at')->limit(80)->get();
 
         $contacts->each(function ($c) {
-            $c->donation_count = $c->donations()->count();
-            $c->donation_total = (float) $c->donations()->sum('amount');
+            $c->donation_count = (int) $c->donation_count;
+            $c->donation_total = (float) $c->donation_total;
             $c->donation_total_formatted = 'Rp ' . number_format($c->donation_total, 0, ',', '.');
         });
 
@@ -297,6 +301,7 @@ class MobileAppController extends Controller
             ->get()
             ->map(function ($u) {
                 return [
+                    'id' => $u->id,
                     'name' => $u->name,
                     'role_label' => $u->roleLabel(),
                     'role' => $u->role,
@@ -320,6 +325,10 @@ class MobileAppController extends Controller
             return response()->json(['error' => 'Donasi tidak ditemukan.'], 404);
         }
 
+        if (! $this->canAccessDonation($donation)) {
+            return response()->json(['error' => 'Anda tidak memiliki izin untuk melihat donasi ini.'], 403);
+        }
+
         $items = $donation->items->map(fn ($item) => [
             'category_label' => $item->program ? $item->program->category_label : ($item->program_category ?: '-'),
             'program_name' => $item->program->name ?? '-',
@@ -341,6 +350,8 @@ class MobileAppController extends Controller
             'proof_url' => $donation->payment_proof ? asset_photo_url($donation->payment_proof) : null,
             'created_at_formatted' => $donation->created_at ? $donation->created_at->format('d M Y H:i') : '-',
             'creator' => $donation->creator->name ?? '-',
+            'can_edit' => true,
+            'edit_url' => route('mo.donation.edit', $donation->id),
         ]);
     }
 
@@ -355,6 +366,10 @@ class MobileAppController extends Controller
             return response()->json(['error' => 'Kontak tidak ditemukan.'], 404);
         }
 
+        if (! $this->canAccessContact($contact)) {
+            return response()->json(['error' => 'Anda tidak memiliki izin untuk melihat kontak ini.'], 403);
+        }
+
         return response()->json([
             'id' => $contact->id,
             'name' => $contact->name,
@@ -366,6 +381,8 @@ class MobileAppController extends Controller
             'notes' => $contact->notes,
             'donation_count' => $contact->donations()->count(),
             'donation_total_formatted' => 'Rp ' . number_format((float) $contact->donations()->sum('amount'), 0, ',', '.'),
+            'can_edit' => true,
+            'edit_url' => route('mo.contact.edit', $contact->id),
         ]);
     }
 
@@ -377,5 +394,41 @@ class MobileAppController extends Controller
             'qris' => 'QRIS',
             'e-wallet' => 'E-Wallet',
         ][$method] ?? '-';
+    }
+
+    /**
+     * Cek apakah user berhak mengakses donasi (scoped per role).
+     */
+    protected function canAccessDonation(Donation $donation): bool
+    {
+        $user = auth()->user();
+
+        if ($user->isAgen()) {
+            return (int) $donation->agen_id === (int) $user->id;
+        }
+
+        if ($user->isSupervisor()) {
+            return (int) $donation->branch_id === (int) $user->branch_id;
+        }
+
+        return true;
+    }
+
+    /**
+     * Cek apakah user berhak mengakses kontak (scoped per role).
+     */
+    protected function canAccessContact(Contact $contact): bool
+    {
+        $user = auth()->user();
+
+        if ($user->isAgen()) {
+            return (int) $contact->agen_id === (int) $user->id;
+        }
+
+        if ($user->isSupervisor()) {
+            return (int) $contact->branch_id === (int) $user->branch_id;
+        }
+
+        return true;
     }
 }

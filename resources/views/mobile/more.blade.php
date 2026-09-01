@@ -46,7 +46,7 @@
             <div class="txt">Manajemen Kontak</div>
             <i class="fas fa-chevron-right chev"></i>
         </a>
-        <a href="{{ route('donations.create') }}" class="mo-menu-item">
+        <a href="{{ route('mo.donation.create') }}" class="mo-menu-item">
             <i class="fas fa-hand-holding-dollar mi gold"></i>
             <div class="txt">Catat Donasi</div>
             <i class="fas fa-chevron-right chev"></i>

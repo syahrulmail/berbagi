@@ -65,9 +65,9 @@
         var itemsHtml = '';
         (data.items || []).forEach(function (it) {
             itemsHtml += '<div class="mo-row" style="box-shadow:none;background:#f6faf9;padding:10px 13px;border-radius:12px;margin-bottom:8px;">' +
-                '<div class="mo-row-body"><div class="mo-row-sub" style="font-size:10.5px;">' + (it.category_label || '') + '</div>' +
-                '<div class="mo-row-title" style="font-size:13px;">' + (it.program_name || '') + '</div></div>' +
-                '<div class="mo-row-end"><span class="amount" style="font-size:12.5px;">' + (it.amount_formatted || '') + '</span></div></div>';
+                '<div class="mo-row-body"><div class="mo-row-sub" style="font-size:10.5px;">' + esc(it.category_label || '') + '</div>' +
+                '<div class="mo-row-title" style="font-size:13px;">' + esc(it.program_name || '') + '</div></div>' +
+                '<div class="mo-row-end"><span class="amount" style="font-size:12.5px;">' + esc(it.amount_formatted || '') + '</span></div></div>';
         });
 
         var body = document.getElementById('mo-donation-sheet-body');
@@ -86,7 +86,8 @@
             (itemsHtml || '<div class="mo-empty"><p>Tanpa rincian program.</p></div>') +
             '<div class="mo-detail-item full" style="margin-top:4px;background:#eefaf8;"><div class="mo-detail-label">Total Donasi</div><div class="mo-detail-value amount">' + esc(data.amount_formatted || '-') + '</div></div>' +
             ((data.note) ? '<div class="mo-detail-item full" style="margin-top:10px;"><div class="mo-detail-label">Catatan</div><div class="mo-detail-value">' + esc(data.note) + '</div></div>' : '') +
-            ((data.proof_url) ? '<a href="' + esc(data.proof_url) + '" target="_blank" rel="noopener" style="display:block;margin-top:12px;text-align:center;background:#eefaf8;color:var(--mo-primary);font-weight:600;font-size:12.5px;padding:11px;border-radius:12px;text-decoration:none;"><i class="fas fa-image"></i> Lihat Bukti Pembayaran</a>' : '');
+            ((data.proof_url) ? '<a href="' + esc(data.proof_url) + '" target="_blank" rel="noopener" style="display:block;margin-top:12px;text-align:center;background:#eefaf8;color:var(--mo-primary);font-weight:600;font-size:12.5px;padding:11px;border-radius:12px;text-decoration:none;"><i class="fas fa-image"></i> Lihat Bukti Pembayaran</a>' : '') +
+            ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:12px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Donasi</a>' : '');
     }
 
     function loadContactDetail(id, cb) {
@@ -121,11 +122,12 @@
             '<div class="mo-detail-grid">' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Cabang</div><div class="mo-detail-value">' + esc(data.branch || '-') + '</div></div>' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Agen</div><div class="mo-detail-value">' + esc(data.agen || '-') + '</div></div>' +
-                '<div class="mo-detail-item"><div class="mo-detail-label">Jumlah Donasi</div><div class="mo-detail-value">' + (data.donation_count != null ? data.donation_count : '-') + '</div></div>' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">Jumlah Donasi</div><div class="mo-detail-value">' + esc(data.donation_count != null ? data.donation_count : '-') + '</div></div>' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Total Donasi</div><div class="mo-detail-value">' + esc(data.donation_total_formatted || '-') + '</div></div>' +
             '</div>' +
             ((data.notes) ? '<div class="mo-detail-item full" style="margin-top:10px;"><div class="mo-detail-label">Catatan</div><div class="mo-detail-value">' + esc(data.notes) + '</div></div>' : '') +
-            ((data.phone) ? '<a href="' + waHref + '" target="_blank" rel="noopener" style="display:block;margin-top:14px;text-align:center;background:#25d366;color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat WhatsApp</a>' : '');
+            ((data.phone) ? '<a href="' + waHref + '" target="_blank" rel="noopener" style="display:block;margin-top:14px;text-align:center;background:#25d366;color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat WhatsApp</a>' : '') +
+            ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:10px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Kontak</a>' : '');
     }
 
     function esc(s) {
@@ -192,6 +194,7 @@
 
         // Program cards open public page
         document.addEventListener('click', function (e) {
+            if (e.target.closest('.mo-program-edit')) return;
             var card = e.target.closest('[data-program-slug]');
             if (card) {
                 var slug = card.getAttribute('data-program-slug');

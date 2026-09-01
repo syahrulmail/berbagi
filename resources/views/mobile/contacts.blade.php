@@ -62,6 +62,10 @@
         @endforelse
     </div>
 </div>
+
+<a href="{{ route('mo.contact.create') }}" class="mo-fab" aria-label="Tambah Kontak">
+    <i class="fas fa-plus"></i>
+</a>
 @endsection
 
 @section('sheets')

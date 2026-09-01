@@ -22,21 +22,23 @@
     @endphp
     <div class="mo-list">
         @forelse($users as $u)
-            <div class="mo-row" style="cursor:default;">
-                <div class="mo-row-icon {{ $u['role'] === 'admin' ? 'red' : ($u['role'] === 'supervisor' ? 'blue' : '') }}">
-                    {{ $u['initial'] }}
+            <a href="{{ route('mo.user.edit', $u['id']) }}" style="text-decoration:none;color:inherit;display:block;">
+                <div class="mo-row" style="cursor:pointer;">
+                    <div class="mo-row-icon {{ $u['role'] === 'admin' ? 'red' : ($u['role'] === 'supervisor' ? 'blue' : '') }}">
+                        {{ $u['initial'] }}
+                    </div>
+                    <div class="mo-row-body">
+                        <div class="mo-row-title">{{ $u['name'] }}</div>
+                        <div class="mo-row-sub"><i class="fas {{ $roleIcon[$u['role']] ?? 'fa-user' }}"></i> {{ $u['branch'] }}</div>
+                    </div>
+                    <div class="mo-row-end">
+                        <span class="mo-badge {{ $roleCls[$u['role']] ?? 'gray' }}">{{ $u['role_label'] }}</span>
+                        @if(!$u['is_active'])
+                            <div class="mo-badge gray" style="margin-top:4px;">Nonaktif</div>
+                        @endif
+                    </div>
                 </div>
-                <div class="mo-row-body">
-                    <div class="mo-row-title">{{ $u['name'] }}</div>
-                    <div class="mo-row-sub"><i class="fas {{ $roleIcon[$u['role']] ?? 'fa-user' }}"></i> {{ $u['branch'] }}</div>
-                </div>
-                <div class="mo-row-end">
-                    <span class="mo-badge {{ $roleCls[$u['role']] ?? 'gray' }}">{{ $u['role_label'] }}</span>
-                    @if(!$u['is_active'])
-                        <div class="mo-badge gray" style="margin-top:4px;">Nonaktif</div>
-                    @endif
-                </div>
-            </div>
+            </a>
         @empty
             <div class="mo-empty">
                 <i class="fas fa-users"></i>
@@ -45,4 +47,8 @@
         @endforelse
     </div>
 </div>
+
+<a href="{{ route('mo.user.create') }}" class="mo-fab" aria-label="Tambah Pengguna">
+    <i class="fas fa-plus"></i>
+</a>
 @endsection

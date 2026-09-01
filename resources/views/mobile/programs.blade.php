@@ -18,6 +18,9 @@
 <div class="mo-content" style="padding-top:0;">
     @forelse($programs as $p)
         <div class="mo-program-card" data-program-slug="{{ $p->slug }}">
+            <a href="{{ route('mo.program.edit', $p->id) }}" class="mo-program-edit" aria-label="Edit program" onclick="event.stopPropagation();">
+                <i class="fas fa-pen"></i>
+            </a>
             <div class="mo-program-cover">
                 @if($p->image_url)
                     <img src="{{ $p->image_url }}" alt="{{ $p->name }}" loading="lazy">
@@ -52,4 +55,8 @@
         </div>
     @endforelse
 </div>
+
+<a href="{{ route('mo.program.create') }}" class="mo-fab" aria-label="Tambah Program">
+    <i class="fas fa-plus"></i>
+</a>
 @endsection

@@ -71,7 +71,7 @@
     </div>
 </div>
 
-<a href="{{ route('donations.create') }}" class="mo-fab" aria-label="Catat Donasi">
+<a href="{{ route('mo.donation.create') }}" class="mo-fab" aria-label="Catat Donasi">
     <i class="fas fa-plus"></i>
 </a>
 @endsection

@@ -10,6 +10,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MobileAppController;
+use App\Http\Controllers\MobileCrudController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
@@ -115,5 +116,40 @@ Route::middleware('auth')->group(function () {
         Route::get('/api/donasi/{donation}/detail', [MobileAppController::class, 'donationDetail'])->name('api.donation-detail');
         Route::get('/api/kontak/{contact}/detail', [MobileAppController::class, 'contactDetail'])->name('api.contact-detail');
         Route::get('/api', fn () => url('/mo/api'))->name('api');
+
+        // Donasi CRUD
+        Route::get('/donasi/tambah', [MobileCrudController::class, 'donationCreate'])->name('donation.create');
+        Route::post('/donasi/tambah', [MobileCrudController::class, 'donationStore'])->name('donation.store');
+        Route::get('/donasi/{donation}/edit', [MobileCrudController::class, 'donationEdit'])->name('donation.edit');
+        Route::put('/donasi/{donation}', [MobileCrudController::class, 'donationUpdate'])->name('donation.update');
+        Route::delete('/donasi/{donation}', [MobileCrudController::class, 'donationDestroy'])->name('donation.destroy');
+
+        // Kontak CRUD
+        Route::get('/kontak/tambah', [MobileCrudController::class, 'contactCreate'])->name('contact.create');
+        Route::post('/kontak/tambah', [MobileCrudController::class, 'contactStore'])->name('contact.store');
+        Route::get('/kontak/{contact}/edit', [MobileCrudController::class, 'contactEdit'])->name('contact.edit');
+        Route::put('/kontak/{contact}', [MobileCrudController::class, 'contactUpdate'])->name('contact.update');
+        Route::delete('/kontak/{contact}', [MobileCrudController::class, 'contactDestroy'])->name('contact.destroy');
+
+        // Program CRUD
+        Route::get('/program/tambah', [MobileCrudController::class, 'programCreate'])->name('program.create')->middleware('role:admin,supervisor,agen');
+        Route::post('/program/tambah', [MobileCrudController::class, 'programStore'])->name('program.store')->middleware('role:admin,supervisor,agen');
+        Route::get('/program/{program}/edit', [MobileCrudController::class, 'programEdit'])->name('program.edit')->middleware('role:admin,supervisor,agen');
+        Route::put('/program/{program}', [MobileCrudController::class, 'programUpdate'])->name('program.update')->middleware('role:admin,supervisor,agen');
+        Route::delete('/program/{program}', [MobileCrudController::class, 'programDestroy'])->name('program.destroy')->middleware('role:admin,supervisor,agen');
+
+        // Cabang CRUD (admin only)
+        Route::get('/cabang/tambah', [MobileCrudController::class, 'branchCreate'])->name('branch.create')->middleware('role:admin');
+        Route::post('/cabang/tambah', [MobileCrudController::class, 'branchStore'])->name('branch.store')->middleware('role:admin');
+        Route::get('/cabang/{branch}/edit', [MobileCrudController::class, 'branchEdit'])->name('branch.edit')->middleware('role:admin');
+        Route::put('/cabang/{branch}', [MobileCrudController::class, 'branchUpdate'])->name('branch.update')->middleware('role:admin');
+        Route::delete('/cabang/{branch}', [MobileCrudController::class, 'branchDestroy'])->name('branch.destroy')->middleware('role:admin');
+
+        // Pengguna CRUD (admin only)
+        Route::get('/pengguna/tambah', [MobileCrudController::class, 'userCreate'])->name('user.create')->middleware('role:admin');
+        Route::post('/pengguna/tambah', [MobileCrudController::class, 'userStore'])->name('user.store')->middleware('role:admin');
+        Route::get('/pengguna/{user}/edit', [MobileCrudController::class, 'userEdit'])->name('user.edit')->middleware('role:admin');
+        Route::put('/pengguna/{user}', [MobileCrudController::class, 'userUpdate'])->name('user.update')->middleware('role:admin');
+        Route::delete('/pengguna/{user}', [MobileCrudController::class, 'userDestroy'])->name('user.destroy')->middleware('role:admin');
     });
 });
