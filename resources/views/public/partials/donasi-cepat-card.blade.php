@@ -33,9 +33,8 @@
        data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
         <i class="fab fa-whatsapp"></i> Berbagi sekarang
     </a>
-    <p class="mt-2 text-center text-xs text-gray-400">Mari berbagi, CS BWA siap melayani sepenuh hati</p>
 
-    <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-black/5 pt-4">
+    <div class="mt-4 flex items-center justify-center gap-2">
         <button type="button" class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-500 transition hover:bg-rose-100" data-program-like data-program-id="{{ $program->id }}" aria-label="Suka program ini">
             <i class="fas fa-heart"></i> <span data-program-like-count>{{ number_format($program->total_suka, 0, ',', '.') }}</span>
         </button>
@@ -43,6 +42,8 @@
             <i class="fas fa-arrow-pointer"></i> <span>{{ number_format($program->total_klik, 0, ',', '.') }}</span>
         </span>
     </div>
+
+    <p class="mt-3 text-center text-xs text-gray-400">Mari berbagi, CS BWA siap melayani sepenuh hati</p>
 
     <div class="mt-5 flex gap-2">
         <a href="https://api.whatsapp.com/send?text={{ $shareText }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm flex-1"><i class="fab fa-whatsapp"></i> Bagikan</a>
