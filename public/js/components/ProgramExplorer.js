@@ -211,13 +211,13 @@
             '          <span v-else></span>' +
             '          <span class="shrink-0 font-semibold text-primary-700">{{ p.progress }}%</span>' +
             '        </div>' +
-            '        <div class="mt-4 flex gap-2">' +
-            '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Berbagi</a>' +
-            '          <button type="button" class="btn btn-outline btn-sm" @click="openDetail(p)"><i class="fas fa-circle-info"></i> Detail</button>' +
-            '        </div>' +
-            '        <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">' +
-            '          <button type="button" class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-500 transition hover:bg-rose-100" @click.stop="like(p)" :aria-label="\'Suka program \' + p.name"><i class="fas fa-heart"></i> <span>{{ displaySuka(p) }}</span></button>' +
-            '          <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500"><i class="fas fa-arrow-pointer"></i> <span>{{ displayKlik(p) }}</span></span>' +
+            '        <div class="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">' +
+            '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm justify-self-start" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Berbagi</a>' +
+            '          <div class="flex items-center justify-self-center gap-1.5">' +
+            '            <button type="button" class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-500 transition hover:bg-rose-100" @click.stop="like(p)" :aria-label="\'Suka program \' + p.name"><i class="fas fa-heart"></i> <span>{{ displaySuka(p) }}</span></button>' +
+            '            <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-500" title="Jumlah klik Detail"><i class="fas fa-arrow-pointer"></i> <span>{{ displayKlik(p) }}</span></span>' +
+            '          </div>' +
+            '          <button type="button" class="btn btn-outline btn-sm justify-self-end" @click="openDetail(p)"><i class="fas fa-circle-info"></i> Detail</button>' +
             '        </div>' +
             '        <a v-if="p.edit_url" :href="p.edit_url" class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition-colors hover:text-primary-600"><i class="fas fa-pen-to-square"></i> Edit program</a>' +
             '      </div>' +
