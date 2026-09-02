@@ -46,7 +46,7 @@ class AuthController extends Controller
 
         ActivityLog::record('login', $user->name . ' login ke sistem');
 
-        return redirect()->route('dashboard');
+        return redirect()->intended(route('dashboard'));
     }
 
     public function logout(Request $request)
