@@ -27,7 +27,7 @@
     <nav class="mo-tabbar" id="mo-tabbar">
         @php
             $tabs = [
-                ['route' => 'mo.home', 'icon' => 'fa-house', 'label' => 'Beranda'],
+                ['route' => 'mo.dashboard', 'icon' => 'fa-house', 'label' => 'Beranda'],
                 ['route' => 'mo.donations', 'icon' => 'fa-hand-holding-dollar', 'label' => 'Donasi'],
                 ['route' => 'mo.contacts', 'icon' => 'fa-address-book', 'label' => 'Kontak'],
                 ['route' => 'mo.programs', 'icon' => 'fa-file-invoice-dollar', 'label' => 'Program'],

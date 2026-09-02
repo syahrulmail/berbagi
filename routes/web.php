@@ -10,6 +10,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MobileAppController;
+use App\Http\Controllers\MobileAuthController;
 use App\Http\Controllers\MobileCrudController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ProfileController;
@@ -50,6 +51,16 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Login (guest) — /mo/login
+|--------------------------------------------------------------------------
+*/
+Route::prefix('mo')->name('mo.')->middleware('noindex')->group(function () {
+    Route::get('/login', [MobileAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [MobileAuthController::class, 'login']);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -106,6 +117,7 @@ Route::middleware('auth')->group(function () {
     */
     Route::prefix('mo')->name('mo.')->middleware('role:admin,supervisor,agen', 'noindex')->group(function () {
         Route::get('/', [MobileAppController::class, 'home'])->name('home');
+        Route::get('/dashboard', [MobileAppController::class, 'dashboard'])->name('dashboard');
         Route::get('/donasi', [MobileAppController::class, 'donations'])->name('donations');
         Route::get('/kontak', [MobileAppController::class, 'contacts'])->name('contacts');
         Route::get('/program', [MobileAppController::class, 'programs'])->name('programs');

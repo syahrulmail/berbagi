@@ -8,17 +8,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
-class AuthController extends Controller
+class MobileAuthController extends Controller
 {
+    /**
+     * Tampilkan halaman login mobile (/mo/login).
+     */
     public function showLogin()
     {
         if (auth()->check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('mo.dashboard');
         }
 
-        return view('auth.login');
+        return view('mobile.login');
     }
 
+    /**
+     * Proses login mobile, lalu kembali ke dashboard mobile (/mo/dashboard).
+     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -46,22 +52,6 @@ class AuthController extends Controller
 
         ActivityLog::record('login', $user->name . ' login ke sistem');
 
-        return redirect()->intended(route('dashboard'));
-    }
-
-    public function logout(Request $request)
-    {
-        $user = auth()->user();
-        ActivityLog::record('logout', $user ? $user->name . ' logout dari sistem' : 'logout dari sistem');
-
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        if ($request->input('next') === 'mo') {
-            return redirect()->route('mo.home');
-        }
-
-        return redirect()->route('login');
+        return redirect()->intended(route('mo.dashboard'));
     }
 }

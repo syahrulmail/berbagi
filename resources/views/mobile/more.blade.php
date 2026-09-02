@@ -81,7 +81,7 @@
             <div class="txt">Lihat Situs Publik</div>
             <i class="fas fa-external-link chev"></i>
         </a>
-        <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+        <form method="POST" action="{{ route('logout', ['next' => 'mo']) }}" style="margin:0;">
             @csrf
             <button type="submit" class="mo-menu-item" style="width:100%;border:none;background:none;font-family:inherit;text-align:left;">
                 <i class="fas fa-right-from-bracket mi red"></i>

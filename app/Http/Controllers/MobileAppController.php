@@ -65,9 +65,17 @@ class MobileAppController extends Controller
     }
 
     /**
-     * Beranda mobile.
+     * Entri mobile (/mo): alihkan ke dashboard setelah login.
      */
     public function home()
+    {
+        return redirect()->route('mo.dashboard');
+    }
+
+    /**
+     * Dashboard mobile (/mo/dashboard).
+     */
+    public function dashboard()
     {
         $user = auth()->user();
         $today = now()->toDateString();
