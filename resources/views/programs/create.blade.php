@@ -50,11 +50,16 @@
             <input type="number" id="goal_amount" name="goal_amount" value="{{ old('goal_amount') }}" min="0" step="0.01" required>
         </div>
         <div class="form-group">
+            <label for="terkumpul_publik">Terkumpul Publik (Rp)</label>
+            <input type="number" id="terkumpul_publik" name="terkumpul_publik" value="{{ old('terkumpul_publik', 0) }}" min="0" step="0.01">
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Angka ini yang ditampilkan sebagai progress publik. Donasi riil TIDAK menambah angka ini.</small>
+        </div>
+        <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="show_goal" value="1" {{ old('show_goal', true) ? 'checked' : '' }}>
                 Tampilkan Goal di halaman publik
             </label>
-            <small style="color: var(--gray-500); display:block; margin-top:4px;">Jika dicentang, target &amp; progress donasi ditampilkan di halaman publik.</small>
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Jika dicentang, target &amp; progress ditampilkan di halaman publik.</small>
         </div>
         @include('partials.tag-input', [
             'defaultTags' => $defaultTags,
@@ -62,6 +67,16 @@
             'defaultTagValue' => $defaultTagValue,
             'tagNamesValue' => $tagNamesValue,
         ])
+        <div class="form-group">
+            <label for="suka">Suka (klik ❤ oleh pengunjung)</label>
+            <input type="number" id="suka" name="suka" value="{{ old('suka', 0) }}" min="0" step="1">
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Jumlah suka awal. Klik ❤ riil dari pengunjung akan ditambahkan otomatis.</small>
+        </div>
+        <div class="form-group">
+            <label for="klik">Klik (klik Detail oleh pengunjung)</label>
+            <input type="number" id="klik" name="klik" value="{{ old('klik', 0) }}" min="0" step="1">
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Jumlah klik awal. Setiap pembukaan detail program oleh pengunjung akan menambah angka ini.</small>
+        </div>
         <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}> Aktif

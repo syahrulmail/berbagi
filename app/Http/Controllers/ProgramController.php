@@ -75,6 +75,9 @@ class ProgramController extends Controller
             'description' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
             'goal_amount' => ['required', 'numeric', 'min:0'],
+            'terkumpul_publik' => ['nullable', 'numeric', 'min:0'],
+            'suka' => ['nullable', 'integer', 'min:0'],
+            'klik' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
             'show_goal' => ['boolean'],
             'media_paths' => ['nullable', 'array'],
@@ -96,6 +99,9 @@ class ProgramController extends Controller
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
         $data['show_goal'] = $request->boolean('show_goal');
+        $data['terkumpul_publik'] = (float) ($data['terkumpul_publik'] ?? 0);
+        $data['suka'] = (int) ($data['suka'] ?? 0);
+        $data['klik'] = (int) ($data['klik'] ?? 0);
         $data['media'] = $this->resolveMedia($request);
 
         $program = Program::create($data);
@@ -138,6 +144,9 @@ class ProgramController extends Controller
             'description' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
             'goal_amount' => ['required', 'numeric', 'min:0'],
+            'terkumpul_publik' => ['nullable', 'numeric', 'min:0'],
+            'suka' => ['nullable', 'integer', 'min:0'],
+            'klik' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
             'show_goal' => ['boolean'],
             'media_paths' => ['nullable', 'array'],
@@ -159,6 +168,9 @@ class ProgramController extends Controller
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
         $data['show_goal'] = $request->boolean('show_goal');
+        $data['terkumpul_publik'] = (float) ($data['terkumpul_publik'] ?? 0);
+        $data['suka'] = (int) ($data['suka'] ?? 0);
+        $data['klik'] = (int) ($data['klik'] ?? 0);
         $data['media'] = $this->resolveMedia($request);
 
         $program->update($data);

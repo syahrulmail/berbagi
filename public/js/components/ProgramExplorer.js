@@ -10,7 +10,7 @@
             sticky: { type: Boolean, default: false }
         },
         data: function () {
-            return { q: '', active: 'semua', detail: null, showFilters: false, slide: 0, slideTimer: null };
+            return { q: '', active: 'semua', detail: null, showFilters: false, slide: 0, slideTimer: null, stats: {} };
         },
         computed: {
             filtered: function () {
@@ -37,8 +37,47 @@
         methods: {
             setFilter: function (f) { this.active = f; },
             toggleFilters: function () { this.showFilters = !this.showFilters; },
-            openDetail: function (p) { this.detail = p; },
+            openDetail: function (p) {
+                this.detail = p;
+                if (window.BerbagiProgramKlik) {
+                    var self = this;
+                    window.BerbagiProgramKlik(p.id).then(function (d) {
+                        if (d && typeof d.total !== 'undefined' && self.detail && self.detail.id === p.id) {
+                            self.stats[p.id] = {
+                                suka: self.displaySuka(p),
+                                klik: d.total
+                            };
+                        }
+                    }).catch(function () {});
+                }
+            },
             closeDetail: function () { this.detail = null; },
+            displaySuka: function (p) {
+                var s = this.stats[p.id];
+                return s && typeof s.suka !== 'undefined' ? s.suka : (p.suka || 0);
+            },
+            displayKlik: function (p) {
+                var s = this.stats[p.id];
+                return s && typeof s.klik !== 'undefined' ? s.klik : (p.klik || 0);
+            },
+            like: function (p) {
+                if (!p) return;
+                var self = this;
+                this.stats[p.id] = {
+                    suka: this.displaySuka(p) + 1,
+                    klik: this.displayKlik(p)
+                };
+                if (window.BerbagiProgramLike) {
+                    window.BerbagiProgramLike(p.id).then(function (d) {
+                        if (d && typeof d.total !== 'undefined') {
+                            self.stats[p.id] = {
+                                suka: d.total,
+                                klik: self.displayKlik(p)
+                            };
+                        }
+                    }).catch(function () {});
+                }
+            },
             slidesFor: function (p) {
                 if (!p) return [];
                 if (p.media && p.media.length) return p.media;
@@ -176,6 +215,10 @@
             '          <a :href="p.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-sm flex-1" data-wa-log="1" :data-wa-source="p.wa_source" :data-wa-program="p.wa_program" :data-wa-agen="p.wa_agen || null"><i class="fab fa-whatsapp"></i> Berbagi</a>' +
             '          <button type="button" class="btn btn-outline btn-sm" @click="openDetail(p)"><i class="fas fa-circle-info"></i> Detail</button>' +
             '        </div>' +
+            '        <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">' +
+            '          <button type="button" class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-500 transition hover:bg-rose-100" @click.stop="like(p)" :aria-label="\'Suka program \' + p.name"><i class="fas fa-heart"></i> <span>{{ displaySuka(p) }}</span></button>' +
+            '          <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500"><i class="fas fa-arrow-pointer"></i> <span>{{ displayKlik(p) }}</span></span>' +
+            '        </div>' +
             '        <a v-if="p.edit_url" :href="p.edit_url" class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition-colors hover:text-primary-600"><i class="fas fa-pen-to-square"></i> Edit program</a>' +
             '      </div>' +
             '    </div>' +
@@ -238,6 +281,10 @@
             '      <a :href="detail.wa_url" target="_blank" rel="noopener" class="btn btn-wa btn-block pdetail-cta" data-wa-log="1" :data-wa-source="detail.wa_source" :data-wa-program="detail.wa_program" :data-wa-agen="detail.wa_agen || null">' +
             '        <i class="fab fa-whatsapp"></i> Berbagi Sekarang' +
             '      </a>' +
+            '      <div class="mt-3 flex flex-wrap items-center gap-2">' +
+            '        <button type="button" class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-500 transition hover:bg-rose-100" @click="like(detail)" :aria-label="\'Suka program \' + detail.name"><i class="fas fa-heart"></i> <span>{{ displaySuka(detail) }}</span></button>' +
+            '        <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-500"><i class="fas fa-arrow-pointer"></i> <span>{{ displayKlik(detail) }}</span></span>' +
+            '      </div>' +
             '      <a :href="detail.url" class="pdetail-more">' +
             '        <i class="fas fa-circle-info"></i> Lihat halaman detail program lengkap <i class="fas fa-arrow-right pdetail-more-arrow"></i>' +
             '      </a>' +

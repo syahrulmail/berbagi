@@ -39,6 +39,14 @@ Route::post('/wa/followup', [PublicController::class, 'followup'])
     ->name('wa.followup')
     ->middleware('throttle:30,1');
 
+Route::post('/program/{program}/suka', [PublicController::class, 'suka'])
+    ->name('public.program.suka')
+    ->middleware('throttle:30,1');
+
+Route::post('/program/{program}/klik', [PublicController::class, 'klik'])
+    ->name('public.program.klik')
+    ->middleware('throttle:30,1');
+
 /*
 |--------------------------------------------------------------------------
 | Guest Routes

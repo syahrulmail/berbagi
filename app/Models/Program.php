@@ -34,6 +34,11 @@ class Program extends Model
         'media',
         'show_goal',
         'is_active',
+        'terkumpul_publik',
+        'suka',
+        'klik',
+        'suka_riil',
+        'klik_riil',
     ];
 
     protected $casts = [
@@ -41,6 +46,7 @@ class Program extends Model
         'media' => 'array',
         'show_goal' => 'boolean',
         'is_active' => 'boolean',
+        'terkumpul_publik' => 'decimal:2',
     ];
 
     public function campaignTags()
@@ -61,6 +67,25 @@ class Program extends Model
     public function totalCollected()
     {
         return $this->donationItems()->sum('amount');
+    }
+
+    /**
+     * Angka 'Terkumpul' yang ditampilkan publik = input manual terkumpul_publik.
+     * Donasi riil TIDAK ikut menambah angka publik ini.
+     */
+    public function getPublicCollectedAttribute()
+    {
+        return (float) $this->terkumpul_publik;
+    }
+
+    public function getTotalSukaAttribute()
+    {
+        return (int) $this->suka + (int) $this->suka_riil;
+    }
+
+    public function getTotalKlikAttribute()
+    {
+        return (int) $this->klik + (int) $this->klik_riil;
     }
 
     public function getCategoryLabelAttribute()

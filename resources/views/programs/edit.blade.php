@@ -53,6 +53,11 @@
             <input type="number" id="goal_amount" name="goal_amount" value="{{ old('goal_amount', $program->goal_amount) }}" min="0" step="0.01" required>
         </div>
         <div class="form-group">
+            <label for="terkumpul_publik">Terkumpul Publik (Rp)</label>
+            <input type="number" id="terkumpul_publik" name="terkumpul_publik" value="{{ old('terkumpul_publik', $program->terkumpul_publik) }}" min="0" step="0.01">
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Angka ini yang ditampilkan sebagai progress publik. Donasi riil TIDAK menambah angka ini.</small>
+        </div>
+        <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="show_goal" value="1" {{ old('show_goal', $program->show_goal) ? 'checked' : '' }}>
                 Tampilkan Goal di halaman publik
@@ -65,6 +70,16 @@
             'defaultTagValue' => $defaultTagValue,
             'tagNamesValue' => $tagNamesValue,
         ])
+        <div class="form-group">
+            <label for="suka">Suka (klik ❤ oleh pengunjung)</label>
+            <input type="number" id="suka" name="suka" value="{{ old('suka', $program->suka) }}" min="0" step="1">
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Jumlah suka awal. Klik ❤ riil dari pengunjung akan ditambahkan otomatis.</small>
+        </div>
+        <div class="form-group">
+            <label for="klik">Klik (klik Detail oleh pengunjung)</label>
+            <input type="number" id="klik" name="klik" value="{{ old('klik', $program->klik) }}" min="0" step="1">
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Jumlah klik awal. Setiap pembukaan detail program oleh pengunjung akan menambah angka ini.</small>
+        </div>
         <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', $program->is_active) ? 'checked' : '' }}> Aktif

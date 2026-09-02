@@ -17,7 +17,6 @@ class PublicController extends Controller
     public function home()
     {
         $programs = Program::where('is_active', true)
-            ->withSum('donationItems as total_collected', 'amount')
             ->with('campaignTags')
             ->orderByDesc('created_at')
             ->get();
@@ -44,7 +43,7 @@ class PublicController extends Controller
         $sections = $this->funnelSections();
 
         return view('public.home', compact(
-            'programs', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate'
+            'programs', 'programCards', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate'
         ) + $sections);
     }
 
@@ -88,7 +87,7 @@ class PublicController extends Controller
 
         $program->loadMissing('campaignTags');
 
-        $collected = $program->donationItems()->sum('amount');
+        $collected = (float) $program->public_collected;
         $waNumber = Setting::get('wa_public_number', '6281234567890');
         $waTemplate = Setting::get('wa_public_template', '');
         $agen = null;
@@ -108,7 +107,7 @@ class PublicController extends Controller
 
         $program->loadMissing('campaignTags');
 
-        $collected = $program->donationItems()->sum('amount');
+        $collected = (float) $program->public_collected;
 
         $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
         $waNumber = $waNumber !== ''
@@ -130,13 +129,17 @@ class PublicController extends Controller
         $agen = $this->resolveAgent($slug);
 
         $programs = Program::where('is_active', true)
-            ->withSum('donationItems as total_collected', 'amount')
             ->with('campaignTags')
             ->orderByDesc('created_at')
             ->get();
 
         $waTemplate = Setting::get('wa_agent_template', '');
         $waFallback = Setting::get('wa_public_number', '6281234567890');
+
+        $cleanPhone = preg_replace('/\D/', '', $agen->phone ?: '');
+        $waNumber = $cleanPhone !== '' ? $cleanPhone : preg_replace('/\D/', '', $waFallback);
+
+        $programCards = $this->cardifyPrograms($programs, $waNumber, $waTemplate, 'agent', $agen);
 
         $achievements = Achievement::where('is_active', true)
             ->orderBy('sort_order')
@@ -155,7 +158,7 @@ class PublicController extends Controller
             ? $profile['intro']
             : 'Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.';
 
-        return view('public.agent', compact('agen', 'programs', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro') + $sections);
+        return view('public.agent', compact('agen', 'programs', 'programCards', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro') + $sections);
     }
 
     protected function agentProfile(User $user): array
@@ -183,16 +186,28 @@ class PublicController extends Controller
         return $agen;
     }
 
-    protected function cardifyPrograms($programs, string $waNumber, string $waTemplate, string $waSource): array
+    protected function cardifyPrograms($programs, string $waNumber, string $waTemplate, string $waSource, $agen = null): array
     {
-        return $programs->map(function ($p) use ($waNumber, $waTemplate, $waSource) {
-            $collected = (float) ($p->total_collected ?? 0);
+        return $programs->map(function ($p) use ($waNumber, $waTemplate, $waSource, $agen) {
+            $collected = (float) $p->public_collected;
             $goal = (float) $p->goal_amount;
             $progress = $goal > 0 ? min(100, round(($collected / $goal) * 100, 1)) : 0;
             $isComplete = $goal > 0 && $collected >= $goal;
-            $waMsg = str_replace('{program}', $p->name, $waTemplate ?: 'Assalamualaikum, saya ingin berdonasi untuk program {program}');
+
+            if ($agen) {
+                $waMsg = str_replace(
+                    ['{agen}', '{program}'],
+                    [$agen->name, $p->name],
+                    $waTemplate ?: 'Assalamualaikum {agen}, saya ingin berdonasi untuk program {program} melalui Anda.'
+                );
+                $url = route('public.agent-program', ['agentSlug' => $agen->slug, 'program' => $p->slug]);
+            } else {
+                $waMsg = str_replace('{program}', $p->name, $waTemplate ?: 'Assalamualaikum, saya ingin berdonasi untuk program {program}');
+                $url = route('public.program', $p->slug);
+            }
 
             return [
+                'id'          => $p->id,
                 'slug'        => $p->slug,
                 'name'        => $p->name,
                 'description' => \Illuminate\Support\Str::limit(strip_tags((string) $p->description), 160),
@@ -206,10 +221,13 @@ class PublicController extends Controller
                 'remaining'   => $isComplete ? null : 'Rp ' . number_format(max(0, $goal - $collected), 0, ',', '.'),
                 'is_complete' => $isComplete,
                 'show_goal'   => (bool) $p->show_goal,
-                'url'         => route('public.program', $p->slug),
+                'suka'        => (int) $p->total_suka,
+                'klik'        => (int) $p->total_klik,
+                'url'         => $url,
                 'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
                 'wa_source'   => $waSource,
                 'wa_program'  => $p->id,
+                'wa_agen'     => $agen ? $agen->id : null,
                 'edit_url'    => auth()->check() && auth()->user()->isAdmin() ? route('programs.edit', $p) : null,
             ];
         })->values()->all();
@@ -239,7 +257,6 @@ class PublicController extends Controller
             ->whereHas('campaignTags', function ($q) use ($tagIds) {
                 $q->whereIn('campaign_tags.id', $tagIds);
             })
-            ->withSum('donationItems as total_collected', 'amount')
             ->with('campaignTags')
             ->orderByDesc('created_at')
             ->limit(3)
@@ -271,5 +288,41 @@ class PublicController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * Catat klik suka dari pengunjung (tanpa batas per pengunjung).
+     * Angka publik yang ditampilkan = input 'Suka' + klik suka riil ini.
+     */
+    public function suka(Program $program)
+    {
+        if (!$program->is_active) {
+            abort(404);
+        }
+
+        $program->increment('suka_riil');
+
+        return response()->json([
+            'success' => true,
+            'total'   => (int) $program->suka + (int) $program->fresh()->suka_riil,
+        ]);
+    }
+
+    /**
+     * Catat klik 'Detail' (buka modal detail) dari pengunjung.
+     * Angka publik yang ditampilkan = input 'Klik' + klik detail riil ini.
+     */
+    public function klik(Program $program)
+    {
+        if (!$program->is_active) {
+            abort(404);
+        }
+
+        $program->increment('klik_riil');
+
+        return response()->json([
+            'success' => true,
+            'total'   => (int) $program->klik + (int) $program->fresh()->klik_riil,
+        ]);
     }
 }

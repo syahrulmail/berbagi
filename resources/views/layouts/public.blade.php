@@ -241,6 +241,39 @@
         if (el) logWaClick(el);
     });
 
+    // ---- Suka & Klik program (angka publik = input + riil dari pengunjung) ----
+    function programSend(programId, kind) {
+        var csrf = document.querySelector('meta[name="csrf-token"]');
+        return fetch('/program/' + encodeURIComponent(programId) + '/' + encodeURIComponent(kind), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrf ? csrf.content : ''
+            },
+            body: JSON.stringify({}),
+            keepalive: true
+        }).then(function (r) { return r.json(); }).catch(function () { return null; });
+    }
+    window.BerbagiProgramLike = function (programId) { return programSend(programId, 'suka'); };
+    window.BerbagiProgramKlik = function (programId) { return programSend(programId, 'klik'); };
+
+    document.addEventListener('click', function (e) {
+        var likeBtn = e.target.closest('[data-program-like]');
+        if (!likeBtn) return;
+        e.preventDefault();
+        var id = likeBtn.getAttribute('data-program-id');
+        if (!id) return;
+        var countEl = likeBtn.querySelector('[data-program-like-count]');
+        if (countEl) {
+            var cur = parseInt(countEl.textContent || '0', 10);
+            countEl.textContent = isNaN(cur) ? 1 : (cur + 1);
+        }
+        window.BerbagiProgramLike(id).then(function (d) {
+            if (d && typeof d.total !== 'undefined' && countEl) countEl.textContent = d.total;
+        });
+    });
+
     var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
             if (entry.isIntersecting) {

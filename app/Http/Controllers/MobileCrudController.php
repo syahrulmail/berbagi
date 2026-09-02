@@ -359,6 +359,9 @@ class MobileCrudController extends MobileAppController
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
         $data['show_goal'] = $request->boolean('show_goal');
+        $data['terkumpul_publik'] = (float) ($data['terkumpul_publik'] ?? 0);
+        $data['suka'] = (int) ($data['suka'] ?? 0);
+        $data['klik'] = (int) ($data['klik'] ?? 0);
 
         if ($request->hasFile('cover_image')) {
             $data['media'] = [['path' => $request->file('cover_image')->store('programs', 'public'), 'order' => 0]];
@@ -386,6 +389,9 @@ class MobileCrudController extends MobileAppController
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
         $data['show_goal'] = $request->boolean('show_goal');
+        $data['terkumpul_publik'] = (float) ($data['terkumpul_publik'] ?? 0);
+        $data['suka'] = (int) ($data['suka'] ?? 0);
+        $data['klik'] = (int) ($data['klik'] ?? 0);
 
         if ($request->hasFile('cover_image')) {
             $data['media'] = array_merge(
@@ -429,6 +435,9 @@ class MobileCrudController extends MobileAppController
             'description' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
             'goal_amount' => ['required', 'numeric', 'min:0'],
+            'terkumpul_publik' => ['nullable', 'numeric', 'min:0'],
+            'suka' => ['nullable', 'integer', 'min:0'],
+            'klik' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
             'show_goal' => ['boolean'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],

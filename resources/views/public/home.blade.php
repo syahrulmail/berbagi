@@ -15,42 +15,6 @@
             'url'   => $b->url,
         ];
     })->values();
-
-    $defaultTagSlugs = \App\Models\CampaignTag::DEFAULT_TAG_SLUGS;
-
-    $programCards = $programs->map(function ($p) use ($waNumber, $waTemplate, $defaultTagSlugs) {
-        $collected = (float) ($p->total_collected ?? 0);
-        $goal = (float) $p->goal_amount;
-        $progress = $goal > 0 ? min(100, round(($collected / $goal) * 100, 1)) : 0;
-        $isComplete = $goal > 0 && $collected >= $goal;
-        $waMsg = str_replace('{program}', $p->name, $waTemplate ?: 'Assalamualaikum, saya ingin berdonasi untuk program {program}');
-        return [
-            'slug'        => $p->slug,
-            'name'        => $p->name,
-            'description' => \Illuminate\Support\Str::limit(strip_tags((string) $p->description), 160),
-            'image'       => $p->image_url,
-            'media'       => $p->media_slides,
-            'category'    => $p->category ?? 'penggalangan',
-            'tags'        => $p->campaignTags->map(function ($t) use ($defaultTagSlugs) {
-                return [
-                    'name'       => $t->name,
-                    'color'      => $t->color,
-                    'is_default' => in_array($t->slug, $defaultTagSlugs, true),
-                ];
-            })->values()->all(),
-            'progress'    => $progress,
-            'collected'   => 'Rp ' . number_format($collected, 0, ',', '.'),
-            'goal'        => 'Rp ' . number_format($goal, 0, ',', '.'),
-            'remaining'   => $isComplete ? null : 'Rp ' . number_format(max(0, $goal - $collected), 0, ',', '.'),
-            'is_complete' => $isComplete,
-            'show_goal'   => (bool) $p->show_goal,
-            'url'         => route('public.program', $p->slug),
-            'wa_url'      => 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg),
-            'wa_source'   => 'home',
-            'wa_program'  => $p->id,
-            'edit_url'    => auth()->check() && auth()->user()->isAdmin() ? route('programs.edit', $p) : null,
-        ];
-    })->values();
 @endphp
 
 <section class="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 text-white">

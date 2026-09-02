@@ -63,6 +63,14 @@
                    data-wa-log="1" data-wa-source="{{ $p['wa_source'] }}" data-wa-program="{{ $p['wa_program'] }}"><i class="fab fa-whatsapp"></i> Berbagi sekarang</a>
                 <a href="{{ $p['url'] }}" class="btn btn-outline btn-sm"><i class="fas fa-circle-info"></i> Detail</a>
             </div>
+            <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-500 transition hover:bg-rose-100" data-program-like data-program-id="{{ $p['id'] }}" aria-label="Suka program ini">
+                    <i class="fas fa-heart"></i> <span data-program-like-count>{{ number_format($p['suka'], 0, ',', '.') }}</span>
+                </button>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500" title="Jumlah klik Detail">
+                    <i class="fas fa-arrow-pointer"></i> <span>{{ number_format($p['klik'], 0, ',', '.') }}</span>
+                </span>
+            </div>
             @if(!empty($p['edit_url']))
             <a href="{{ $p['edit_url'] }}" class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition-colors hover:text-primary-600"><i class="fas fa-pen-to-square"></i> Edit program</a>
             @endif

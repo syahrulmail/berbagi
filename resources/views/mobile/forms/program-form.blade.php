@@ -116,6 +116,12 @@
                 <input type="number" id="goal_amount" name="goal_amount" class="mo-input" value="{{ old('goal_amount', $program->goal_amount ?? '') }}" min="0" step="0.01" required placeholder="0">
             </div>
 
+            <div class="mo-field">
+                <label for="terkumpul_publik">Terkumpul Publik (Rp)</label>
+                <input type="number" id="terkumpul_publik" name="terkumpul_publik" class="mo-input" value="{{ old('terkumpul_publik', $program->terkumpul_publik ?? 0) }}" min="0" step="0.01" placeholder="0">
+                <div class="mo-form-help">Angka ini yang tampil sebagai progress publik. Donasi riil tidak menambah angka ini.</div>
+            </div>
+
             <div class="mo-switch">
                 <div>
                     <div class="lbl">Tampilkan Goal</div>
@@ -125,13 +131,25 @@
                 <label class="track" for="mo-show-goal"></label>
             </div>
 
-            <div class="mo-switch" style="margin-bottom:0;">
+            <div class="mo-switch">
                 <div>
                     <div class="lbl">Aktif</div>
                     <div class="sub">Program aktif tampil di aplikasi &amp; situs publik</div>
                 </div>
                 <input type="checkbox" name="is_active" value="1" id="mo-is-active" {{ old('is_active', $program->is_active ?? true) ? 'checked' : '' }}>
                 <label class="track" for="mo-is-active"></label>
+            </div>
+
+            <div class="mo-field">
+                <label for="suka"><i class="fas fa-heart" style="color:#e0245e;"></i> Suka</label>
+                <input type="number" id="suka" name="suka" class="mo-input" value="{{ old('suka', $program->suka ?? 0) }}" min="0" step="1" placeholder="0">
+                <div class="mo-form-help">Jumlah suka awal. Klik ❤ riil pengunjung di situs publik ditambahkan otomatis.</div>
+            </div>
+
+            <div class="mo-field" style="margin-bottom:0;">
+                <label for="klik"><i class="fas fa-arrow-pointer"></i> Klik</label>
+                <input type="number" id="klik" name="klik" class="mo-input" value="{{ old('klik', $program->klik ?? 0) }}" min="0" step="1" placeholder="0">
+                <div class="mo-form-help">Jumlah klik awal. Pembukaan detail program oleh pengunjung ditambahkan otomatis.</div>
             </div>
         </div>
 
