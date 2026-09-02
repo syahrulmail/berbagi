@@ -18,4 +18,10 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+
+    # Semua URL di bawah /mo dilarang diindeks (robots, AI crawler)
+    SetEnvIf Request_URI "^/mo(/|$)" MO_NOINDEX=1
+    <IfModule mod_headers.c>
+        Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet" env=MO_NOINDEX
+    </IfModule>
 </IfModule>

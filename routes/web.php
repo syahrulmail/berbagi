@@ -104,7 +104,7 @@ Route::middleware('auth')->group(function () {
     | Mobile App (Berbagi Mobile) — desain mobile-first, kelak jadi app native.
     |--------------------------------------------------------------------------
     */
-    Route::prefix('mo')->name('mo.')->middleware('role:admin,supervisor,agen')->group(function () {
+    Route::prefix('mo')->name('mo.')->middleware('role:admin,supervisor,agen', 'noindex')->group(function () {
         Route::get('/', [MobileAppController::class, 'home'])->name('home');
         Route::get('/donasi', [MobileAppController::class, 'donations'])->name('donations');
         Route::get('/kontak', [MobileAppController::class, 'contacts'])->name('contacts');

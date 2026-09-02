@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#086e66">
     <meta name="mobile-web-app-capable" content="yes">

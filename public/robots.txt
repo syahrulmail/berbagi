@@ -1,2 +1,33 @@
 User-agent: *
-Disallow:
+Disallow: /mo
+Disallow: /mo/
+
+# Halaman internal (login) tidak perlu diindeks
+Disallow: /login
+Disallow: /dashboard
+
+# AI / mesin pencari — area mobile (/mo) dilarang
+User-agent: Googlebot
+Disallow: /mo
+User-agent: Bingbot
+Disallow: /mo
+User-agent: Google-Extended
+Disallow: /mo
+User-agent: GPTBot
+Disallow: /mo
+User-agent: ChatGPT-User
+Disallow: /mo
+User-agent: ClaudeBot
+Disallow: /mo
+User-agent: anthropic-ai
+Disallow: /mo
+User-agent: PerplexityBot
+Disallow: /mo
+User-agent: CCBot
+Disallow: /mo
+User-agent: Bytespider
+Disallow: /mo
+User-agent: Applebot-Extended
+Disallow: /mo
+User-agent: cohere-ai
+Disallow: /mo
