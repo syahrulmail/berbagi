@@ -72,8 +72,9 @@ class ContactController extends Controller
     public function create()
     {
         $agents = $this->visibleAgents();
+        $branches = $this->visibleBranches();
 
-        return view('contacts.create', compact('agents'));
+        return view('contacts.create', compact('agents', 'branches'));
     }
 
     public function store(Request $request)
@@ -96,6 +97,10 @@ class ContactController extends Controller
         $map = $this->importService->normalizedPhoneMap();
         if (isset($map[$normalized])) {
             return back()->withErrors(['phone' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'."])->withInput();
+        }
+
+        if (auth()->user()->isSupervisor()) {
+            $data['branch_id'] = auth()->user()->branch_id;
         }
 
         if (!auth()->user()->isAgen() && !empty($data['agen_id'])) {
@@ -398,7 +403,24 @@ class ContactController extends Controller
                 ->get();
         }
 
+        if ($user->isAgen()) {
+            return collect([$user]);
+        }
+
         return collect();
+    }
+
+    protected function visibleBranches()
+    {
+        $query = Branch::where('is_active', true)->orderBy('name');
+
+        $user = auth()->user();
+
+        if ($user && ($user->isSupervisor() || $user->isAgen())) {
+            $query->where('id', $user->branch_id);
+        }
+
+        return $query->get();
     }
 
     protected function authorizeAccess(Contact $contact): void

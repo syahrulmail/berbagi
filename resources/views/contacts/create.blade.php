@@ -22,6 +22,11 @@
 
     {{-- ===================== MANUAL ===================== --}}
     <div class="tab-panel" id="tab-manual">
+        @php
+            $authUser = auth()->user();
+            $defaultBranchId = $authUser->isAdmin() ? null : $authUser->branch_id;
+            $defaultAgentId = $authUser->isAgen() ? $authUser->id : null;
+        @endphp
         <form method="POST" action="{{ route('contacts.store') }}">
             @csrf
             <input type="hidden" name="tab" value="manual">
@@ -30,8 +35,8 @@
                     <label for="branch_id">Cabang</label>
                     <select id="branch_id" name="branch_id">
                         <option value="">— Pilih Cabang —</option>
-                        @foreach(\App\Models\Branch::where('is_active', true)->orderBy('name')->get() as $branch)
-                            <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" {{ (string) old('branch_id', $defaultBranchId) === (string) $branch->id ? 'selected' : '' }}>
                                 {{ $branch->name }}
                             </option>
                         @endforeach
@@ -42,7 +47,7 @@
                     <select id="agen_id" name="agen_id">
                         <option value="">— Pilih Agen —</option>
                         @foreach($agents as $agent)
-                            <option value="{{ $agent->id }}" data-branch="{{ $agent->branch_id ?? '' }}" {{ old('agen_id') == $agent->id ? 'selected' : '' }}>
+                            <option value="{{ $agent->id }}" data-branch="{{ $agent->branch_id ?? '' }}" {{ (string) old('agen_id', $defaultAgentId) === (string) $agent->id ? 'selected' : '' }}>
                                 {{ $agent->name }}
                             </option>
                         @endforeach
