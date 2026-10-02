@@ -113,10 +113,16 @@
                         </td>
                         <td>
                             <div class="actions">
-                                @if($program->is_active && (auth()->user()->isAgen() || auth()->user()->isSupervisor()) && auth()->user()->slug)
+                                @if($program->is_active)
+                                    @php
+                                        $canShareAsAgent = (auth()->user()->isAgen() || auth()->user()->isSupervisor()) && auth()->user()->slug;
+                                        $shareUrl = $canShareAsAgent
+                                            ? route('public.agent-program', ['agentSlug' => auth()->user()->slug, 'program' => $program->slug])
+                                            : route('public.program', $program);
+                                    @endphp
                                     <button type="button" class="btn btn-sm btn-icon" title="Bagikan program"
                                             data-program-share
-                                            data-share-url="{{ route('public.agent-program', ['agentSlug' => auth()->user()->slug, 'program' => $program->slug]) }}"
+                                            data-share-url="{{ $shareUrl }}"
                                             data-share-title="{{ $program->name }}">
                                         <i class="fas fa-share-nodes"></i>
                                     </button>

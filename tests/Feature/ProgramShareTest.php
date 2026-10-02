@@ -74,14 +74,15 @@ class ProgramShareTest extends TestCase
             ->assertDontSee('/cs/' . $agent->slug . '/program/' . $program->slug, false);
     }
 
-    public function test_admin_does_not_see_share_button()
+    public function test_admin_sees_share_button_with_public_program_url()
     {
         $admin = $this->makeUser('admin');
         $program = $this->makeProgram(true);
 
         $this->actingAs($admin)->get(route('programs.index', ['search' => $program->name]))
             ->assertOk()
-            ->assertDontSee('data-share-url=', false)
+            ->assertSee('data-share-url=', false)
+            ->assertSee('/program/' . $program->slug, false)
             ->assertDontSee('/cs/' . $admin->slug . '/program/' . $program->slug, false);
     }
 
