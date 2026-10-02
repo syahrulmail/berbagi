@@ -19,7 +19,8 @@ class ContactController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Contact::with(['agen', 'branch']);
+        $query = Contact::with(['agen', 'branch'])
+            ->withSum('donations as total_donation', 'amount');
 
         if (auth()->user()->isAgen()) {
             $query->where('agen_id', auth()->id());

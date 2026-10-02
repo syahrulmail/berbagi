@@ -33,10 +33,9 @@
             <thead>
                 <tr>
                     <th>Nama</th>
-                    <th>No. WhatsApp</th>
                     <th>Status</th>
                     <th>Agen</th>
-                    <th>Cabang</th>
+                    <th>Donasi</th>
                     <th>Catatan</th>
                     <th class="text-right">Aksi</th>
                 </tr>
@@ -44,8 +43,10 @@
             <tbody>
                 @forelse($contacts as $contact)
                     <tr>
-                        <td><strong>{{ $contact->name }}</strong></td>
-                        <td>{{ $contact->phone }}</td>
+                        <td>
+                            <strong>{{ $contact->name }}</strong>
+                            <small style="display:block; color: var(--gray-500);">{{ $contact->phone }}</small>
+                        </td>
                         <td>
                             @php
                                 $statusColors = [
@@ -57,8 +58,13 @@
                             @endphp
                             <span class="badge {{ $statusColors[$contact->status] ?? 'badge-gray' }}">{{ $contact->statusLabel() }}</span>
                         </td>
-                        <td>{{ $contact->agen->name ?? '-' }}</td>
-                        <td>{{ $contact->branch->name ?? '-' }}</td>
+                        <td>
+                            {{ $contact->agen->name ?? '-' }}
+                            @if($contact->branch)
+                                <small style="display:block; color: var(--gray-500);">{{ $contact->branch->name }}</small>
+                            @endif
+                        </td>
+                        <td>Rp {{ number_format((float) ($contact->total_donation ?? 0), 0, ',', '.') }}</td>
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             {{ $contact->notes ?? '-' }}
                         </td>
@@ -83,7 +89,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="empty-state">
+                        <td colspan="6" class="empty-state">
                             <i class="fas fa-address-book"></i>
                             <p>Belum ada data kontak.</p>
                         </td>
