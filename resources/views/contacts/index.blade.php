@@ -2,6 +2,29 @@
 
 @section('title', 'Manajemen Kontak')
 
+@php
+    $sort = request('sort', 'created_at');
+    $dir = request('dir', 'desc');
+    $sortUrl = function ($key) use ($sort, $dir) {
+        $query = request()->except(['page']);
+        $query['sort'] = $key;
+        if ($sort === $key) {
+            $query['dir'] = $dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $query['dir'] = $key === 'donation' ? 'desc' : 'asc';
+        }
+        return route('contacts.index', $query);
+    };
+    $sortIcon = function ($key) use ($sort, $dir) {
+        if ($sort !== $key) {
+            return '<i class="fas fa-sort" style="opacity:.4; font-size:11px;"></i>';
+        }
+        return $dir === 'asc'
+            ? '<i class="fas fa-sort-up"></i>'
+            : '<i class="fas fa-sort-down"></i>';
+    };
+@endphp
+
 @section('content')
 <div class="page-header">
     <div>
@@ -32,10 +55,10 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Nama</th>
-                    <th>Status</th>
-                    <th>Agen</th>
-                    <th>Donasi</th>
+                    <th><a href="{{ $sortUrl('name') }}" class="sort-link">Nama {!! $sortIcon('name') !!}</a></th>
+                    <th><a href="{{ $sortUrl('status') }}" class="sort-link">Status {!! $sortIcon('status') !!}</a></th>
+                    <th><a href="{{ $sortUrl('agen') }}" class="sort-link">Agen {!! $sortIcon('agen') !!}</a></th>
+                    <th><a href="{{ $sortUrl('donation') }}" class="sort-link">Donasi {!! $sortIcon('donation') !!}</a></th>
                     <th>Catatan</th>
                     <th class="text-right">Aksi</th>
                 </tr>

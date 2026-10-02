@@ -38,7 +38,31 @@ class ContactController extends Controller
             });
         });
 
-        $contacts = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
+        $sort = $request->input('sort', 'created_at');
+        $dir = $request->input('dir') === 'asc' ? 'asc' : 'desc';
+
+        switch ($sort) {
+            case 'name':
+                $query->orderBy('contacts.name', $dir)->orderBy('contacts.id');
+                break;
+            case 'status':
+                $query->orderBy('contacts.status', $dir)->orderBy('contacts.id');
+                break;
+            case 'agen':
+                $query->orderBy(
+                    User::select('name')->whereColumn('users.id', 'contacts.agen_id'),
+                    $dir
+                )->orderBy('contacts.id');
+                break;
+            case 'donation':
+                $query->orderBy('total_donation', $dir)->orderBy('contacts.id');
+                break;
+            default:
+                $sort = 'created_at';
+                $query->orderByDesc('contacts.created_at');
+        }
+
+        $contacts = $query->paginate(15)->withQueryString();
 
         $agents = $this->visibleAgents();
 
