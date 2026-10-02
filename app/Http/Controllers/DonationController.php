@@ -52,9 +52,9 @@ class DonationController extends Controller
 
         $totalAmount = (clone $query)->sum('donations.amount');
 
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->visibleBranches();
         $programs = Program::where('is_active', true)->orderBy('name')->get();
-        $downloadBranches = $this->visibleBranches();
+        $downloadBranches = $branches;
 
         return view('donations.index', compact('donations', 'totalAmount', 'branches', 'programs', 'downloadBranches'));
     }

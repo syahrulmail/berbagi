@@ -59,9 +59,11 @@
         <div class="form-group">
             <label>Cabang</label>
             <select name="branch_id">
-                <option value="">Semua Cabang</option>
+                @if(auth()->user()->isAdmin())
+                    <option value="">Semua Cabang</option>
+                @endif
                 @foreach($branches as $branch)
-                    <option value="{{ $branch->id }}" {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
+                    <option value="{{ $branch->id }}" {{ (string) request('branch_id', auth()->user()->branch_id) === (string) $branch->id ? 'selected' : '' }}>
                         {{ $branch->name }}
                     </option>
                 @endforeach
