@@ -189,17 +189,19 @@ class DonationController extends Controller
         ->when($request->search, function ($q, $search) {
             $search = trim($search);
             $digits = preg_replace('/\D/', '', $search);
-            $phoneVariant = null;
+            $phoneVariants = [];
 
             if (strlen($digits) >= 4) {
+                $phoneVariants[] = $digits;
+
                 if (strpos($digits, '0') === 0) {
-                    $phoneVariant = '62' . substr($digits, 1);
+                    $phoneVariants[] = '62' . substr($digits, 1);
                 } elseif (strpos($digits, '8') === 0) {
-                    $phoneVariant = '62' . $digits;
+                    $phoneVariants[] = '62' . $digits;
                 }
             }
 
-            return $q->where(function ($inner) use ($search, $digits, $phoneVariant) {
+            return $q->where(function ($inner) use ($search, $phoneVariants) {
                 $inner->where('donasi_kontak.name', 'like', "%{$search}%")
                     ->orWhereExists(function ($sub) use ($search) {
                         $sub->selectRaw(1)
@@ -207,14 +209,28 @@ class DonationController extends Controller
                             ->join('programs', 'donation_items.program_id', '=', 'programs.id')
                             ->whereColumn('donation_items.donation_id', 'donations.id')
                             ->where('programs.name', 'like', "%{$search}%");
+                    })
+                    ->orWhereExists(function ($sub) use ($search) {
+                        $sub->selectRaw(1)
+                            ->from('users')
+                            ->whereColumn('users.id', 'donations.agen_id')
+                            ->where('users.name', 'like', "%{$search}%");
+                    })
+                    ->orWhereExists(function ($sub) use ($search) {
+                        $sub->selectRaw(1)
+                            ->from('branches')
+                            ->whereColumn('branches.id', 'donations.branch_id')
+                            ->where('branches.name', 'like', "%{$search}%");
                     });
 
-                if (strlen($digits) >= 4) {
-                    $inner->orWhere('donasi_kontak.phone', 'like', "%{$digits}%");
-
-                    if ($phoneVariant) {
-                        $inner->orWhere('donasi_kontak.phone', 'like', "%{$phoneVariant}%");
-                    }
+                foreach ($phoneVariants as $variant) {
+                    $inner->orWhere('donasi_kontak.phone', 'like', "%{$variant}%")
+                        ->orWhereExists(function ($sub) use ($variant) {
+                            $sub->selectRaw(1)
+                                ->from('users')
+                                ->whereColumn('users.id', 'donations.agen_id')
+                                ->where('users.phone', 'like', "%{$variant}%");
+                        });
                 }
             });
         });

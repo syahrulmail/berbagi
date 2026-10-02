@@ -45,7 +45,7 @@
         <div class="form-group">
             <div class="input-icon">
                 <i class="fas fa-magnifying-glass"></i>
-                <input type="search" name="search" placeholder="Cari program, donatur, kontak donatur..." value="{{ request('search') }}">
+                <input type="search" name="search" placeholder="Cari program, donatur, no. WhatsApp, agen, cabang..." value="{{ request('search') }}">
             </div>
         </div>
         <div class="form-group">
