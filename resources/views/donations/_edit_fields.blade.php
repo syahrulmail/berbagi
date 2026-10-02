@@ -37,6 +37,11 @@
     </div>
 
     <div class="form-group">
+        <label for="modal_payment_date">Tanggal Pembayaran</label>
+        <input type="date" id="modal_payment_date" name="payment_date" value="{{ $donation->payment_date ? $donation->payment_date->toDateString() : '' }}">
+    </div>
+
+    <div class="form-group">
         <label for="modal_contact_id">Kontak Donatur *</label>
         @php
             $contactLabel = $donation->contact ? $donation->contact->name . ($donation->contact->phone ? ' (' . $donation->contact->phone . ')' : '') : '';

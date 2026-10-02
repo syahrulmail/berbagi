@@ -17,6 +17,7 @@ class Donation extends Model
         'donor_info',
         'amount',
         'donation_date',
+        'payment_date',
         'payment_method',
         'payment_proof',
         'note',
@@ -26,6 +27,7 @@ class Donation extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'donation_date' => 'date',
+        'payment_date' => 'date',
     ];
 
     public function branch()

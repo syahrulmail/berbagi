@@ -76,6 +76,12 @@
                 <input type="date" id="donation_date" name="donation_date" class="mo-input"
                        value="{{ old('donation_date', $donation->donation_date ? $donation->donation_date->toDateString() : now()->toDateString()) }}" required>
             </div>
+
+            <div class="mo-field">
+                <label for="payment_date">Tanggal Pembayaran</label>
+                <input type="date" id="payment_date" name="payment_date" class="mo-input"
+                       value="{{ old('payment_date', $donation && $donation->payment_date ? $donation->payment_date->toDateString() : '') }}">
+            </div>
         </div>
 
         <div class="mo-form-card">

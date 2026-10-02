@@ -8,65 +8,16 @@ use App\Models\Contact;
 use App\Models\Donation;
 use App\Models\Program;
 use App\Models\User;
+use App\Services\XlsxWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class DonationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Donation::with(['branch', 'agen', 'program', 'contact', 'items.program'])->select('donations.*');
-
-        if (auth()->user()->isAgen()) {
-            $query->where('agen_id', auth()->id());
-        } elseif (auth()->user()->isSupervisor() && auth()->user()->branch_id) {
-            $query->where('branch_id', auth()->user()->branch_id);
-        }
-
-        $query->leftJoin('programs as donasi_program', 'donations.program_id', '=', 'donasi_program.id');
-        $query->leftJoin('contacts as donasi_kontak', 'donations.contact_id', '=', 'donasi_kontak.id');
-
-        $query->when($request->from, function ($q, $from) {
-            return $q->whereDate('donations.donation_date', '>=', $from);
-        })
-        ->when($request->to, function ($q, $to) {
-            return $q->whereDate('donations.donation_date', '<=', $to);
-        })
-        ->when($request->branch_id, function ($q, $branchId) {
-            return $q->where('donations.branch_id', $branchId);
-        })
-        ->when($request->search, function ($q, $search) {
-            $search = trim($search);
-            $digits = preg_replace('/\D/', '', $search);
-            $phoneVariant = null;
-
-            if (strlen($digits) >= 4) {
-                if (strpos($digits, '0') === 0) {
-                    $phoneVariant = '62' . substr($digits, 1);
-                } elseif (strpos($digits, '8') === 0) {
-                    $phoneVariant = '62' . $digits;
-                }
-            }
-
-            return $q->where(function ($inner) use ($search, $digits, $phoneVariant) {
-                $inner->where('donasi_kontak.name', 'like', "%{$search}%")
-                    ->orWhereExists(function ($sub) use ($search) {
-                        $sub->selectRaw(1)
-                            ->from('donation_items')
-                            ->join('programs', 'donation_items.program_id', '=', 'programs.id')
-                            ->whereColumn('donation_items.donation_id', 'donations.id')
-                            ->where('programs.name', 'like', "%{$search}%");
-                    });
-
-                if (strlen($digits) >= 4) {
-                    $inner->orWhere('donasi_kontak.phone', 'like', "%{$digits}%");
-
-                    if ($phoneVariant) {
-                        $inner->orWhere('donasi_kontak.phone', 'like', "%{$phoneVariant}%");
-                    }
-                }
-            });
-        });
+        $query = $this->filteredQuery($request);
 
         $sortable = [
             'date'     => 'donations.donation_date',
@@ -106,6 +57,225 @@ class DonationController extends Controller
         return view('donations.index', compact('donations', 'totalAmount', 'branches', 'programs'));
     }
 
+    /**
+     * Unduh data donasi (XLSX) sesuai filter cabang & periode.
+     */
+    public function download(Request $request)
+    {
+        $request->validate([
+            'branch_ids' => ['nullable', 'array'],
+            'branch_ids.*' => ['integer', 'exists:branches,id'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', Rule::when($request->filled('from'), ['after_or_equal:from'])],
+        ]);
+
+        $donations = $this->filteredQuery($request)
+            ->orderBy('donations.donation_date')
+            ->orderBy('donations.id')
+            ->get();
+
+        $headers = [
+            'Cabang',
+            'Agent',
+            'Tanggal Donasi',
+            'Kontak Donatur',
+            'Info Donatur',
+            'Kategori Program',
+            'Program',
+            'Nominal',
+            'Total Donasi',
+            'Tanggal Pembayaran',
+            'Metode Pembayaran',
+            'Bukti Pembayaran',
+            'Catatan',
+        ];
+
+        $writer = (new XlsxWriter('Donasi'))
+            ->setColumnWidths([
+                1 => 20, 2 => 20, 3 => 15, 4 => 24, 5 => 28,
+                6 => 20, 7 => 30, 8 => 16, 9 => 16, 10 => 18,
+                11 => 18, 12 => 36, 13 => 28,
+            ])
+            ->addRow($headers, XlsxWriter::STYLE_HEADER);
+
+        foreach ($donations as $donation) {
+            [$categories, $programs, $amounts] = $this->exportItems($donation);
+
+            if (count($amounts) === 1) {
+                $nominalCell = ['value' => $amounts[0], 'style' => XlsxWriter::STYLE_NUMBER];
+            } else {
+                $nominalCell = [
+                    'value' => $this->formatAmounts($amounts),
+                    'style' => XlsxWriter::STYLE_WRAP,
+                ];
+            }
+
+            $wrap = XlsxWriter::STYLE_WRAP;
+
+            $writer->addRow([
+                ['value' => $donation->branch->name ?? '-', 'style' => $wrap],
+                ['value' => $donation->agen->name ?? '-', 'style' => $wrap],
+                ['value' => $donation->donation_date ? $donation->donation_date->format('d/m/Y') : '-', 'style' => $wrap],
+                ['value' => $this->contactLabel($donation->contact), 'style' => $wrap],
+                ['value' => $donation->donor_info ?: '-', 'style' => $wrap],
+                ['value' => $categories ? implode("\n", $categories) : '-', 'style' => $wrap],
+                ['value' => $programs ? implode("\n", $programs) : '-', 'style' => $wrap],
+                $nominalCell,
+                ['value' => (float) $donation->amount, 'style' => XlsxWriter::STYLE_NUMBER],
+                ['value' => $this->paymentDateLabel($donation), 'style' => $wrap],
+                ['value' => $this->paymentMethodLabel($donation->payment_method), 'style' => $wrap],
+                ['value' => $donation->payment_proof ? asset_photo_url($donation->payment_proof) : '-', 'style' => $wrap],
+                ['value' => $donation->note ?: '-', 'style' => $wrap],
+            ]);
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'donasi_');
+
+        if ($path === false) {
+            abort(500, 'Gagal menyiapkan berkas unduhan.');
+        }
+
+        $writer->save($path);
+
+        ActivityLog::record('donation.download', 'Mengunduh data donasi (' . $donations->count() . ' baris)');
+
+        $filename = 'donasi-' . now()->format('Ymd-His') . '.xlsx';
+
+        return response()->download($path, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Bangun query donasi yang sudah difilter (role, periode, cabang, pencarian).
+     * Dipakai bersama oleh index() dan download() agar konsisten.
+     */
+    protected function filteredQuery(Request $request)
+    {
+        $query = Donation::with(['branch', 'agen', 'program', 'contact', 'items.program'])->select('donations.*');
+
+        if (auth()->user()->isAgen()) {
+            $query->where('donations.agen_id', auth()->id());
+        } elseif (auth()->user()->isSupervisor() && auth()->user()->branch_id) {
+            $query->where('donations.branch_id', auth()->user()->branch_id);
+        }
+
+        $query->leftJoin('programs as donasi_program', 'donations.program_id', '=', 'donasi_program.id');
+        $query->leftJoin('contacts as donasi_kontak', 'donations.contact_id', '=', 'donasi_kontak.id');
+
+        $branchIds = array_values(array_filter((array) $request->input('branch_ids', [])));
+
+        $query->when($request->from, function ($q, $from) {
+            return $q->whereDate('donations.donation_date', '>=', $from);
+        })
+        ->when($request->to, function ($q, $to) {
+            return $q->whereDate('donations.donation_date', '<=', $to);
+        })
+        ->when($request->branch_id, function ($q, $branchId) {
+            return $q->where('donations.branch_id', $branchId);
+        })
+        ->when(count($branchIds), function ($q) use ($branchIds) {
+            return $q->whereIn('donations.branch_id', $branchIds);
+        })
+        ->when($request->search, function ($q, $search) {
+            $search = trim($search);
+            $digits = preg_replace('/\D/', '', $search);
+            $phoneVariant = null;
+
+            if (strlen($digits) >= 4) {
+                if (strpos($digits, '0') === 0) {
+                    $phoneVariant = '62' . substr($digits, 1);
+                } elseif (strpos($digits, '8') === 0) {
+                    $phoneVariant = '62' . $digits;
+                }
+            }
+
+            return $q->where(function ($inner) use ($search, $digits, $phoneVariant) {
+                $inner->where('donasi_kontak.name', 'like', "%{$search}%")
+                    ->orWhereExists(function ($sub) use ($search) {
+                        $sub->selectRaw(1)
+                            ->from('donation_items')
+                            ->join('programs', 'donation_items.program_id', '=', 'programs.id')
+                            ->whereColumn('donation_items.donation_id', 'donations.id')
+                            ->where('programs.name', 'like', "%{$search}%");
+                    });
+
+                if (strlen($digits) >= 4) {
+                    $inner->orWhere('donasi_kontak.phone', 'like', "%{$digits}%");
+
+                    if ($phoneVariant) {
+                        $inner->orWhere('donasi_kontak.phone', 'like', "%{$phoneVariant}%");
+                    }
+                }
+            });
+        });
+
+        return $query;
+    }
+
+    /**
+     * Ambil daftar kategori, program, dan nominal donasi untuk ekspor.
+     * Donasi lama tanpa item memakai relasi program langsung.
+     *
+     * @return array{0: array<int, string>, 1: array<int, string>, 2: array<int, float>}
+     */
+    protected function exportItems(Donation $donation): array
+    {
+        $items = $donation->items;
+
+        if ($items->isEmpty()) {
+            $program = $donation->program;
+
+            return [
+                [$program ? ($program->category_label ?: '-') : '-'],
+                [$program->name ?? '-'],
+                [(float) $donation->amount],
+            ];
+        }
+
+        $categories = [];
+        $programs = [];
+        $amounts = [];
+
+        foreach ($items as $item) {
+            $program = $item->program;
+
+            $categories[] = $program ? ($program->category_label ?: '-') : ($item->program_category ?: '-');
+            $programs[] = $program->name ?? '-';
+            $amounts[] = (float) $item->amount;
+        }
+
+        return [$categories, $programs, $amounts];
+    }
+
+    protected function formatAmounts(array $amounts): string
+    {
+        return implode("\n", array_map(function ($value) {
+            return number_format((float) $value, 0, ',', '.');
+        }, $amounts));
+    }
+
+    protected function contactLabel(?Contact $contact): string
+    {
+        if (!$contact) {
+            return '-';
+        }
+
+        return $contact->phone ? $contact->name . ' (' . $contact->phone . ')' : $contact->name;
+    }
+
+    /**
+     * Label tanggal pembayaran. Jika belum diisi, pakai waktu pencatatan.
+     */
+    protected function paymentDateLabel(Donation $donation): string
+    {
+        if ($donation->payment_date) {
+            return $donation->payment_date->format('d/m/Y');
+        }
+
+        return $donation->created_at ? $donation->created_at->format('d/m/Y H:i') : '-';
+    }
+
     public function create()
     {
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
@@ -124,6 +294,7 @@ class DonationController extends Controller
             'items.*.amount' => ['required', 'numeric', 'min:1'],
             'items.*.program_category' => ['nullable', 'string'],
             'donation_date' => ['required', 'date'],
+            'payment_date' => ['nullable', 'date'],
             'branch_id' => ['required', 'exists:branches,id'],
             'agen_id' => ['required', 'exists:users,id'],
             'contact_id' => ['required', 'exists:contacts,id'],
@@ -195,6 +366,7 @@ class DonationController extends Controller
         return response()->json([
             'id' => $donation->id,
             'donation_date_formatted' => $donation->donation_date->format('d M Y'),
+            'payment_date_formatted' => $donation->payment_date ? $donation->payment_date->format('d M Y') : '-',
             'branch' => $donation->branch->name ?? '-',
             'agen' => $donation->agen->name ?? '-',
             'contact' => $donation->contact_id ? ($donation->contact->name ?? '-') : '-',
@@ -245,6 +417,7 @@ class DonationController extends Controller
             'items.*.amount' => ['required', 'numeric', 'min:1'],
             'items.*.program_category' => ['nullable', 'string'],
             'donation_date' => ['required', 'date'],
+            'payment_date' => ['nullable', 'date'],
             'branch_id' => ['required', 'exists:branches,id'],
             'agen_id' => ['required', 'exists:users,id'],
             'contact_id' => ['required', 'exists:contacts,id'],

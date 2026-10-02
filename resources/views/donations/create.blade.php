@@ -45,6 +45,11 @@
         </div>
 
         <div class="form-group">
+            <label for="payment_date">Tanggal Pembayaran</label>
+            <input type="date" id="payment_date" name="payment_date" value="{{ old('payment_date', now()->toDateString()) }}">
+        </div>
+
+        <div class="form-group">
             <label for="contact_id">Kontak Donatur *</label>
             @php
                 $contactSelected = old('contact_id');

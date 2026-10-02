@@ -34,7 +34,10 @@
         <h1><i class="fas fa-hand-holding-dollar"></i> Manajemen Donasi</h1>
         <p class="subtitle">Total tampilan filter: <strong>Rp {{ number_format($totalAmount, 0, ',', '.') }}</strong></p>
     </div>
-    <a href="{{ route('donations.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Catat Donasi</a>
+    <div class="header-actions">
+        <a href="{{ route('donations.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Catat Donasi</a>
+        <button type="button" class="btn btn-outline" id="donation-download-btn" data-donation-download-open><i class="fas fa-download"></i> Download Donasi</button>
+    </div>
 </div>
 
 <div class="card">
@@ -152,9 +155,11 @@
 </div>
 
 @include('partials.donation-detail-modal')
+@include('partials.donation-download-modal')
 @endsection
 
 @push('scripts')
 <script src="{{ assetv('js/donation-form.js') }}"></script>
 <script src="{{ assetv('js/donation-detail.js') }}"></script>
+<script src="{{ assetv('js/donation-download.js') }}"></script>
 @endpush

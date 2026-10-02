@@ -157,6 +157,7 @@ class MobileCrudController extends MobileAppController
             'items.*.amount' => ['required', 'numeric', 'min:1'],
             'items.*.program_category' => ['nullable', 'string'],
             'donation_date' => ['required', 'date'],
+            'payment_date' => ['nullable', 'date'],
             'branch_id' => ['required', 'exists:branches,id'],
             'agen_id' => ['required', 'exists:users,id'],
             'contact_id' => ['nullable', 'exists:contacts,id'],

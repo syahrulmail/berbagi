@@ -76,6 +76,7 @@
                     detailItem('Agent', d.agen) +
                 '</div>' +
                 detailItem('Tanggal Donasi', d.donation_date_formatted) +
+                detailItem('Tanggal Pembayaran', d.payment_date_formatted) +
                 detailItem('Kontak Donatur', contactValue) +
                 '<div class="detail-section">' +
                     '<h4>Info Donatur</h4>' +
