@@ -81,17 +81,12 @@
                     <th>Kategori Program</th>
                     <th>Tags</th>
                     <th><a href="{{ $sortUrl('collected') }}" class="sort-link">Terkumpul {!! $sortIcon('collected') !!}</a></th>
-                    <th>Progress</th>
-                    <th><a href="{{ $sortUrl('donations') }}" class="sort-link">Donasi {!! $sortIcon('donations') !!}</a></th>
                     <th>Status</th>
                     <th class="text-right">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($programs as $program)
-                    @php
-                        $progress = $program->goal_amount > 0 ? min(100, round(((float) $program->total_collected / (float) $program->goal_amount) * 100, 1)) : 0;
-                    @endphp
                     <tr>
                         <td><strong>{{ $program->name }}</strong></td>
                         <td>
@@ -111,8 +106,6 @@
                             @endif
                         </td>
                         <td>Rp {{ number_format($program->total_collected, 0, ',', '.') }}</td>
-                        <td><span class="progress-percent">{{ $progress }}%</span></td>
-                        <td>{{ $program->donation_items_count }}</td>
                         <td>
                             <span class="badge {{ $program->is_active ? 'badge-green' : 'badge-gray' }}">
                                 {{ $program->is_active ? 'Aktif' : 'Nonaktif' }}
@@ -120,6 +113,14 @@
                         </td>
                         <td>
                             <div class="actions">
+                                @if($program->is_active && (auth()->user()->isAgen() || auth()->user()->isSupervisor()) && auth()->user()->slug)
+                                    <button type="button" class="btn btn-sm btn-icon" title="Bagikan program"
+                                            data-program-share
+                                            data-share-url="{{ route('public.agent-program', ['agentSlug' => auth()->user()->slug, 'program' => $program->slug]) }}"
+                                            data-share-title="{{ $program->name }}">
+                                        <i class="fas fa-share-nodes"></i>
+                                    </button>
+                                @endif
                                 <a href="{{ route('programs.edit', $program) }}" class="btn btn-sm btn-icon" title="Edit">
                                     <i class="fas fa-pen"></i>
                                 </a>
@@ -136,7 +137,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="empty-state">
+                        <td colspan="6" class="empty-state">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <p>Belum ada program.</p>
                         </td>
@@ -147,4 +148,10 @@
     </div>
     {{ $programs->links() }}
 </div>
+
+@include('partials.program-share-modal')
 @endsection
+
+@push('scripts')
+<script src="{{ assetv('js/program-share.js') }}"></script>
+@endpush
