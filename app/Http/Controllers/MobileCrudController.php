@@ -25,7 +25,7 @@ class MobileCrudController extends MobileAppController
     {
         $user = auth()->user();
 
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->formBranches($user);
         $programs = Program::where('is_active', true)->orderBy('name')->get();
         $agents = $this->formAgents($user);
         $contacts = $this->formContacts();
@@ -75,7 +75,7 @@ class MobileCrudController extends MobileAppController
         }
 
         $user = auth()->user();
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->formBranches($user);
         $programs = Program::where('is_active', true)->orderBy('name')->get();
         $agents = $this->formAgents($user);
         $contacts = $this->formContacts();
@@ -178,6 +178,23 @@ class MobileCrudController extends MobileAppController
         if (auth()->user()->isAgen()) {
             $data['agen_id'] = auth()->id();
             $data['branch_id'] = auth()->user()->branch_id ?? $data['branch_id'];
+        }
+
+        if (auth()->user()->isSupervisor()) {
+            $allowedAgentIds = $this->formAgents(auth()->user())
+                ->pluck('id')
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->all();
+
+            if (! in_array((int) ($data['agen_id'] ?? 0), $allowedAgentIds, true)) {
+                throw ValidationException::withMessages([
+                    'agen_id' => 'Agent yang dipilih tidak berada di cabang Anda.',
+                ]);
+            }
+
+            $data['branch_id'] = auth()->user()->branch_id;
         }
 
         if (! empty($data['agen_id'])) {
@@ -631,6 +648,17 @@ class MobileCrudController extends MobileAppController
     /* =====================================================
      | HELPER FORM
      | ===================================================== */
+
+    protected function formBranches($user)
+    {
+        $query = Branch::where('is_active', true)->orderBy('name');
+
+        if ($user->isSupervisor() || $user->isAgen()) {
+            $query->where('id', $user->branch_id);
+        }
+
+        return $query->get();
+    }
 
     protected function formAgents($user)
     {

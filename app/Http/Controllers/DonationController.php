@@ -12,6 +12,7 @@ use App\Services\XlsxWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class DonationController extends Controller
 {
@@ -303,7 +304,7 @@ class DonationController extends Controller
 
     public function create()
     {
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->visibleBranches();
         $programs = Program::where('is_active', true)->orderBy('name')->get();
         $agents = $this->visibleAgents();
         $contacts = Contact::orderBy('name')->get();
@@ -331,10 +332,7 @@ class DonationController extends Controller
 
         unset($data['payment_proof']);
 
-        if (auth()->user()->isAgen()) {
-            $data['agen_id'] = auth()->id();
-            $data['branch_id'] = auth()->user()->branch_id ?? $data['branch_id'];
-        }
+        $data = $this->enforceRoleAssignment($data);
 
         $this->normalizeBranch($data);
 
@@ -453,6 +451,8 @@ class DonationController extends Controller
         ]);
 
         unset($data['payment_proof']);
+
+        $data = $this->enforceRoleAssignment($data);
 
         $this->normalizeBranch($data);
 
@@ -589,6 +589,41 @@ class DonationController extends Controller
         }
 
         return User::where('id', $user->id)->get();
+    }
+
+    /**
+     * Paksa cabang/agent sesuai role agar tidak bisa diubah lewat request manual.
+     * Agen selalu terisi dirinya dan cabangnya; supervisor selalu cabangnya.
+     */
+    protected function enforceRoleAssignment(array $data): array
+    {
+        $user = auth()->user();
+
+        if ($user->isAgen()) {
+            $data['agen_id'] = $user->id;
+            $data['branch_id'] = $user->branch_id ?? ($data['branch_id'] ?? null);
+
+            return $data;
+        }
+
+        if ($user->isSupervisor()) {
+            $allowedAgentIds = $this->visibleAgents()
+                ->pluck('id')
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->all();
+
+            if (! in_array((int) ($data['agen_id'] ?? 0), $allowedAgentIds, true)) {
+                throw ValidationException::withMessages([
+                    'agen_id' => 'Agent yang dipilih tidak berada di cabang Anda.',
+                ]);
+            }
+
+            $data['branch_id'] = $user->branch_id;
+        }
+
+        return $data;
     }
 
     protected function authorizeAccess(Donation $donation): void
