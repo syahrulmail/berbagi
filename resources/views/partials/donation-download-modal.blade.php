@@ -56,7 +56,7 @@
                         <span>Pilih semua cabang</span>
                     </label>
                     <div class="checkbox-group" id="donation-download-branches">
-                        @forelse($branches as $branch)
+                        @forelse($downloadBranches as $branch)
                             <label class="checkbox-label">
                                 <input type="checkbox" name="branch_ids[]" value="{{ $branch->id }}">
                                 <span>{{ $branch->name }}</span>
@@ -77,7 +77,13 @@
                     </div>
                 </div>
                 <p class="download-hint">
-                    Kosongkan cabang atau tanggal untuk mengunduh seluruh data sesuai akses Anda.
+                    @if(auth()->user() && auth()->user()->isAgen())
+                        Anda hanya dapat memilih cabang Anda dan hanya donasi milik Anda yang akan diunduh.
+                    @elseif(auth()->user() && auth()->user()->isSupervisor())
+                        Anda hanya dapat memilih cabang Anda sendiri.
+                    @else
+                        Kosongkan cabang atau tanggal untuk mengunduh seluruh data sesuai akses Anda.
+                    @endif
                 </p>
             </div>
             <div class="modal-footer">

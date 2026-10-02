@@ -53,8 +53,9 @@ class DonationController extends Controller
 
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
         $programs = Program::where('is_active', true)->orderBy('name')->get();
+        $downloadBranches = $this->visibleBranches();
 
-        return view('donations.index', compact('donations', 'totalAmount', 'branches', 'programs'));
+        return view('donations.index', compact('donations', 'totalAmount', 'branches', 'programs', 'downloadBranches'));
     }
 
     /**
@@ -68,6 +69,13 @@ class DonationController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', Rule::when($request->filled('from'), ['after_or_equal:from'])],
         ]);
+
+        $allowedBranchIds = $this->visibleBranches()->pluck('id')->all();
+        $requestedBranchIds = array_values(array_filter((array) $request->input('branch_ids', [])));
+
+        if (array_diff($requestedBranchIds, $allowedBranchIds)) {
+            abort(403, 'Cabang yang dipilih tidak sesuai dengan akses Anda.');
+        }
 
         $donations = $this->filteredQuery($request)
             ->orderBy('donations.donation_date')
@@ -211,6 +219,23 @@ class DonationController extends Controller
         });
 
         return $query;
+    }
+
+    /**
+     * Daftar cabang yang boleh diakses pengguna saat ini.
+     * Admin melihat semua cabang, supervisor & agen hanya cabangnya sendiri.
+     */
+    protected function visibleBranches()
+    {
+        $query = Branch::where('is_active', true)->orderBy('name');
+
+        $user = auth()->user();
+
+        if ($user && ($user->isSupervisor() || $user->isAgen())) {
+            $query->where('id', $user->branch_id);
+        }
+
+        return $query->get();
     }
 
     /**

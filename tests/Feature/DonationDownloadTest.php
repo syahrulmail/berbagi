@@ -123,4 +123,84 @@ class DonationDownloadTest extends TestCase
 
         $response->assertSessionHasErrors('to');
     }
+
+    public function test_download_modal_lists_only_own_branch_for_supervisor()
+    {
+        $branchA = Branch::create(['code' => 'A-' . uniqid(), 'name' => 'Cabang A', 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'B-' . uniqid(), 'name' => 'Cabang B', 'is_active' => true]);
+
+        $supervisor = $this->makeUser('supervisor', $branchA);
+
+        $this->actingAs($supervisor)->get(route('donations.index'))
+            ->assertOk()
+            ->assertSee('name="branch_ids[]" value="' . $branchA->id . '"', false)
+            ->assertDontSee('name="branch_ids[]" value="' . $branchB->id . '"', false);
+    }
+
+    public function test_agent_download_other_branch_is_forbidden()
+    {
+        $branchA = Branch::create(['code' => 'A-' . uniqid(), 'name' => 'Cabang A', 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'B-' . uniqid(), 'name' => 'Cabang B', 'is_active' => true]);
+
+        $agent = $this->makeUser('agen', $branchA);
+
+        $this->actingAs($agent)->get(route('donations.download', [
+            'branch_ids' => [$branchB->id],
+        ]))->assertForbidden();
+    }
+
+    public function test_supervisor_can_download_own_branch()
+    {
+        $branch = Branch::create(['code' => 'S-' . uniqid(), 'name' => 'Cabang Sendiri', 'is_active' => true]);
+
+        $supervisor = $this->makeUser('supervisor', $branch);
+
+        $this->actingAs($supervisor)->get(route('donations.download', [
+            'branch_ids' => [$branch->id],
+        ]))->assertOk();
+    }
+
+    public function test_agent_download_contains_only_own_donations()
+    {
+        $branch = Branch::create(['code' => 'AG-' . uniqid(), 'name' => 'Cabang Agen', 'is_active' => true]);
+        $program = Program::create(['name' => 'Program Agen', 'slug' => 'program-agen-' . uniqid(), 'program_category' => 'WAP', 'is_active' => true]);
+
+        $agentA = $this->makeUser('agen', $branch);
+        $agentB = $this->makeUser('agen', $branch);
+
+        $contactA = Contact::create(['name' => 'Kontak Agen Satu', 'phone' => '0811000001', 'status' => 'prospect']);
+        $contactB = Contact::create(['name' => 'Kontak Agen Dua', 'phone' => '0811000002', 'status' => 'prospect']);
+
+        foreach ([[$agentA, $contactA, 10000], [$agentB, $contactB, 20000]] as [$agent, $contact, $amount]) {
+            $donation = Donation::create([
+                'branch_id' => $branch->id,
+                'agen_id' => $agent->id,
+                'program_id' => $program->id,
+                'contact_id' => $contact->id,
+                'amount' => $amount,
+                'donation_date' => now()->format('Y-m-d'),
+                'payment_date' => now()->format('Y-m-d'),
+                'payment_method' => 'transfer',
+                'created_by' => $agent->id,
+            ]);
+
+            $donation->items()->create([
+                'program_id' => $program->id,
+                'program_category' => 'WAP',
+                'amount' => $amount,
+            ]);
+        }
+
+        $response = $this->actingAs($agentA)->get(route('donations.download'));
+        $response->assertOk();
+
+        $file = $response->baseResponse->getFile()->getPathname();
+        $zip = new \ZipArchive();
+        $zip->open($file);
+        $sheet = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+
+        $this->assertStringContainsString('Kontak Agen Satu', $sheet);
+        $this->assertStringNotContainsString('Kontak Agen Dua', $sheet);
+    }
 }
