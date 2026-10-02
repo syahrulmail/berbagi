@@ -82,11 +82,9 @@
             <thead>
                 <tr>
                     <th><a href="{{ $sortUrl('date') }}" class="sort-link">Tanggal {!! $sortIcon('date') !!}</a></th>
-                    <th><a href="{{ $sortUrl('branch') }}" class="sort-link">Cabang {!! $sortIcon('branch') !!}</a></th>
                     <th><a href="{{ $sortUrl('agent') }}" class="sort-link">Agen {!! $sortIcon('agent') !!}</a></th>
                     <th><a href="{{ $sortUrl('program') }}" class="sort-link">Program Donasi {!! $sortIcon('program') !!}</a></th>
                     <th><a href="{{ $sortUrl('donatur') }}" class="sort-link">Donatur {!! $sortIcon('donatur') !!}</a></th>
-                    <th>Kontak Donatur</th>
                     <th><a href="{{ $sortUrl('amount') }}" class="sort-link">Nominal {!! $sortIcon('amount') !!}</a></th>
                     <th class="text-right">Aksi</th>
                 </tr>
@@ -95,8 +93,12 @@
                 @forelse($donations as $donation)
                     <tr>
                         <td>{{ $donation->donation_date->format('d M Y') }}</td>
-                        <td>{{ $donation->branch->name ?? '-' }}</td>
-                        <td>{{ $donation->agen->name ?? '-' }}</td>
+                        <td>
+                            {{ $donation->agen->name ?? '-' }}
+                            @if($donation->branch)
+                                <small style="display:block; color: var(--gray-500);">{{ $donation->branch->name }}</small>
+                            @endif
+                        </td>
                         <td>
                             @if($donation->items->isNotEmpty())
                                 <div class="item-list">
@@ -120,8 +122,12 @@
                                 -
                             @endif
                         </td>
-                        <td>{{ $donation->contact->name ?? '-' }}</td>
-                        <td>{{ $donation->contact->phone ?? '-' }}</td>
+                        <td>
+                            {{ $donation->contact->name ?? '-' }}
+                            @if($donation->contact && $donation->contact->phone)
+                                <small style="display:block; color: var(--gray-500);">{{ $donation->contact->phone }}</small>
+                            @endif
+                        </td>
                         <td><strong>Rp {{ number_format($donation->amount, 0, ',', '.') }}</strong></td>
                         <td>
                             <div class="actions">
@@ -144,7 +150,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="empty-state">
+                        <td colspan="6" class="empty-state">
                             <i class="fas fa-hand-holding-dollar"></i>
                             <p>Belum ada data donasi.</p>
                         </td>
