@@ -261,6 +261,35 @@ class ContactController extends Controller
 
         $contact->load(['agen', 'branch']);
 
+        $donations = $contact->donations()
+            ->with(['items.program', 'program'])
+            ->orderByDesc('donation_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($donation) {
+                $items = $donation->items->map(function ($item) {
+                    return [
+                        'category_label' => $item->program ? $item->program->category_label : ($item->program_category ?: '-'),
+                        'program_name' => $item->program->name ?? '-',
+                    ];
+                });
+
+                if ($items->isEmpty() && $donation->program) {
+                    $items = collect([[
+                        'category_label' => $donation->program->category_label ?: '-',
+                        'program_name' => $donation->program->name,
+                    ]]);
+                }
+
+                return [
+                    'id' => $donation->id,
+                    'date_formatted' => $donation->donation_date ? $donation->donation_date->format('d M Y') : '-',
+                    'items' => $items->values(),
+                    'amount_formatted' => 'Rp ' . number_format((float) $donation->amount, 0, ',', '.'),
+                ];
+            })
+            ->values();
+
         return response()->json([
             'id' => $contact->id,
             'name' => $contact->name,
@@ -273,6 +302,7 @@ class ContactController extends Controller
             'notes' => $contact->notes,
             'donation_count' => $contact->donations()->count(),
             'donation_total_formatted' => 'Rp ' . number_format((float) $contact->donations()->sum('amount'), 0, ',', '.'),
+            'donations' => $donations,
             'created_at_formatted' => $contact->created_at ? $contact->created_at->format('d M Y H:i') : '-',
             'updated_at_formatted' => $contact->updated_at ? $contact->updated_at->format('d M Y H:i') : '-',
         ]);

@@ -125,8 +125,11 @@
 </div>
 
 @include('partials.contact-detail-modal')
+@include('partials.donation-detail-modal')
 @endsection
 
 @push('scripts')
+<script src="{{ assetv('js/donation-form.js') }}"></script>
 <script src="{{ assetv('js/contact-detail.js') }}"></script>
+<script src="{{ assetv('js/donation-detail.js') }}"></script>
 @endpush

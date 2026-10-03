@@ -61,6 +61,54 @@
             .replace(/'/g, '&#039;');
     }
 
+    function escapeAttr(s) {
+        return escapeHtml(s).replace(/`/g, '&#096;');
+    }
+
+    function renderDonations(donations) {
+        var list = donations || [];
+
+        if (!list.length) {
+            return '<div class="detail-section">' +
+                '<h4>Donasi</h4>' +
+                '<p class="muted">Belum ada donasi.</p>' +
+                '</div>';
+        }
+
+        var rows = list.map(function (don) {
+            var programs = (don.items || []).map(function (it) {
+                var cat = (it.category_label && it.category_label !== '-')
+                    ? '<span class="badge">' + escapeHtml(it.category_label) + '</span> '
+                    : '';
+                return '<span style="display:block;">' + cat + escapeHtml(it.program_name) + '</span>';
+            }).join('') || '<span class="muted">-</span>';
+
+            return '<tr>' +
+                '<td>' + escapeHtml(don.date_formatted) + '</td>' +
+                '<td>' + programs + '</td>' +
+                '<td class="detail-amount">' + escapeHtml(don.amount_formatted) + '</td>' +
+                '<td class="text-right">' +
+                    '<button type="button" class="btn btn-sm btn-icon" data-donation-detail="' + escapeAttr(don.id) + '" title="Lihat Detail Donasi">' +
+                        '<i class="fas fa-eye"></i>' +
+                    '</button>' +
+                '</td>' +
+                '</tr>';
+        }).join('');
+
+        return '<div class="detail-section">' +
+            '<h4>Donasi</h4>' +
+            '<table class="detail-items-table">' +
+                '<thead><tr>' +
+                    '<th>Tanggal Donasi</th>' +
+                    '<th>Program Donasi</th>' +
+                    '<th>Nominal</th>' +
+                    '<th class="text-right">Aksi</th>' +
+                '</tr></thead>' +
+                '<tbody>' + rows + '</tbody>' +
+            '</table>' +
+            '</div>';
+    }
+
     function renderDetail(d) {
         var statusHtml = '<span class="badge ' + escapeHtml(d.status_color) + '">' + escapeHtml(d.status_label) + '</span>';
         var notesHtml = d.notes
@@ -93,6 +141,7 @@
                     detailItem('Dibuat pada', d.created_at_formatted) +
                     detailItem('Diperbarui pada', d.updated_at_formatted) +
                 '</div>' +
+                renderDonations(d.donations) +
             '</div>';
     }
 
