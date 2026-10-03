@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,supervisor,agen')->group(function () {
         Route::resource('contacts', ContactController::class)->except('show');
+        Route::get('contacts/download', [ContactController::class, 'download'])->name('contacts.download');
         Route::post('contacts/quick', [ContactController::class, 'storeQuick'])->name('contacts.quick');
         Route::post('contacts/paste', [ContactController::class, 'storePaste'])->name('contacts.paste');
         Route::post('contacts/import', [ContactController::class, 'import'])->name('contacts.import');

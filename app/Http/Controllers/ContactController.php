@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Contact;
 use App\Models\User;
 use App\Services\ContactImportService;
+use App\Services\XlsxWriter;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
@@ -19,24 +20,7 @@ class ContactController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Contact::with(['agen', 'branch'])
-            ->withSum('donations as total_donation', 'amount');
-
-        if (auth()->user()->isAgen()) {
-            $query->where('agen_id', auth()->id());
-        } elseif (auth()->user()->isSupervisor() && auth()->user()->branch_id) {
-            $query->where('branch_id', auth()->user()->branch_id);
-        }
-
-        $query->when($request->status, function ($q, $status) {
-            return $q->where('status', $status);
-        })
-        ->when($request->search, function ($q, $search) {
-            return $q->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
-            });
-        });
+        $query = $this->filteredQuery($request);
 
         $sort = $request->input('sort', 'created_at');
         $dir = $request->input('dir') === 'asc' ? 'asc' : 'desc';
@@ -67,6 +51,94 @@ class ContactController extends Controller
         $agents = $this->visibleAgents();
 
         return view('contacts.index', compact('contacts', 'agents'));
+    }
+
+    /**
+     * Bangun query kontak yang sudah difilter (role, status, pencarian).
+     * Dipakai bersama oleh index() dan download() agar konsisten.
+     */
+    protected function filteredQuery(Request $request)
+    {
+        $query = Contact::with(['agen', 'branch'])
+            ->withSum('donations as total_donation', 'amount');
+
+        if (auth()->user()->isAgen()) {
+            $query->where('agen_id', auth()->id());
+        } elseif (auth()->user()->isSupervisor() && auth()->user()->branch_id) {
+            $query->where('branch_id', auth()->user()->branch_id);
+        }
+
+        $query->when($request->status, function ($q, $status) {
+            return $q->where('status', $status);
+        })
+        ->when($request->search, function ($q, $search) {
+            return $q->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        });
+
+        return $query;
+    }
+
+    /**
+     * Unduh data kontak (XLSX) sesuai akses role dan filter yang aktif.
+     */
+    public function download(Request $request)
+    {
+        $contacts = $this->filteredQuery($request)
+            ->withCount('donations')
+            ->orderBy('name')
+            ->get();
+
+        $headers = [
+            'Nama',
+            'No. WhatsApp',
+            'Status',
+            'Agen',
+            'Cabang',
+            'Total Donasi',
+            'Jumlah Donasi',
+            'Catatan',
+            'Dibuat Pada',
+        ];
+
+        $writer = (new XlsxWriter('Kontak'))
+            ->setColumnWidths([
+                1 => 28, 2 => 20, 3 => 16, 4 => 22, 5 => 22,
+                6 => 16, 7 => 14, 8 => 36, 9 => 20,
+            ])
+            ->addRow($headers, XlsxWriter::STYLE_HEADER);
+
+        foreach ($contacts as $contact) {
+            $writer->addRow([
+                ['value' => $contact->name, 'style' => XlsxWriter::STYLE_WRAP],
+                ['value' => $contact->phone ?: '-', 'style' => XlsxWriter::STYLE_WRAP],
+                ['value' => $contact->statusLabel(), 'style' => XlsxWriter::STYLE_WRAP],
+                ['value' => $contact->agen->name ?? '-', 'style' => XlsxWriter::STYLE_WRAP],
+                ['value' => $contact->branch->name ?? '-', 'style' => XlsxWriter::STYLE_WRAP],
+                ['value' => (float) ($contact->total_donation ?? 0), 'style' => XlsxWriter::STYLE_NUMBER],
+                ['value' => (int) $contact->donations_count, 'style' => XlsxWriter::STYLE_NUMBER],
+                ['value' => $contact->notes ?: '-', 'style' => XlsxWriter::STYLE_WRAP],
+                ['value' => $contact->created_at ? $contact->created_at->format('d/m/Y H:i') : '-', 'style' => XlsxWriter::STYLE_WRAP],
+            ]);
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'kontak_');
+
+        if ($path === false) {
+            abort(500, 'Gagal menyiapkan berkas unduhan.');
+        }
+
+        $writer->save($path);
+
+        ActivityLog::record('contact.download', 'Mengunduh data kontak (' . $contacts->count() . ' baris)');
+
+        $filename = 'kontak-' . now()->format('Ymd-His') . '.xlsx';
+
+        return response()->download($path, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     public function create()

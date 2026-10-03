@@ -385,6 +385,12 @@
         margin-top: 2px;
     }
 
+    .header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
     /* ============ BUTTONS ============ */
     .btn {
         @apply inline-flex items-center justify-center gap-2 rounded-xl text-[13px] font-semibold whitespace-nowrap cursor-pointer;

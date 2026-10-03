@@ -31,7 +31,10 @@
         <h1><i class="fas fa-address-book"></i> Manajemen Kontak</h1>
         <p class="subtitle">Kelola calon donatur (Kontak Intelligent).</p>
     </div>
-    <a href="{{ route('contacts.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Kontak</a>
+    <div class="header-actions">
+        <a href="{{ route('contacts.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Kontak</a>
+        <a href="{{ route('contacts.download', request()->query()) }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Download Kontak</a>
+    </div>
 </div>
 
 <div class="card">

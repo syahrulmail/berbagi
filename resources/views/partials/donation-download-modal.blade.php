@@ -4,12 +4,6 @@
 --}}
 @push('styles')
 <style>
-    .header-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
     #donation-download-modal .checkbox-group {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
