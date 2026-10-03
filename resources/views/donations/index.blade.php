@@ -86,6 +86,7 @@
                     <th><a href="{{ $sortUrl('program') }}" class="sort-link">Program Donasi {!! $sortIcon('program') !!}</a></th>
                     <th><a href="{{ $sortUrl('donatur') }}" class="sort-link">Donatur {!! $sortIcon('donatur') !!}</a></th>
                     <th><a href="{{ $sortUrl('amount') }}" class="sort-link">Nominal {!! $sortIcon('amount') !!}</a></th>
+                    <th>Catatan</th>
                     <th class="text-right">Aksi</th>
                 </tr>
             </thead>
@@ -130,6 +131,13 @@
                         </td>
                         <td><strong>Rp {{ number_format($donation->amount, 0, ',', '.') }}</strong></td>
                         <td>
+                            @if($donation->note)
+                                <span class="note-cell">{{ $donation->note }}</span>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
                             <div class="actions">
                                 <button type="button" class="btn btn-sm btn-icon" data-donation-detail="{{ $donation->id }}" title="Lihat Detail">
                                     <i class="fas fa-eye"></i>
@@ -150,7 +158,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="empty-state">
+                        <td colspan="7" class="empty-state">
                             <i class="fas fa-hand-holding-dollar"></i>
                             <p>Belum ada data donasi.</p>
                         </td>

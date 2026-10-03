@@ -1231,6 +1231,14 @@
         flex-wrap: wrap;
     }
 
+    .note-cell {
+        display: inline-block;
+        max-width: 240px;
+        color: var(--gray-500);
+        white-space: pre-line;
+        word-break: break-word;
+    }
+
     @media (max-width: 900px) {
         .donation-item-row {
             grid-template-columns: 1fr;
