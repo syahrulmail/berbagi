@@ -203,6 +203,7 @@ class DonationController extends Controller
 
             return $q->where(function ($inner) use ($search, $phoneVariants) {
                 $inner->where('donasi_kontak.name', 'like', "%{$search}%")
+                    ->orWhere('donations.note', 'like', "%{$search}%")
                     ->orWhereExists(function ($sub) use ($search) {
                         $sub->selectRaw(1)
                             ->from('donation_items')

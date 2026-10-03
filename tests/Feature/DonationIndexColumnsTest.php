@@ -83,4 +83,50 @@ class DonationIndexColumnsTest extends TestCase
             ->assertSee($contact->phone)
             ->assertSee($branch->name);
     }
+
+    public function test_index_uses_small_subtext_for_program_name_and_phone()
+    {
+        $branch = $this->makeBranch('Rapi');
+        $admin = $this->makeUser('admin');
+        $agen = $this->makeUser('agen', $branch);
+
+        $programName = 'Program Rapi ' . uniqid();
+        $program = Program::create([
+            'name' => $programName,
+            'slug' => 'program-rapi-' . uniqid(),
+            'program_category' => 'WAP',
+            'is_active' => true,
+        ]);
+
+        $contact = Contact::create([
+            'name' => 'Donatur Rapi ' . uniqid(),
+            'phone' => '6289911122233',
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        Donation::create([
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+            'program_id' => $program->id,
+            'contact_id' => $contact->id,
+            'amount' => 50000,
+            'donation_date' => now()->format('Y-m-d'),
+            'payment_method' => 'transfer',
+            'created_by' => $agen->id,
+        ]);
+
+        $html = $this->actingAs($admin)
+            ->get(route('donations.index', ['search' => $contact->name]))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('<table class="table table-donations">', $html);
+        $this->assertMatchesRegularExpression(
+            '/<span class="item-program-name">' . preg_quote($programName, '/') . '<\/span>/',
+            $html
+        );
+        $this->assertStringContainsString('<small class="cell-sub">' . $contact->phone . '</small>', $html);
+    }
 }

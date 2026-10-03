@@ -662,6 +662,29 @@
         text-decoration: underline solid;
     }
 
+    /* ============ DONATION TABLE ============ */
+    .table-donations td {
+        vertical-align: top;
+    }
+
+    .table-donations .col-nowrap {
+        white-space: nowrap;
+    }
+
+    .table-donations .cell-sub {
+        display: block;
+        color: var(--gray-500);
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
+    .table-donations .item-program-name {
+        color: var(--gray-500);
+        font-size: 12px;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+
     /* ============ BADGES ============ */
     .badge {
         @apply inline-block rounded-full font-semibold whitespace-nowrap;

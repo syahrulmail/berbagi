@@ -130,4 +130,65 @@ class DonationSearchTest extends TestCase
             ->assertSee($s['contactA']->name)
             ->assertDontSee($s['contactB']->name);
     }
+
+    public function test_search_by_note()
+    {
+        $branch = Branch::create(['code' => 'BR-' . uniqid(), 'name' => 'Cabang Note ' . uniqid(), 'is_active' => true]);
+        $admin = $this->makeUser('admin', $branch, 'Admin Note ' . uniqid());
+        $agen = $this->makeUser('agen', $branch, 'Agen Note ' . uniqid());
+
+        $program = Program::create([
+            'name' => 'Program Note ' . uniqid(),
+            'slug' => 'program-note-' . uniqid(),
+            'program_category' => 'WAP',
+            'is_active' => true,
+        ]);
+
+        $token = 'ZZCATATAN' . uniqid();
+
+        $contactWithNote = Contact::create([
+            'name' => 'Donatur Note A ' . uniqid(),
+            'phone' => '6281200004444',
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        $contactWithoutNote = Contact::create([
+            'name' => 'Donatur Note B ' . uniqid(),
+            'phone' => '6281200005555',
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        Donation::create([
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+            'program_id' => $program->id,
+            'contact_id' => $contactWithNote->id,
+            'amount' => 10000,
+            'donation_date' => now()->format('Y-m-d'),
+            'payment_method' => 'transfer',
+            'note' => 'Donasi dengan ' . $token,
+            'created_by' => $agen->id,
+        ]);
+
+        Donation::create([
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+            'program_id' => $program->id,
+            'contact_id' => $contactWithoutNote->id,
+            'amount' => 10000,
+            'donation_date' => now()->format('Y-m-d'),
+            'payment_method' => 'transfer',
+            'note' => 'Catatan lain',
+            'created_by' => $agen->id,
+        ]);
+
+        $this->actingAs($admin)->get(route('donations.index', ['search' => $token]))
+            ->assertOk()
+            ->assertSee($contactWithNote->name)
+            ->assertDontSee($contactWithoutNote->name);
+    }
 }

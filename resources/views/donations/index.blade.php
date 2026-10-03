@@ -45,7 +45,7 @@
         <div class="form-group">
             <div class="input-icon">
                 <i class="fas fa-magnifying-glass"></i>
-                <input type="search" name="search" placeholder="Cari program, donatur, no. WhatsApp, agen, cabang..." value="{{ request('search') }}">
+                <input type="search" name="search" placeholder="Cari program, donatur, no. WhatsApp, agen, cabang, catatan..." value="{{ request('search') }}">
             </div>
         </div>
         <div class="form-group">
@@ -78,7 +78,7 @@
     </form>
 
     <div class="table-responsive">
-        <table class="table">
+        <table class="table table-donations">
             <thead>
                 <tr>
                     <th><a href="{{ $sortUrl('date') }}" class="sort-link">Tanggal {!! $sortIcon('date') !!}</a></th>
@@ -93,11 +93,11 @@
             <tbody>
                 @forelse($donations as $donation)
                     <tr>
-                        <td>{{ $donation->donation_date->format('d M Y') }}</td>
+                        <td class="col-nowrap">{{ $donation->donation_date->format('d M Y') }}</td>
                         <td>
                             {{ $donation->agen->name ?? '-' }}
                             @if($donation->branch)
-                                <small style="display:block; color: var(--gray-500);">{{ $donation->branch->name }}</small>
+                                <small class="cell-sub">{{ $donation->branch->name }}</small>
                             @endif
                         </td>
                         <td>
@@ -108,7 +108,7 @@
                                             @if($item->program && $item->program->program_category)
                                                 <span class="badge">{{ $item->program->category_label ?: '-' }}</span>
                                             @endif
-                                            <span>{{ $item->program->name ?? '-' }}</span>
+                                            <span class="item-program-name">{{ $item->program->name ?? '-' }}</span>
                                         </span>
                                     @endforeach
                                 </div>
@@ -117,7 +117,7 @@
                                     @if($donation->program->program_category)
                                         <span class="badge">{{ $donation->program->category_label }}</span>
                                     @endif
-                                    <span>{{ $donation->program->name }}</span>
+                                    <span class="item-program-name">{{ $donation->program->name }}</span>
                                 </span>
                             @else
                                 -
@@ -126,10 +126,10 @@
                         <td>
                             {{ $donation->contact->name ?? '-' }}
                             @if($donation->contact && $donation->contact->phone)
-                                <small style="display:block; color: var(--gray-500);">{{ $donation->contact->phone }}</small>
+                                <small class="cell-sub">{{ $donation->contact->phone }}</small>
                             @endif
                         </td>
-                        <td><strong>Rp {{ number_format($donation->amount, 0, ',', '.') }}</strong></td>
+                        <td class="col-nowrap"><strong>Rp {{ number_format($donation->amount, 0, ',', '.') }}</strong></td>
                         <td>
                             @if($donation->note)
                                 <span class="note-cell">{{ $donation->note }}</span>
