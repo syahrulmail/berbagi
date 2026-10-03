@@ -640,6 +640,22 @@
         color: var(--primary);
     }
 
+    .table .link-cell {
+        background: none;
+        border: 0;
+        padding: 0;
+        font: inherit;
+        color: var(--primary);
+        cursor: pointer;
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+    }
+
+    .table .link-cell:hover {
+        color: var(--primary-dark);
+        text-decoration: underline solid;
+    }
+
     /* ============ BADGES ============ */
     .badge {
         @apply inline-block rounded-full font-semibold whitespace-nowrap;
@@ -904,18 +920,21 @@
     }
 
     #donation-detail-modal .modal,
-    #contact-detail-modal .modal {
+    #contact-detail-modal .modal,
+    #program-donors-modal .modal {
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
 
     #donation-detail-modal .modal::-webkit-scrollbar,
-    #contact-detail-modal .modal::-webkit-scrollbar {
+    #contact-detail-modal .modal::-webkit-scrollbar,
+    #program-donors-modal .modal::-webkit-scrollbar {
         display: none;
     }
 
     #donation-detail-modal .modal-header,
-    #contact-detail-modal .modal-header {
+    #contact-detail-modal .modal-header,
+    #program-donors-modal .modal-header {
         position: sticky;
         top: 0;
         z-index: 10;
@@ -925,18 +944,21 @@
     }
 
     #donation-detail-modal .modal-title,
-    #contact-detail-modal .modal-title {
+    #contact-detail-modal .modal-title,
+    #program-donors-modal .modal-title {
         color: #fff;
     }
 
     #donation-detail-modal .modal-close,
-    #contact-detail-modal .modal-close {
+    #contact-detail-modal .modal-close,
+    #program-donors-modal .modal-close {
         background: rgba(255, 255, 255, 0.16);
         color: #fff;
     }
 
     #donation-detail-modal .modal-close:hover,
-    #contact-detail-modal .modal-close:hover {
+    #contact-detail-modal .modal-close:hover,
+    #program-donors-modal .modal-close:hover {
         background: rgba(255, 255, 255, 0.28);
     }
 

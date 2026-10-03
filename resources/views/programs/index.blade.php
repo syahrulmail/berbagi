@@ -105,7 +105,19 @@
                                 <span class="badge badge-gray">-</span>
                             @endif
                         </td>
-                        <td>Rp {{ number_format($program->total_collected, 0, ',', '.') }}</td>
+                        <td>
+                            @php $collected = (float) $program->total_collected; @endphp
+                            @if($collected > 0)
+                                <button type="button" class="link-cell"
+                                        data-program-donors="{{ $program->id }}"
+                                        data-program-name="{{ $program->name }}"
+                                        title="Lihat daftar donatur">
+                                    Rp {{ number_format($collected, 0, ',', '.') }}
+                                </button>
+                            @else
+                                Rp 0
+                            @endif
+                        </td>
                         <td>
                             <span class="badge {{ $program->is_active ? 'badge-green' : 'badge-gray' }}">
                                 {{ $program->is_active ? 'Aktif' : 'Nonaktif' }}
@@ -156,8 +168,15 @@
 </div>
 
 @include('partials.program-share-modal')
+@include('partials.program-donors-modal')
+@include('partials.contact-detail-modal')
+@include('partials.donation-detail-modal')
 @endsection
 
 @push('scripts')
 <script src="{{ assetv('js/program-share.js') }}"></script>
+<script src="{{ assetv('js/program-donors.js') }}"></script>
+<script src="{{ assetv('js/donation-form.js') }}"></script>
+<script src="{{ assetv('js/contact-detail.js') }}"></script>
+<script src="{{ assetv('js/donation-detail.js') }}"></script>
 @endpush

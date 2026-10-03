@@ -107,6 +107,7 @@ Route::middleware('auth')->group(function () {
         Route::get('donations/{donation}/detail', [DonationController::class, 'detail'])->name('donations.detail');
         Route::get('donations/{donation}/edit-fields', [DonationController::class, 'editFields'])->name('donations.edit-fields');
         Route::resource('programs', ProgramController::class)->except('show');
+        Route::get('programs/{program}/donors', [ProgramController::class, 'donors'])->name('programs.donors');
         Route::post('/uploads/rich-image', [ProgramController::class, 'uploadRichImage'])->name('uploads.rich-image');
         Route::resource('whatsapp', WhatsAppController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::resource('followups', WaFollowupController::class)->only(['index']);

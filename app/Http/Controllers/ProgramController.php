@@ -7,6 +7,7 @@ use App\Models\CampaignTag;
 use App\Models\DonationItem;
 use App\Models\Program;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -53,6 +54,48 @@ class ProgramController extends Controller
         $allTags = CampaignTag::orderBy('name')->get();
 
         return view('programs.index', compact('programs', 'allTags'));
+    }
+
+    /**
+     * Daftar kontak yang pernah berdonasi untuk program (format JSON untuk modal).
+     */
+    public function donors(Program $program)
+    {
+        $user = auth()->user();
+
+        $query = DonationItem::query()
+            ->join('donations', 'donations.id', '=', 'donation_items.donation_id')
+            ->join('contacts', 'contacts.id', '=', 'donations.contact_id')
+            ->leftJoin('users as agens', 'agens.id', '=', 'contacts.agen_id')
+            ->where('donation_items.program_id', $program->id);
+
+        if ($user->isAgen()) {
+            $query->where('contacts.agen_id', $user->id);
+        } elseif ($user->isSupervisor() && $user->branch_id) {
+            $query->where('contacts.branch_id', $user->branch_id);
+        }
+
+        $donors = $query
+            ->groupBy('contacts.id', 'contacts.name', 'contacts.phone', 'agens.name')
+            ->select([
+                'contacts.id',
+                'contacts.name',
+                'contacts.phone',
+                'agens.name as agen_name',
+                DB::raw('COUNT(DISTINCT donation_items.donation_id) as donation_count'),
+                DB::raw('SUM(donation_items.amount) as total_amount'),
+            ])
+            ->orderByDesc('total_amount')
+            ->orderBy('contacts.name')
+            ->get();
+
+        $html = view('programs._donor_rows', compact('donors'))->render();
+
+        return response()->json([
+            'program_name' => $program->name,
+            'count' => $donors->count(),
+            'html' => $html,
+        ]);
     }
 
     public function create()
