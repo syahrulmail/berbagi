@@ -321,11 +321,27 @@ class DonationController extends Controller
     public function create()
     {
         $branches = $this->visibleBranches();
-        $programs = Program::where('is_active', true)->orderBy('name')->get();
+        $programs = $this->donationPrograms();
         $agents = $this->visibleAgents();
         $contacts = Contact::orderBy('name')->get();
 
         return view('donations.create', compact('branches', 'programs', 'agents', 'contacts'));
+    }
+
+    /**
+     * Program yang boleh dipilih pada form donasi: Jenis Program "Penggalangan"
+     * atau yang belum diklasifikasi (kosong). Program "Penyaluran" disembunyikan.
+     */
+    protected function donationPrograms()
+    {
+        return Program::where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('category')
+                    ->orWhere('category', '')
+                    ->orWhere('category', 'penggalangan');
+            })
+            ->orderBy('name')
+            ->get();
     }
 
     public function store(Request $request)
@@ -385,12 +401,32 @@ class DonationController extends Controller
     {
         $this->authorizeAccess($donation);
 
+        $donation->loadMissing(['items.program', 'program']);
+
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
-        $programs = Program::where('is_active', true)->orderBy('name')->get();
+        $programs = $this->editablePrograms($donation);
         $agents = $this->visibleAgents();
         $contacts = Contact::orderBy('name')->get();
 
         return view('donations.edit', compact('donation', 'branches', 'programs', 'agents', 'contacts'));
+    }
+
+    /**
+     * Opsi program untuk form edit: gabungan program yang memenuhi aturan donasi
+     * dengan program yang saat ini sudah terpasang, agar pilihan lama tetap tampil.
+     */
+    protected function editablePrograms(Donation $donation)
+    {
+        $current = $donation->items->pluck('program')
+            ->push($donation->program)
+            ->filter()
+            ->unique('id');
+
+        return $this->donationPrograms()
+            ->merge($current)
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
     }
 
     /**
@@ -437,7 +473,7 @@ class DonationController extends Controller
         $donation->load('items.program');
 
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
-        $programs = Program::where('is_active', true)->orderBy('name')->get();
+        $programs = $this->editablePrograms($donation);
         $agents = $this->visibleAgents();
         $contacts = Contact::orderBy('name')->get();
 

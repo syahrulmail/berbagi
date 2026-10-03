@@ -45,11 +45,6 @@
         </div>
 
         <div class="form-group">
-            <label for="payment_date">Tanggal Pembayaran</label>
-            <input type="date" id="payment_date" name="payment_date" value="{{ old('payment_date', now()->toDateString()) }}">
-        </div>
-
-        <div class="form-group">
             <label for="contact_id">Kontak Donatur *</label>
             @php
                 $contactSelected = old('contact_id');
@@ -91,18 +86,18 @@
         </div>
 
         <div class="form-group">
-            <label for="payment_method">Metode Pembayaran *</label>
-            <select id="payment_method" name="payment_method">
-                <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Tunai</option>
-                <option value="transfer" {{ old('payment_method') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
-                <option value="qris" {{ old('payment_method') == 'qris' ? 'selected' : '' }}>QRIS</option>
-                <option value="e-wallet" {{ old('payment_method') == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
-            </select>
+            <label for="payment_date">Tanggal Pembayaran</label>
+            <input type="date" id="payment_date" name="payment_date" value="{{ old('payment_date', now()->toDateString()) }}">
         </div>
 
         <div class="form-group">
-            <label for="note">Catatan</label>
-            <textarea id="note" name="note" rows="3" placeholder="Catatan donasi...">{{ old('note') }}</textarea>
+            <label for="payment_method">Metode Pembayaran *</label>
+            <select id="payment_method" name="payment_method">
+                <option value="cash" {{ old('payment_method', 'transfer') == 'cash' ? 'selected' : '' }}>Tunai</option>
+                <option value="transfer" {{ old('payment_method', 'transfer') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
+                <option value="qris" {{ old('payment_method', 'transfer') == 'qris' ? 'selected' : '' }}>QRIS</option>
+                <option value="e-wallet" {{ old('payment_method', 'transfer') == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
+            </select>
         </div>
 
         <div class="form-group">
@@ -114,6 +109,11 @@
                 <img id="proof-preview" src="" alt="Preview bukti pembayaran" class="proof-preview" style="display:none;">
             </div>
             <small style="color:var(--muted);">Format JPG, PNG, GIF, WebP. Maks 5MB.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="note">Catatan</label>
+            <textarea id="note" name="note" rows="3" placeholder="Catatan donasi...">{{ old('note') }}</textarea>
         </div>
         <div class="form-actions">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Donasi</button>

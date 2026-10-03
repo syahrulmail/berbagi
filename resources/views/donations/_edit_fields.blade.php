@@ -37,11 +37,6 @@
     </div>
 
     <div class="form-group">
-        <label for="modal_payment_date">Tanggal Pembayaran</label>
-        <input type="date" id="modal_payment_date" name="payment_date" value="{{ $donation->payment_date ? $donation->payment_date->toDateString() : '' }}">
-    </div>
-
-    <div class="form-group">
         <label for="modal_contact_id">Kontak Donatur *</label>
         @php
             $contactLabel = $donation->contact ? $donation->contact->name . ($donation->contact->phone ? ' (' . $donation->contact->phone . ')' : '') : '';
@@ -86,18 +81,18 @@
     </div>
 
     <div class="form-group">
-        <label for="modal_payment_method">Metode Pembayaran *</label>
-        <select id="modal_payment_method" name="payment_method">
-            <option value="cash" {{ $donation->payment_method == 'cash' ? 'selected' : '' }}>Tunai</option>
-            <option value="transfer" {{ $donation->payment_method == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
-            <option value="qris" {{ $donation->payment_method == 'qris' ? 'selected' : '' }}>QRIS</option>
-            <option value="e-wallet" {{ $donation->payment_method == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
-        </select>
+        <label for="modal_payment_date">Tanggal Pembayaran</label>
+        <input type="date" id="modal_payment_date" name="payment_date" value="{{ $donation->payment_date ? $donation->payment_date->toDateString() : now()->toDateString() }}">
     </div>
 
     <div class="form-group">
-        <label for="modal_note">Catatan</label>
-        <textarea id="modal_note" name="note" rows="3">{{ $donation->note }}</textarea>
+        <label for="modal_payment_method">Metode Pembayaran *</label>
+        <select id="modal_payment_method" name="payment_method">
+            <option value="cash" {{ ($donation->payment_method ?: 'transfer') == 'cash' ? 'selected' : '' }}>Tunai</option>
+            <option value="transfer" {{ ($donation->payment_method ?: 'transfer') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
+            <option value="qris" {{ ($donation->payment_method ?: 'transfer') == 'qris' ? 'selected' : '' }}>QRIS</option>
+            <option value="e-wallet" {{ ($donation->payment_method ?: 'transfer') == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
+        </select>
     </div>
 
     <div class="form-group">
@@ -118,5 +113,10 @@
             </div>
         @endif
         <small style="color:var(--muted);">Format JPG, PNG, GIF, WebP. Maks 5MB.</small>
+    </div>
+
+    <div class="form-group">
+        <label for="modal_note">Catatan</label>
+        <textarea id="modal_note" name="note" rows="3">{{ $donation->note }}</textarea>
     </div>
 </form>
