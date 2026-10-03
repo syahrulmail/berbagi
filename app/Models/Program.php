@@ -18,6 +18,7 @@ class Program extends Model
         'IB' => 'Belajar',
         'SK' => 'Kemanusiaan',
         'IS' => 'Infaq',
+        'ZPP' => 'Zakat',
     ];
 
     public const CATEGORY_DEFAULT = 'WAP';
