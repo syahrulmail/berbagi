@@ -105,6 +105,20 @@ class MobileDonationListTest extends TestCase
         $response->assertSee('Donatur Telp');
     }
 
+    public function test_bottom_tab_has_quick_add_and_no_lainnya(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.donations'));
+
+        $response->assertOk();
+        $response->assertSee('id="mo-add-tab"', false);
+        $response->assertSee('Tambah Donasi');
+        $response->assertSee('Tambah Kontak');
+        $response->assertDontSee('Lainnya');
+    }
+
     public function test_advanced_filters_are_hidden_by_default(): void
     {
         $branch = $this->makeBranch();

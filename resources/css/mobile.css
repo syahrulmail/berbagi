@@ -564,7 +564,7 @@
         background: linear-gradient(135deg, var(--mo-accent), var(--mo-primary));
         color: #fff;
         font-size: 19px;
-        display: grid;
+        display: none;
         place-items: center;
         box-shadow: 0 10px 26px rgba(8, 110, 102, 0.45);
         cursor: pointer;
@@ -631,6 +631,65 @@
         border-radius: 50%;
         background: var(--mo-accent);
     }
+    .mo-tab-add {
+        overflow: visible;
+    }
+    .mo-tab-add-btn {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #34d399 0%, #16a34a 100%);
+        color: #fff;
+        margin-top: -26px;
+        border: 4px solid var(--mo-bg);
+        box-shadow: 0 10px 22px rgba(22, 163, 74, 0.5);
+        transition: transform 0.15s ease;
+    }
+    .mo-tab-add-btn i { font-size: 21px; }
+    .mo-tab-add:active .mo-tab-add-btn { transform: scale(0.93); }
+    .mo-tab-add-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #16a34a;
+    }
+
+    /* ============ QUICK ADD ACTIONS (sheet) ============ */
+    .mo-add-action {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #f6faf9;
+        border: 1.5px solid var(--mo-border);
+        text-decoration: none;
+        margin-bottom: 12px;
+    }
+    .mo-add-action:active { background: #eefaf8; }
+    .mo-add-action-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .mo-add-action-icon--donation { background: linear-gradient(135deg, #34d399, #16a34a); }
+    .mo-add-action-icon--contact { background: linear-gradient(135deg, #5aa0e0, #2f7fcd); }
+    .mo-add-action-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+    .mo-add-action-text strong { font-size: 14px; color: var(--mo-text); font-weight: 600; }
+    .mo-add-action-text small { font-size: 12px; color: var(--mo-muted); }
+    .mo-add-action-chevron { color: #c3d6d3; font-size: 13px; }
 
     /* ============ BOTTOM SHEET ============ */
     .mo-sheet-backdrop {

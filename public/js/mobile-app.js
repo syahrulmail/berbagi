@@ -197,6 +197,12 @@
             }
         });
 
+        // Quick add tab (tombol + tengah)
+        var addTab = document.getElementById('mo-add-tab');
+        if (addTab) {
+            addTab.addEventListener('click', function () { openSheet('mo-add-sheet'); });
+        }
+
         // Donation detail rows
         document.addEventListener('click', function (e) {
             var row = e.target.closest('[data-donation-detail]');
