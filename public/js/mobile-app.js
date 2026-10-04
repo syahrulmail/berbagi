@@ -203,6 +203,22 @@
             addTab.addEventListener('click', function () { openSheet('mo-add-sheet'); });
         }
 
+        // Collapsible filter panel
+        document.querySelectorAll('[data-filter-toggle]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var target = document.getElementById(btn.getAttribute('data-filter-toggle'));
+                if (!target) return;
+                var opening = target.hasAttribute('hidden');
+                if (opening) {
+                    target.removeAttribute('hidden');
+                } else {
+                    target.setAttribute('hidden', '');
+                }
+                btn.classList.toggle('open', opening);
+                btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+            });
+        });
+
         // Donation detail rows
         document.addEventListener('click', function (e) {
             var row = e.target.closest('[data-donation-detail]');

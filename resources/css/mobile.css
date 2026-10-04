@@ -504,8 +504,8 @@
     }
     .mo-search input::placeholder { color: #9db3b0; }
 
-    /* Donasi: sticky filter bar */
-    .mo-donasi-sticky {
+    /* Donasi/Kontak: sticky filter bar */
+    .mo-sticky-filter {
         position: sticky;
         top: 0;
         z-index: 30;
@@ -1517,7 +1517,7 @@
             padding-left: 24px;
             padding-right: 24px;
         }
-        .mo-donasi-sticky {
+        .mo-sticky-filter {
             margin-left: -24px;
             margin-right: -24px;
             padding-left: 24px;

@@ -22,14 +22,14 @@
     @php
         $hasDateFilter = request('period') || request('from') || request('to');
     @endphp
-    <div class="mo-donasi-sticky">
+    <div class="mo-sticky-filter">
         <form method="GET" action="{{ route('mo.donations') }}" id="mo-donasi-form">
             <div class="mo-search-flex">
                 <div class="mo-search">
                     <i class="fas fa-magnifying-glass"></i>
                     <input type="search" name="search" placeholder="Cari nama / no. WA / catatan / program..." value="{{ request('search') }}">
                 </div>
-                <button type="button" class="mo-filter-toggle {{ $hasDateFilter ? 'has-filter' : '' }}" id="mo-filter-toggle" aria-label="Filter tanggal" aria-expanded="false">
+                <button type="button" class="mo-filter-toggle {{ $hasDateFilter ? 'has-filter' : '' }}" id="mo-filter-toggle" data-filter-toggle="mo-advanced-filters" aria-label="Filter tanggal" aria-expanded="false">
                     <i class="fas fa-sliders"></i>
                 </button>
             </div>
@@ -168,21 +168,6 @@
     (function () {
         var opener = document.getElementById('mo-open-download');
         if (opener) opener.addEventListener('click', function () { window.MoApp.sheets.open('mo-download-sheet'); });
-
-        var filterToggle = document.getElementById('mo-filter-toggle');
-        var advanced = document.getElementById('mo-advanced-filters');
-        if (filterToggle && advanced) {
-            filterToggle.addEventListener('click', function () {
-                var opening = advanced.hasAttribute('hidden');
-                if (opening) {
-                    advanced.removeAttribute('hidden');
-                } else {
-                    advanced.setAttribute('hidden', '');
-                }
-                filterToggle.classList.toggle('open', opening);
-                filterToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
-            });
-        }
 
         document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
             el.addEventListener('change', function () {

@@ -198,6 +198,19 @@ class MobileModulesTest extends TestCase
             ->assertJson(['count' => 2]);
     }
 
+    public function test_contact_list_has_sticky_search_and_hidden_status_filters(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.contacts'));
+
+        $response->assertOk();
+        $response->assertSee('mo-sticky-filter', false);
+        $response->assertSee('data-filter-toggle="mo-contact-filters"', false);
+        $response->assertSee('id="mo-contact-filters" hidden', false);
+    }
+
     public function test_contact_form_footer_is_not_sticky_and_uses_short_save_label(): void
     {
         $branch = $this->makeBranch();

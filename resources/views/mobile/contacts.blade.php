@@ -22,24 +22,44 @@
 </div>
 
 <div class="mo-content" style="padding-top:0;">
-    <form method="GET" action="{{ route('mo.contacts') }}" style="margin-bottom:14px;">
-        <div class="mo-search">
-            <i class="fas fa-magnifying-glass"></i>
-            <input type="search" name="search" placeholder="Cari nama / nomor WA..." value="{{ request('search') }}">
-        </div>
+    @php
+        $hasStatusFilter = (bool) request('status');
+    @endphp
+    <div class="mo-sticky-filter">
+        <form method="GET" action="{{ route('mo.contacts') }}" id="mo-kontak-form">
+            <div class="mo-search-flex">
+                <div class="mo-search">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="search" name="search" placeholder="Cari nama / nomor WA..." value="{{ request('search') }}">
+                </div>
+                <button type="button" class="mo-filter-toggle {{ $hasStatusFilter ? 'has-filter' : '' }}" id="mo-contact-filter-toggle" data-filter-toggle="mo-contact-filters" aria-label="Filter status" aria-expanded="false">
+                    <i class="fas fa-sliders"></i>
+                </button>
+            </div>
 
-        <div class="mo-segmented">
-            <button type="submit" name="status" value="" class="mo-segmented-item {{ !request('status') ? 'active' : '' }}">
-                Semua ({{ $statusCounts['all'] }})
-            </button>
-            <button type="submit" name="status" value="donated" class="mo-segmented-item {{ request('status') === 'donated' ? 'active' : '' }}">
-                Donatur ({{ $statusCounts['donated'] }})
-            </button>
-            <button type="submit" name="status" value="prospect" class="mo-segmented-item {{ request('status') === 'prospect' ? 'active' : '' }}">
-                Prospek ({{ $statusCounts['prospect'] }})
-            </button>
-        </div>
-    </form>
+            <div id="mo-contact-filters" hidden>
+                <div class="mo-segmented" style="margin-top:10px;margin-bottom:6px;">
+                    <button type="submit" name="status" value="" class="mo-segmented-item {{ !request('status') ? 'active' : '' }}">
+                        Semua ({{ $statusCounts['all'] }})
+                    </button>
+                    <button type="submit" name="status" value="donated" class="mo-segmented-item {{ request('status') === 'donated' ? 'active' : '' }}">
+                        Donatur ({{ $statusCounts['donated'] }})
+                    </button>
+                    <button type="submit" name="status" value="prospect" class="mo-segmented-item {{ request('status') === 'prospect' ? 'active' : '' }}">
+                        Prospek ({{ $statusCounts['prospect'] }})
+                    </button>
+                </div>
+
+                @if(request('search') || $hasStatusFilter)
+                    <div style="text-align:right;">
+                        <a href="{{ route('mo.contacts') }}" style="font-size:12px;color:var(--mo-muted);text-decoration:none;">
+                            <i class="fas fa-rotate-left"></i> Reset filter
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </form>
+    </div>
 
     <div class="mo-list">
         @forelse($contacts as $c)
