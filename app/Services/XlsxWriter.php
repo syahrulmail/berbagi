@@ -41,7 +41,7 @@ class XlsxWriter
     /** @var array<int, float>|null Urutan: left, right, top, bottom, header, footer (inci). */
     protected $pageMargins = null;
 
-    /** @var array{paperSize: int, orientation: string}|null */
+    /** @var array{paperSize: int, orientation: string, fitToWidth: int, fitToHeight: int}|null */
     protected $pageSetup = null;
 
     public function __construct(string $sheetName = 'Sheet1')
@@ -121,14 +121,18 @@ class XlsxWriter
 
     /**
      * Atur ukuran kertas & orientasi. paperSize 9 = A4.
+     * Bila fitToWidth/fitToHeight > 0, lembar akan diskalakan agar muat
+     * dalam jumlah halaman tersebut (mencegah kolom terpotong ke halaman lain).
      *
      * @return $this
      */
-    public function setPageSetup(int $paperSize = 9, string $orientation = 'portrait'): self
+    public function setPageSetup(int $paperSize = 9, string $orientation = 'portrait', int $fitToWidth = 0, int $fitToHeight = 0): self
     {
         $this->pageSetup = [
             'paperSize' => $paperSize,
             'orientation' => $orientation === 'landscape' ? 'landscape' : 'portrait',
+            'fitToWidth' => max(0, $fitToWidth),
+            'fitToHeight' => max(0, $fitToHeight),
         ];
 
         return $this;
@@ -321,6 +325,10 @@ class XlsxWriter
             . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
             . 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">';
 
+        if ($this->pageSetup !== null && ($this->pageSetup['fitToWidth'] > 0 || $this->pageSetup['fitToHeight'] > 0)) {
+            $xml .= '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>';
+        }
+
         if (!empty($this->columnWidths)) {
             $xml .= '<cols>';
 
@@ -367,8 +375,15 @@ class XlsxWriter
         }
 
         if ($this->pageSetup !== null) {
-            $xml .= '<pageSetup paperSize="' . (int) $this->pageSetup['paperSize']
-                . '" orientation="' . $this->escape($this->pageSetup['orientation']) . '"/>';
+            $pageSetup = '<pageSetup paperSize="' . (int) $this->pageSetup['paperSize']
+                . '" orientation="' . $this->escape($this->pageSetup['orientation']) . '"';
+
+            if ($this->pageSetup['fitToWidth'] > 0 || $this->pageSetup['fitToHeight'] > 0) {
+                $pageSetup .= ' fitToWidth="' . (int) $this->pageSetup['fitToWidth']
+                    . '" fitToHeight="' . (int) $this->pageSetup['fitToHeight'] . '"';
+            }
+
+            $xml .= $pageSetup . '/>';
         }
 
         if (!empty($this->images)) {

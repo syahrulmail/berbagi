@@ -153,8 +153,9 @@ class DonationProofDownloadTest extends TestCase
         $this->assertStringContainsString('<xdr:row>0</xdr:row>', $drawing);
         $this->assertStringContainsString('<c r="A2"', $sheet);
 
-        // Ukuran kertas A4, margin narrow, header/footer 0.
-        $this->assertStringContainsString('<pageSetup paperSize="9" orientation="portrait"/>', $sheet);
+        // Ukuran kertas A4, margin narrow, header/footer 0, fit 1 halaman lebar.
+        $this->assertStringContainsString('<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>', $sheet);
+        $this->assertStringContainsString('<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>', $sheet);
         $this->assertStringContainsString('left="0.25" right="0.25"', $sheet);
         $this->assertStringContainsString('top="0.75" bottom="0.75"', $sheet);
         $this->assertStringContainsString('header="0" footer="0"', $sheet);

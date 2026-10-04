@@ -216,7 +216,7 @@ class DonationController extends Controller
         $maxHeight = 360;
 
         $writer->setColumnWidths([1 => $columnWidth, 2 => 3, 3 => $columnWidth, 4 => 3]);
-        $writer->setPageSetup(9, 'portrait');
+        $writer->setPageSetup(9, 'portrait', 1, 0);
         $writer->setPageMargins(0.25, 0.25, 0.75, 0.75, 0, 0);
 
         $cards = [];
@@ -260,9 +260,11 @@ class DonationController extends Controller
 
             $startRowNumber = $writer->rowCount() + 1;
 
-            // Baris sel gambar (satu sel per kolom).
+            // Baris sel gambar (satu sel per kolom), beri jarak agar gambar
+            // tidak menutupi sel catatan tepat di bawahnya saat dicetak.
             $writer->addRow(['', '', '', '']);
-            $writer->setRowHeight($startRowNumber, max($left['height'], $right['height'] ?? 0) * 0.75);
+            $imageRowPx = max($left['height'], $right['height'] ?? 0) + 8;
+            $writer->setRowHeight($startRowNumber, $imageRowPx * 0.75);
 
             $writer->addImage($left['path'], 0, $startRowNumber - 1, $left['width'], $left['height']);
 
