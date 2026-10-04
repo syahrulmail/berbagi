@@ -139,17 +139,19 @@
                                         <i class="fas fa-share-nodes"></i>
                                     </button>
                                 @endif
-                                <a href="{{ route('programs.edit', $program) }}" class="btn btn-sm btn-icon" title="Edit">
-                                    <i class="fas fa-pen"></i>
-                                </a>
-                                <form method="POST" action="{{ route('programs.destroy', $program) }}"
-                                      onsubmit="return confirm('Yakin menghapus program {{ $program->name }}?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-icon btn-danger" title="Hapus">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                @if(auth()->user()->isAdmin())
+                                    <a href="{{ route('programs.edit', $program) }}" class="btn btn-sm btn-icon" title="Edit">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    <form method="POST" action="{{ route('programs.destroy', $program) }}"
+                                          onsubmit="return confirm('Yakin menghapus program {{ $program->name }}?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-icon btn-danger" title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

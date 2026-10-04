@@ -157,6 +157,8 @@ class ProgramController extends Controller
 
     public function edit(Program $program)
     {
+        $this->ensureAdmin();
+
         $defaultTags = CampaignTag::whereIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
         $extraTags = CampaignTag::whereNotIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
 
@@ -179,6 +181,8 @@ class ProgramController extends Controller
 
     public function update(Request $request, Program $program)
     {
+        $this->ensureAdmin();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:programs,slug,' . $program->id],
@@ -368,6 +372,8 @@ class ProgramController extends Controller
 
     public function destroy(Program $program)
     {
+        $this->ensureAdmin();
+
         if (DonationItem::where('program_id', $program->id)->exists()) {
             return back()->with('error', 'Program tidak dapat dihapus karena masih memiliki donasi.');
         }
@@ -380,5 +386,15 @@ class ProgramController extends Controller
         $program->delete();
 
         return redirect()->route('programs.index')->with('success', 'Program berhasil dihapus.');
+    }
+
+    /**
+     * Batasi aksi ubah/hapus program hanya untuk admin.
+     */
+    protected function ensureAdmin(): void
+    {
+        if (! auth()->user()->isAdmin()) {
+            abort(403, 'Hanya admin yang dapat mengubah atau menghapus program.');
+        }
     }
 }
