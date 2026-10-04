@@ -79,6 +79,7 @@
                 '<div class="mo-detail-item"><div class="mo-detail-label">Tanggal</div><div class="mo-detail-value">' + esc(data.donation_date_formatted || '-') + '</div></div>' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Cabang</div><div class="mo-detail-value">' + esc(data.branch || '-') + '</div></div>' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Agen</div><div class="mo-detail-value">' + esc(data.agen || '-') + '</div></div>' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">Metode</div><div class="mo-detail-value">' + esc(data.payment_method_label || '-') + '</div></div>' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Dicatat oleh</div><div class="mo-detail-value">' + esc(data.creator || '-') + '</div></div>' +
             '</div>' +
             '<div class="mo-section-title">Program Donasi</div>' +
