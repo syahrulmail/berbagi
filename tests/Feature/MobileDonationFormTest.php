@@ -74,6 +74,7 @@ class MobileDonationFormTest extends TestCase
         $response->assertSee('Ketik nama program');
         $response->assertDontSee('Belum ada kontaknya');
         $response->assertSee('mo-quick-contact', false);
+        $response->assertSee('value="transfer" selected', false);
     }
 
     public function test_agent_can_quick_create_contact_from_donation_form(): void

@@ -140,8 +140,8 @@
             <div class="mo-field">
                 <label for="payment_method">Metode Pembayaran <span class="req">*</span></label>
                 <select id="payment_method" name="payment_method" class="mo-select">
-                    <option value="cash" {{ old('payment_method', $donation->payment_method ?? 'cash') == 'cash' ? 'selected' : '' }}>Tunai</option>
-                    <option value="transfer" {{ old('payment_method', $donation->payment_method ?? '') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
+                    <option value="cash" {{ old('payment_method', $donation->payment_method ?? 'transfer') == 'cash' ? 'selected' : '' }}>Tunai</option>
+                    <option value="transfer" {{ old('payment_method', $donation->payment_method ?? 'transfer') == 'transfer' ? 'selected' : '' }}>Transfer Bank</option>
                     <option value="qris" {{ old('payment_method', $donation->payment_method ?? '') == 'qris' ? 'selected' : '' }}>QRIS</option>
                     <option value="e-wallet" {{ old('payment_method', $donation->payment_method ?? '') == 'e-wallet' ? 'selected' : '' }}>E-Wallet</option>
                 </select>
