@@ -92,15 +92,7 @@
                 <i class="fas fa-bars"></i>
             </button>
 
-            <form action="{{ route('contacts.index') }}" method="GET" class="topbar-search">
-                <i class="fas fa-magnifying-glass"></i>
-                <input type="search" name="search" placeholder="Cari cepat..." value="{{ request('search') }}">
-            </form>
-
             <div class="topbar-right">
-                <a href="{{ route('donations.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Catat Donasi
-                </a>
                 @if(request()->routeIs('donations.index'))
                     <button type="button" class="btn btn-outline btn-sm" data-donation-download-open>
                         <i class="fas fa-download"></i> Download Donasi
