@@ -640,11 +640,11 @@
         border-radius: 50%;
         display: grid;
         place-items: center;
-        background: linear-gradient(135deg, #34d399 0%, #16a34a 100%);
+        background: linear-gradient(135deg, var(--mo-accent), var(--mo-primary));
         color: #fff;
         margin-top: -26px;
         border: 4px solid var(--mo-bg);
-        box-shadow: 0 10px 22px rgba(22, 163, 74, 0.5);
+        box-shadow: 0 10px 22px rgba(8, 110, 102, 0.45);
         transition: transform 0.15s ease;
     }
     .mo-tab-add-btn i { font-size: 21px; }
@@ -652,7 +652,7 @@
     .mo-tab-add-label {
         font-size: 10px;
         font-weight: 700;
-        color: #16a34a;
+        color: var(--mo-primary);
     }
 
     /* ============ QUICK ADD ACTIONS (sheet) ============ */
@@ -678,7 +678,7 @@
         font-size: 18px;
         flex-shrink: 0;
     }
-    .mo-add-action-icon--donation { background: linear-gradient(135deg, #34d399, #16a34a); }
+    .mo-add-action-icon--donation { background: linear-gradient(135deg, var(--mo-accent), var(--mo-primary)); }
     .mo-add-action-icon--contact { background: linear-gradient(135deg, #5aa0e0, #2f7fcd); }
     .mo-add-action-text {
         flex: 1;

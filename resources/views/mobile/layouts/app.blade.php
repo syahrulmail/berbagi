@@ -55,7 +55,7 @@
     <div class="mo-sheet" id="mo-add-sheet" aria-hidden="true">
         <div class="mo-sheet-handle"></div>
         <div class="mo-sheet-head">
-            <h3 class="mo-sheet-title"><i class="fas fa-plus" style="color:#16a34a;margin-right:6px;"></i>Tambah</h3>
+            <h3 class="mo-sheet-title"><i class="fas fa-plus" style="color:var(--mo-primary);margin-right:6px;"></i>Tambah</h3>
             <button type="button" class="mo-sheet-close" aria-label="Tutup"><i class="fas fa-xmark"></i></button>
         </div>
         <div class="mo-sheet-body">
