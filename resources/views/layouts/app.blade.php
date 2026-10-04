@@ -93,11 +93,6 @@
             </button>
 
             <div class="topbar-right">
-                @if(request()->routeIs('donations.index'))
-                    <button type="button" class="btn btn-outline btn-sm" data-donation-download-open>
-                        <i class="fas fa-download"></i> Download Donasi
-                    </button>
-                @endif
                 <div class="user-menu">
                     <div class="user-chip" id="user-chip">
                         <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
