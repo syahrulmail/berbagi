@@ -7,11 +7,7 @@
     $isEdit = (bool) $donation->id;
 
     $selectedContactId = old('contact_id', $donation->contact_id ?? '');
-    $selectedContact = $selectedContactId ? $contacts->firstWhere('id', (int) $selectedContactId) : null;
     $selectedContactLabel = $selectedContact ? $selectedContact->name . ($selectedContact->phone ? ' (' . $selectedContact->phone . ')' : '') : '';
-    $contactsData = $contacts->map(function ($c) {
-        return ['id' => $c->id, 'name' => $c->name, 'phone' => $c->phone];
-    })->values()->all();
     $programNames = $programs->pluck('name', 'id');
 @endphp
 
@@ -79,7 +75,7 @@
             <h3 class="mo-form-card-title"><i class="fas fa-user"></i> Donatur</h3>
 
             <div class="mo-field">
-                <label for="contact_search">Kontak Donatur</label>
+                <label for="contact_search">Kontak Donatur <span class="req">*</span></label>
                 <div class="mo-ac" id="mo-contact-ac">
                     <input type="text" class="mo-input mo-ac-input" id="contact_search" placeholder="Ketik nama atau nomor WA..." autocomplete="off" value="{{ $selectedContactLabel }}">
                     <input type="hidden" name="contact_id" id="contact_id" value="{{ $selectedContactId }}">
@@ -90,7 +86,7 @@
 
             <div class="mo-field">
                 <label for="donor_info">Info Donatur</label>
-                <textarea id="donor_info" name="donor_info" class="mo-textarea" rows="2" placeholder="Nama / informasi tambahan bila kontak kosong...">{{ old('donor_info', $donation->donor_info ?? '') }}</textarea>
+                <textarea id="donor_info" name="donor_info" class="mo-textarea" rows="2">{{ old('donor_info', $donation->donor_info ?? '') }}</textarea>
             </div>
         </div>
 
@@ -107,17 +103,19 @@
                 @endphp
                 @foreach($items as $i => $item)
                     <div class="mo-item-row" data-item-row>
-                        <div class="grow">
+                        <div class="mo-item-main">
                             <div class="mo-ac mo-program-ac">
-                                <input type="text" class="mo-input mo-ac-input item-program-search" placeholder="Ketik nama program..." autocomplete="off" value="{{ ($item['program_id'] ?? null) ? ($programNames[$item['program_id']] ?? '') : '' }}" style="margin-bottom:8px;">
+                                <input type="text" class="mo-input mo-ac-input item-program-search" placeholder="Ketik nama program..." autocomplete="off" value="{{ ($item['program_id'] ?? null) ? ($programNames[$item['program_id']] ?? '') : '' }}">
                                 <input type="hidden" name="items[{{ $i }}][program_id]" class="item-program" value="{{ $item['program_id'] ?? '' }}">
                                 <div class="mo-ac-list" hidden></div>
                             </div>
-                            <input type="text" class="item-category-label" value="{{ old('items.'.$i.'.program_category', $item['program_category'] ?? '') }}" placeholder="Kategori program" style="width:100%;border:none;background:transparent;font-size:11px;color:var(--mo-muted);">
+                            <input type="text" class="item-category-label" value="{{ old('items.'.$i.'.program_category', $item['program_category'] ?? '') }}" placeholder="Kategori program" readonly tabindex="-1">
                             <input type="hidden" name="items[{{ $i }}][program_category]" class="item-category-input" value="{{ old('items.'.$i.'.program_category', $item['program_category'] ?? '') }}">
                         </div>
-                        <input type="number" name="items[{{ $i }}][amount]" class="amount-inline item-amount" value="{{ old('items.'.$i.'.amount', $item['amount'] ?? '') }}" min="1" step="0.01" required placeholder="Rp">
-                        <button type="button" class="mo-item-remove" data-remove-item aria-label="Hapus"><i class="fas fa-xmark"></i></button>
+                        <div class="mo-item-bottom">
+                            <input type="number" name="items[{{ $i }}][amount]" class="amount-inline item-amount" value="{{ old('items.'.$i.'.amount', $item['amount'] ?? '') }}" min="1" step="0.01" required placeholder="Rp">
+                            <button type="button" class="mo-item-remove" data-remove-item aria-label="Hapus"><i class="fas fa-xmark"></i></button>
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -247,7 +245,7 @@
         var totalEl = document.getElementById('mo-donation-total');
         var itemIndex = itemsWrap.querySelectorAll('[data-item-row]').length;
         var programsData = @json($programsData);
-        var contactsData = @json($contactsData);
+        var contactSearchUrl = '{{ route('mo.api.contact-search') }}';
 
         function esc(s) {
             var d = document.createElement('div');
@@ -269,15 +267,24 @@
             return { id: p.id, label: p.name, search: p.name, meta: p.label || '', category: p.category || '' };
         });
 
-        var contactItems = contactsData.map(function (c) {
-            return { id: c.id, label: c.name + (c.phone ? ' (' + c.phone + ')' : ''), search: c.name, meta: c.phone || '' };
-        });
+        function fetchContacts(q, cb) {
+            fetch(contactSearchUrl + '?q=' + encodeURIComponent(q), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            }).then(function (r) { return r.json(); })
+              .then(function (data) {
+                  cb(((data && data.contacts) || []).map(function (c) {
+                      return { id: c.id, label: c.label, search: c.name, meta: c.phone || '' };
+                  }));
+              })
+              .catch(function () { cb([]); });
+        }
 
-        function initAutoComplete(ac, items, opts) {
+        function initAutoComplete(ac, opts) {
             opts = opts || {};
             var input = ac.querySelector('.mo-ac-input');
             var list = ac.querySelector('.mo-ac-list');
             var hidden = ac.querySelector('input[type="hidden"]');
+            var seq = 0;
 
             function norm(s) { return String(s == null ? '' : s).toLowerCase().replace(/[\s+\-().]/g, ''); }
             function digits(s) { return String(s == null ? '' : s).replace(/[^0-9]/g, ''); }
@@ -291,22 +298,13 @@
                 if (opts.onSelect) opts.onSelect(item);
             }
 
-            function render(q) {
-                var nq = norm(q);
-                var dq = digits(q);
-                var res = items.filter(function (it) {
-                    if (!nq) return true;
-                    if (norm(it.search).indexOf(nq) !== -1) return true;
-                    if (it.meta && dq && digits(it.meta).indexOf(dq) !== -1) return true;
-                    return false;
-                }).slice(0, 50);
-
+            function paint(res) {
+                list.__items = res;
                 if (!res.length) {
                     list.innerHTML = '<div class="mo-ac-empty">Tidak ditemukan</div>';
                     list.hidden = false;
                     return;
                 }
-
                 list.innerHTML = res.map(function (it) {
                     return '<button type="button" class="mo-ac-item" data-id="' + esc(it.id) + '">' +
                         '<span class="mo-ac-name">' + esc(it.search) + '</span>' +
@@ -314,6 +312,30 @@
                         '</button>';
                 }).join('');
                 list.hidden = false;
+            }
+
+            function render(q) {
+                if (opts.remote) {
+                    var myseq = ++seq;
+                    clearTimeout(list.__timer);
+                    list.__timer = setTimeout(function () {
+                        opts.remote(q, function (res) {
+                            if (myseq !== seq) return;
+                            paint(res || []);
+                        });
+                    }, 200);
+                    return;
+                }
+
+                var items = opts.items || [];
+                var nq = norm(q);
+                var dq = digits(q);
+                paint(items.filter(function (it) {
+                    if (!nq) return true;
+                    if (norm(it.search).indexOf(nq) !== -1) return true;
+                    if (it.meta && dq && digits(it.meta).indexOf(dq) !== -1) return true;
+                    return false;
+                }).slice(0, 50));
             }
 
             input.addEventListener('focus', function () { render(''); });
@@ -327,7 +349,10 @@
                 e.preventDefault();
                 var id = btn.getAttribute('data-id');
                 var found = null;
-                items.some(function (it) { if (String(it.id) === String(id)) { found = it; return true; } return false; });
+                (list.__items || []).some(function (it) {
+                    if (String(it.id) === String(id)) { found = it; return true; }
+                    return false;
+                });
                 if (found) choose(found);
             });
         }
@@ -345,7 +370,8 @@
             var label = row.querySelector('.item-category-label');
             var catHidden = row.querySelector('.item-category-input');
 
-            initAutoComplete(ac, programItems, {
+            initAutoComplete(ac, {
+                items: programItems,
                 onSelect: function (item) {
                     label.value = item.meta || '';
                     catHidden.value = item.category || '';
@@ -367,17 +393,19 @@
             row.setAttribute('data-item-row', '');
 
             row.innerHTML =
-                '<div class="grow">' +
+                '<div class="mo-item-main">' +
                     '<div class="mo-ac mo-program-ac">' +
-                        '<input type="text" class="mo-input mo-ac-input item-program-search" placeholder="Ketik nama program..." autocomplete="off" style="margin-bottom:8px;">' +
+                        '<input type="text" class="mo-input mo-ac-input item-program-search" placeholder="Ketik nama program..." autocomplete="off">' +
                         '<input type="hidden" name="items[' + itemIndex + '][program_id]" class="item-program" value="">' +
                         '<div class="mo-ac-list" hidden></div>' +
                     '</div>' +
-                    '<input type="text" class="item-category-label" value="" placeholder="Kategori program" style="width:100%;border:none;background:transparent;font-size:11px;color:var(--mo-muted);">' +
+                    '<input type="text" class="item-category-label" value="" placeholder="Kategori program" readonly tabindex="-1">' +
                     '<input type="hidden" name="items[' + itemIndex + '][program_category]" class="item-category-input" value="">' +
                 '</div>' +
-                '<input type="number" name="items[' + itemIndex + '][amount]" class="amount-inline item-amount" min="1" step="0.01" required placeholder="Rp">' +
-                '<button type="button" class="mo-item-remove" data-remove-item aria-label="Hapus"><i class="fas fa-xmark"></i></button>';
+                '<div class="mo-item-bottom">' +
+                    '<input type="number" name="items[' + itemIndex + '][amount]" class="amount-inline item-amount" min="1" step="0.01" required placeholder="Rp">' +
+                    '<button type="button" class="mo-item-remove" data-remove-item aria-label="Hapus"><i class="fas fa-xmark"></i></button>' +
+                '</div>';
 
             itemIndex++;
             itemsWrap.appendChild(row);
@@ -391,7 +419,7 @@
         /* ---------- Kontak Donatur ---------- */
         var contactAc = document.getElementById('mo-contact-ac');
         if (contactAc) {
-            initAutoComplete(contactAc, contactItems, {});
+            initAutoComplete(contactAc, { remote: fetchContacts });
         }
 
         document.addEventListener('click', function (e) {
@@ -445,7 +473,6 @@
                     }
                     var c = res.data.contact;
                     var label = c.name + (c.phone ? ' (' + c.phone + ')' : '');
-                    contactItems.push({ id: c.id, label: label, search: c.name, meta: c.phone || '' });
                     var ch = document.getElementById('contact_id');
                     var ci = document.getElementById('contact_search');
                     if (ch) ch.value = c.id;
@@ -459,10 +486,18 @@
             });
         }
 
-        /* ---------- Validasi program wajib ---------- */
+        /* ---------- Validasi wajib ---------- */
         var donationForm = document.getElementById('mo-donation-form');
         if (donationForm) {
             donationForm.addEventListener('submit', function (e) {
+                var contactId = document.getElementById('contact_id');
+                if (!contactId || !contactId.value) {
+                    e.preventDefault();
+                    showToast('Kontak donatur wajib dipilih.', true);
+                    var ci = document.getElementById('contact_search');
+                    if (ci) ci.focus();
+                    return;
+                }
                 var missing = false;
                 itemsWrap.querySelectorAll('[data-item-row]').forEach(function (row) {
                     if (!row.querySelector('.item-program').value) missing = true;

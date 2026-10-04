@@ -38,9 +38,9 @@ class MobileCrudController extends MobileAppController
         $branches = $this->formBranches($user);
         $programs = Program::where('is_active', true)->orderBy('name')->get();
         $agents = $this->formAgents($user);
-        $contacts = $this->formContacts();
+        $selectedContact = $this->resolveSelectedContact(old('contact_id'));
 
-        return view('mobile.forms.donation-form', compact('user', 'branches', 'programs', 'agents', 'contacts'))
+        return view('mobile.forms.donation-form', compact('user', 'branches', 'programs', 'agents', 'selectedContact'))
             ->with('donation', null);
     }
 
@@ -88,9 +88,9 @@ class MobileCrudController extends MobileAppController
         $branches = $this->formBranches($user);
         $programs = Program::where('is_active', true)->orderBy('name')->get();
         $agents = $this->formAgents($user);
-        $contacts = $this->formContacts();
+        $selectedContact = $this->resolveSelectedContact(old('contact_id', $donation->contact_id));
 
-        return view('mobile.forms.donation-form', compact('donation', 'user', 'branches', 'programs', 'agents', 'contacts'));
+        return view('mobile.forms.donation-form', compact('donation', 'user', 'branches', 'programs', 'agents', 'selectedContact'));
     }
 
     public function donationUpdate(Request $request, $id)
@@ -170,7 +170,7 @@ class MobileCrudController extends MobileAppController
             'payment_date' => ['nullable', 'date'],
             'branch_id' => ['required', 'exists:branches,id'],
             'agen_id' => ['required', 'exists:users,id'],
-            'contact_id' => ['nullable', 'exists:contacts,id'],
+            'contact_id' => ['required', 'exists:contacts,id'],
             'donor_info' => ['nullable', 'string'],
             'payment_method' => ['required', 'in:cash,transfer,qris,e-wallet'],
             'payment_proof' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
@@ -181,9 +181,19 @@ class MobileCrudController extends MobileAppController
             'items.*.program_id.exists' => 'Program donasi yang dipilih tidak valid.',
             'items.*.amount.required' => 'Nominal donasi wajib diisi.',
             'items.*.amount.min' => 'Nominal donasi minimal Rp 1.',
+            'contact_id.required' => 'Kontak donatur wajib dipilih.',
+            'contact_id.exists' => 'Kontak donatur yang dipilih tidak valid.',
         ]);
 
         unset($data['payment_proof']);
+
+        $contactQuery = Contact::where('id', $data['contact_id']);
+        $this->scopeContacts($contactQuery);
+        if (! $contactQuery->exists()) {
+            throw ValidationException::withMessages([
+                'contact_id' => 'Kontak donatur yang dipilih tidak tersedia untuk akun Anda.',
+            ]);
+        }
 
         if (auth()->user()->isAgen()) {
             $data['agen_id'] = auth()->id();
@@ -689,11 +699,15 @@ class MobileCrudController extends MobileAppController
         return User::where('id', $user->id)->get();
     }
 
-    protected function formContacts()
+    protected function resolveSelectedContact($id): ?Contact
     {
-        $query = Contact::query();
+        if (! $id) {
+            return null;
+        }
+
+        $query = Contact::where('id', $id);
         $this->scopeContacts($query);
 
-        return $query->orderBy('name')->limit(200)->get();
+        return $query->first();
     }
 }

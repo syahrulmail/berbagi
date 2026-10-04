@@ -1028,7 +1028,7 @@
 
     .mo-item-row {
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 10px;
         background: #f6faf9;
         border: 1.5px solid var(--mo-border);
@@ -1037,8 +1037,26 @@
         margin-bottom: 10px;
     }
     .mo-item-row .grow { flex: 1; min-width: 0; }
+    .mo-item-main { min-width: 0; }
+    .mo-item-row .item-category-label {
+        display: block;
+        width: 100%;
+        margin-top: 5px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 11px;
+        color: var(--mo-muted);
+        outline: none;
+    }
+    .mo-item-bottom {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .mo-item-bottom .amount-inline { flex: 1; width: auto; }
     .mo-item-row .amount-inline {
-        width: 108px;
         border: 1.5px solid var(--mo-border);
         border-radius: 10px;
         background: #fff;

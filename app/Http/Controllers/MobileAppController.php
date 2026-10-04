@@ -412,6 +412,41 @@ class MobileAppController extends Controller
         ]);
     }
 
+    /**
+     * Pencarian kontak (JSON) untuk autocomplete form donation mobile.
+     * Mencari berdasarkan nama dan nomor WA (abaikan +, -, spasi).
+     */
+    public function contactSearch(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $digits = preg_replace('/[^0-9]/', '', $q);
+
+        $query = Contact::query();
+        $this->scopeContacts($query);
+
+        if ($q !== '') {
+            $query->where(function ($inner) use ($q, $digits) {
+                $inner->where('name', 'like', "%{$q}%");
+                if ($digits !== '') {
+                    $inner->orWhere('phone', 'like', "%{$digits}%");
+                }
+            });
+        }
+
+        $contacts = $query->orderBy('name')->limit(30)->get();
+
+        return response()->json([
+            'contacts' => $contacts->map(function (Contact $contact) {
+                return [
+                    'id' => $contact->id,
+                    'name' => $contact->name,
+                    'phone' => $contact->phone,
+                    'label' => $contact->name . ($contact->phone ? ' (' . $contact->phone . ')' : ''),
+                ];
+            })->values(),
+        ]);
+    }
+
     protected function paymentMethodLabel(?string $method): string
     {
         return [

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Contact;
+use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -39,6 +40,27 @@ class MobileDonationFormTest extends TestCase
         return User::create($data);
     }
 
+    protected function makeContact(string $name, string $phone, ?User $agen = null, ?Branch $branch = null): Contact
+    {
+        return Contact::create([
+            'name' => $name,
+            'phone' => $phone,
+            'status' => 'prospect',
+            'agen_id' => $agen?->id,
+            'branch_id' => $branch?->id,
+        ]);
+    }
+
+    protected function makeProgram(): Program
+    {
+        return Program::create([
+            'name' => 'Program ' . uniqid(),
+            'slug' => 'program-' . uniqid(),
+            'program_category' => 'WAP',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_donation_form_has_searchable_contact_and_program_inputs(): void
     {
         $branch = $this->makeBranch();
@@ -72,9 +94,79 @@ class MobileDonationFormTest extends TestCase
             'name' => 'Donatur Baru',
             'agen_id' => $agen->id,
         ]);
+    }
 
-        $contact = Contact::where('name', 'Donatur Baru')->first();
-        $this->assertNotNull($contact);
-        $this->assertNotEmpty($contact->phone);
+    public function test_contact_search_finds_by_name_and_phone(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $this->makeContact('Ahmad Fauzi', '6281234567890', $agen, $branch);
+
+        $this->actingAs($agen)
+            ->getJson(route('mo.api.contact-search', ['q' => 'Fauzi']))
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'Ahmad Fauzi']);
+
+        $this->actingAs($agen)
+            ->getJson(route('mo.api.contact-search', ['q' => '62812-345 678']))
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'Ahmad Fauzi']);
+    }
+
+    public function test_contact_search_is_scoped_to_current_user(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $other = $this->makeUser('agen', $branch);
+
+        $this->makeContact('Kontak Sendiri', '628111111111', $agen, $branch);
+        $this->makeContact('Kontak Orang Lain', '628222222222', $other, $branch);
+
+        $this->actingAs($agen)
+            ->getJson(route('mo.api.contact-search', ['q' => 'Kontak']))
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'Kontak Sendiri'])
+            ->assertJsonMissing(['name' => 'Kontak Orang Lain']);
+    }
+
+    public function test_donation_store_requires_contact(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->actingAs($agen)->post(route('mo.donation.store'), [
+            'items' => [[
+                'program_id' => $program->id,
+                'amount' => 10000,
+                'program_category' => 'WAP',
+            ]],
+            'donation_date' => now()->format('Y-m-d'),
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+            'payment_method' => 'transfer',
+        ])->assertSessionHasErrors('contact_id');
+    }
+
+    public function test_agent_cannot_use_other_agent_contact(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $other = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+        $foreign = $this->makeContact('Kontak Lain', '628333333333', $other, $branch);
+
+        $this->actingAs($agen)->post(route('mo.donation.store'), [
+            'items' => [[
+                'program_id' => $program->id,
+                'amount' => 10000,
+                'program_category' => 'WAP',
+            ]],
+            'donation_date' => now()->format('Y-m-d'),
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+            'contact_id' => $foreign->id,
+            'payment_method' => 'transfer',
+        ])->assertSessionHasErrors('contact_id');
     }
 }
