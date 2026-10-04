@@ -22,8 +22,8 @@
     @php
         $hasDateFilter = request('period') || request('from') || request('to');
     @endphp
-    <form method="GET" action="{{ route('mo.donations') }}" id="mo-donasi-form">
-        <div class="mo-donasi-sticky">
+    <div class="mo-donasi-sticky">
+        <form method="GET" action="{{ route('mo.donations') }}" id="mo-donasi-form">
             <div class="mo-search-flex">
                 <div class="mo-search">
                     <i class="fas fa-magnifying-glass"></i>
@@ -60,8 +60,8 @@
                     </div>
                 @endif
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
 
     @if(request('search'))
         <div style="font-size:12.5px;color:var(--mo-muted);margin:-6px 4px 12px;">
