@@ -504,6 +504,53 @@
     }
     .mo-search input::placeholder { color: #9db3b0; }
 
+    /* Donasi: sticky filter bar */
+    .mo-donasi-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        margin: 0 -16px;
+        padding: 6px 16px 12px;
+        background: var(--mo-bg);
+    }
+    .mo-search-flex {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .mo-search-flex .mo-search {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    .mo-filter-toggle {
+        position: relative;
+        flex-shrink: 0;
+        width: 46px;
+        height: 46px;
+        border: none;
+        border-radius: 14px;
+        background: var(--mo-surface);
+        color: var(--mo-muted);
+        font-size: 15px;
+        box-shadow: var(--mo-shadow-sm);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .mo-filter-toggle.open {
+        color: var(--mo-primary);
+        background: #eefaf8;
+    }
+    .mo-filter-toggle.has-filter::after {
+        content: '';
+        position: absolute;
+        top: 9px;
+        right: 9px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--mo-danger);
+    }
+
     /* ============ FAB ============ */
     .mo-fab {
         position: fixed;
@@ -1403,6 +1450,12 @@
             padding-bottom: 130px;
         }
         .mo-appbar {
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+        .mo-donasi-sticky {
+            margin-left: -24px;
+            margin-right: -24px;
             padding-left: 24px;
             padding-right: 24px;
         }

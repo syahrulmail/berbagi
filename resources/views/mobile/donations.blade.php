@@ -19,35 +19,48 @@
 </div>
 
 <div class="mo-content" style="padding-top:0;">
-    <form method="GET" action="{{ route('mo.donations') }}" style="margin-bottom:14px;">
-        <div class="mo-search">
-            <i class="fas fa-magnifying-glass"></i>
-            <input type="search" name="search" placeholder="Cari nama / no. WA / catatan / program..." value="{{ request('search') }}">
-        </div>
+    @php
+        $hasDateFilter = request('period') || request('from') || request('to');
+    @endphp
+    <form method="GET" action="{{ route('mo.donations') }}" id="mo-donasi-form">
+        <div class="mo-donasi-sticky">
+            <div class="mo-search-flex">
+                <div class="mo-search">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="search" name="search" placeholder="Cari nama / no. WA / catatan / program..." value="{{ request('search') }}">
+                </div>
+                <button type="button" class="mo-filter-toggle {{ $hasDateFilter ? 'has-filter' : '' }}" id="mo-filter-toggle" aria-label="Filter tanggal" aria-expanded="false">
+                    <i class="fas fa-sliders"></i>
+                </button>
+            </div>
 
-        <div style="display:flex;gap:10px;margin-top:10px;">
-            <div style="flex:1;">
-                <label for="filter_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>
-                <input type="date" id="filter_from" name="from" class="mo-input" value="{{ request('from') }}" data-autosubmit>
-            </div>
-            <div style="flex:1;">
-                <label for="filter_to" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Sampai tanggal</label>
-                <input type="date" id="filter_to" name="to" class="mo-input" value="{{ request('to') }}" data-autosubmit>
-            </div>
-        </div>
+            <div id="mo-advanced-filters" hidden>
+                <div style="display:flex;gap:10px;margin-top:10px;">
+                    <div style="flex:1;">
+                        <label for="filter_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>
+                        <input type="date" id="filter_from" name="from" class="mo-input" value="{{ request('from') }}" data-autosubmit>
+                    </div>
+                    <div style="flex:1;">
+                        <label for="filter_to" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Sampai tanggal</label>
+                        <input type="date" id="filter_to" name="to" class="mo-input" value="{{ request('to') }}" data-autosubmit>
+                    </div>
+                </div>
 
-        <div class="mo-segmented">
-            <button type="submit" name="period" value="" class="mo-segmented-item {{ !request('period') ? 'active' : '' }}">Semua</button>
-            <button type="submit" name="period" value="today" class="mo-segmented-item {{ request('period') === 'today' ? 'active' : '' }}">Hari Ini</button>
-            <button type="submit" name="period" value="week" class="mo-segmented-item {{ request('period') === 'week' ? 'active' : '' }}">7 Hari</button>
-        </div>
-        @if(request('search') || request('period') || request('from') || request('to'))
-            <div style="text-align:right;margin-top:-8px;margin-bottom:8px;">
-                <a href="{{ route('mo.donations') }}" style="font-size:12px;color:var(--mo-muted);text-decoration:none;">
-                    <i class="fas fa-rotate-left"></i> Reset filter
-                </a>
+                <div class="mo-segmented" style="margin-top:10px;margin-bottom:6px;">
+                    <button type="submit" name="period" value="" class="mo-segmented-item {{ !request('period') ? 'active' : '' }}">Semua</button>
+                    <button type="submit" name="period" value="today" class="mo-segmented-item {{ request('period') === 'today' ? 'active' : '' }}">Hari Ini</button>
+                    <button type="submit" name="period" value="week" class="mo-segmented-item {{ request('period') === 'week' ? 'active' : '' }}">7 Hari</button>
+                </div>
+
+                @if(request('search') || $hasDateFilter)
+                    <div style="text-align:right;">
+                        <a href="{{ route('mo.donations') }}" style="font-size:12px;color:var(--mo-muted);text-decoration:none;">
+                            <i class="fas fa-rotate-left"></i> Reset filter
+                        </a>
+                    </div>
+                @endif
             </div>
-        @endif
+        </div>
     </form>
 
     @if(request('search'))
@@ -155,6 +168,21 @@
     (function () {
         var opener = document.getElementById('mo-open-download');
         if (opener) opener.addEventListener('click', function () { window.MoApp.sheets.open('mo-download-sheet'); });
+
+        var filterToggle = document.getElementById('mo-filter-toggle');
+        var advanced = document.getElementById('mo-advanced-filters');
+        if (filterToggle && advanced) {
+            filterToggle.addEventListener('click', function () {
+                var opening = advanced.hasAttribute('hidden');
+                if (opening) {
+                    advanced.removeAttribute('hidden');
+                } else {
+                    advanced.setAttribute('hidden', '');
+                }
+                filterToggle.classList.toggle('open', opening);
+                filterToggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+            });
+        }
 
         document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
             el.addEventListener('change', function () {

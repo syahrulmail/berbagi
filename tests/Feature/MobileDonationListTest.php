@@ -105,6 +105,18 @@ class MobileDonationListTest extends TestCase
         $response->assertSee('Donatur Telp');
     }
 
+    public function test_advanced_filters_are_hidden_by_default(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.donations'));
+
+        $response->assertOk();
+        $response->assertSee('id="mo-filter-toggle"', false);
+        $response->assertSee('id="mo-advanced-filters" hidden', false);
+    }
+
     public function test_mobile_list_filters_by_date_range(): void
     {
         $branch = $this->makeBranch();
