@@ -1086,6 +1086,11 @@
         gap: 10px;
     }
     .mo-form-footer .mo-btn { flex: 1; }
+    .mo-form-footer--static {
+        position: static;
+        background: none;
+        padding: 16px 0 8px;
+    }
 
     .mo-item-row {
         display: flex;

@@ -78,6 +78,19 @@ class MobileDonationFormTest extends TestCase
         $response->assertSee('value="transfer" selected', false);
     }
 
+    public function test_donation_form_footer_is_not_sticky_and_uses_short_save_label(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.donation.create'));
+
+        $response->assertOk();
+        $response->assertSee('mo-form-footer--static', false);
+        $response->assertSee('Simpan</button>', false);
+        $response->assertDontSee('Simpan Donasi');
+    }
+
     public function test_donation_form_only_lists_active_penggalangan_programs(): void
     {
         $branch = $this->makeBranch();

@@ -172,9 +172,9 @@
             </div>
         </div>
 
-        <div class="mo-form-footer">
+        <div class="mo-form-footer mo-form-footer--static">
             <a href="{{ route('mo.donations') }}" class="mo-btn mo-btn-ghost">Batal</a>
-            <button type="submit" class="mo-btn mo-btn-primary"><i class="fas fa-save"></i> {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Donasi' }}</button>
+            <button type="submit" class="mo-btn mo-btn-primary"><i class="fas fa-save"></i> {{ $isEdit ? 'Simpan Perubahan' : 'Simpan' }}</button>
         </div>
     </form>
 
