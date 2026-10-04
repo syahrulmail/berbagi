@@ -86,9 +86,9 @@
             </div>
         </div>
 
-        <div class="mo-form-footer">
+        <div class="mo-form-footer mo-form-footer--static">
             <a href="{{ route('mo.contacts') }}" class="mo-btn mo-btn-ghost">Batal</a>
-            <button type="submit" class="mo-btn mo-btn-primary"><i class="fas fa-save"></i> {{ $contact ? 'Simpan Perubahan' : 'Simpan Kontak' }}</button>
+            <button type="submit" class="mo-btn mo-btn-primary"><i class="fas fa-save"></i> Simpan</button>
         </div>
     </form>
 

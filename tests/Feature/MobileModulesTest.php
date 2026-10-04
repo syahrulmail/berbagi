@@ -198,6 +198,20 @@ class MobileModulesTest extends TestCase
             ->assertJson(['count' => 2]);
     }
 
+    public function test_contact_form_footer_is_not_sticky_and_uses_short_save_label(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.contact.create'));
+
+        $response->assertOk();
+        $response->assertSee('mo-form-footer--static', false);
+        $response->assertSee('Simpan</button>', false);
+        $response->assertDontSee('Simpan Kontak');
+        $response->assertDontSee('Simpan Perubahan');
+    }
+
     protected function makeDonation(Branch $branch, User $agen, User $contactOwner, Program $program, string $name): void
     {
         $contact = Contact::create([
