@@ -22,7 +22,18 @@
     <form method="GET" action="{{ route('mo.donations') }}" style="margin-bottom:14px;">
         <div class="mo-search">
             <i class="fas fa-magnifying-glass"></i>
-            <input type="search" name="search" placeholder="Cari donatur / program..." value="{{ request('search') }}">
+            <input type="search" name="search" placeholder="Cari nama / no. WA / catatan / program..." value="{{ request('search') }}">
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:10px;">
+            <div style="flex:1;">
+                <label for="filter_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>
+                <input type="date" id="filter_from" name="from" class="mo-input" value="{{ request('from') }}" data-autosubmit>
+            </div>
+            <div style="flex:1;">
+                <label for="filter_to" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Sampai tanggal</label>
+                <input type="date" id="filter_to" name="to" class="mo-input" value="{{ request('to') }}" data-autosubmit>
+            </div>
         </div>
 
         <div class="mo-segmented">
@@ -30,7 +41,7 @@
             <button type="submit" name="period" value="today" class="mo-segmented-item {{ request('period') === 'today' ? 'active' : '' }}">Hari Ini</button>
             <button type="submit" name="period" value="week" class="mo-segmented-item {{ request('period') === 'week' ? 'active' : '' }}">7 Hari</button>
         </div>
-        @if(request('search') || request('period'))
+        @if(request('search') || request('period') || request('from') || request('to'))
             <div style="text-align:right;margin-top:-8px;margin-bottom:8px;">
                 <a href="{{ route('mo.donations') }}" style="font-size:12px;color:var(--mo-muted);text-decoration:none;">
                     <i class="fas fa-rotate-left"></i> Reset filter
@@ -59,6 +70,9 @@
                     <div class="mo-row-sub" style="margin-top:4px;">
                         <span class="mo-badge teal">{{ $d->payment_method_label ?? $d->payment_method }}</span>
                     </div>
+                    @if($d->note)
+                        <div class="mo-row-note"><i class="fas fa-note-sticky"></i> {{ $d->note }}</div>
+                    @endif
                 </div>
                 <div class="mo-row-end">
                     <div class="amount">{{ $d->amount_formatted }}</div>
@@ -144,6 +158,12 @@
     (function () {
         var opener = document.getElementById('mo-open-download');
         if (opener) opener.addEventListener('click', function () { window.MoApp.sheets.open('mo-download-sheet'); });
+
+        document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
+            el.addEventListener('change', function () {
+                if (el.form) el.form.submit();
+            });
+        });
     })();
 </script>
 @endpush

@@ -192,11 +192,19 @@ class MobileAppController extends Controller
 
         $query->when($request->search, function ($q, $search) {
             $search = trim($search);
-            return $q->where(function ($inner) use ($search) {
-                $inner->whereHas('contact', fn ($c) => $c->where('name', 'like', "%{$search}%"))
+            $digits = preg_replace('/[^0-9]/', '', $search);
+
+            return $q->where(function ($inner) use ($search, $digits) {
+                $inner->whereHas('contact', function ($c) use ($search, $digits) {
+                    $c->where('name', 'like', "%{$search}%");
+                    if ($digits !== '') {
+                        $c->orWhere('phone', 'like', "%{$digits}%");
+                    }
+                })
                     ->orWhereHas('program', fn ($p) => $p->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('items.program', fn ($p) => $p->where('name', 'like', "%{$search}%"))
-                    ->orWhere('donor_info', 'like', "%{$search}%");
+                    ->orWhere('donor_info', 'like', "%{$search}%")
+                    ->orWhere('note', 'like', "%{$search}%");
             });
         })
         ->when($request->from, fn ($q, $from) => $q->whereDate('donations.donation_date', '>=', $from))

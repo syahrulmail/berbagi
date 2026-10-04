@@ -395,6 +395,20 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+    .mo-row-note {
+        font-size: 11.5px;
+        color: var(--mo-text);
+        background: #eefaf8;
+        border-radius: 8px;
+        padding: 5px 8px;
+        margin-top: 7px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+    }
+    .mo-row-note i { color: var(--mo-primary); font-size: 10px; margin-right: 3px; }
     .mo-row-end {
         text-align: right;
         flex-shrink: 0;
