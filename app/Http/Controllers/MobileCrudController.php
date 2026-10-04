@@ -17,6 +17,16 @@ use Illuminate\Validation\ValidationException;
 
 class MobileCrudController extends MobileAppController
 {
+    /**
+     * Hanya admin yang boleh mengubah / menghapus program.
+     */
+    protected function ensureProgramAdmin(): void
+    {
+        if (! auth()->user()->isAdmin()) {
+            abort(403, 'Hanya admin yang dapat mengubah atau menghapus program.');
+        }
+    }
+
     /* =====================================================
      | DONASI
      | ===================================================== */
@@ -394,6 +404,8 @@ class MobileCrudController extends MobileAppController
 
     public function programEdit($id)
     {
+        $this->ensureProgramAdmin();
+
         $program = Program::findOrFail($id);
 
         return view('mobile.forms.program-form', compact('program'));
@@ -401,6 +413,8 @@ class MobileCrudController extends MobileAppController
 
     public function programUpdate(Request $request, $id)
     {
+        $this->ensureProgramAdmin();
+
         $program = Program::findOrFail($id);
 
         $data = $this->validateProgram($request, $program->id);
@@ -429,6 +443,8 @@ class MobileCrudController extends MobileAppController
 
     public function programDestroy($id)
     {
+        $this->ensureProgramAdmin();
+
         $program = Program::findOrFail($id);
 
         if ($program->donationItems()->exists()) {

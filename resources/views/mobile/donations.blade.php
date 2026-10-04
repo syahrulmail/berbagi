@@ -9,6 +9,9 @@
             <h1 class="mo-appbar-title"><i class="fas fa-hand-holding-dollar" style="color:var(--mo-primary);font-size:20px;"></i> Donasi</h1>
             <div class="mo-appbar-sub">{{ $donations->count() }} catatan donasi</div>
         </div>
+        <button type="button" class="mo-icon-btn" id="mo-open-download" aria-label="Unduh Donasi">
+            <i class="fas fa-download"></i>
+        </button>
         <a href="{{ route('mo.more') }}" class="mo-icon-btn" aria-label="Menu">
             <i class="fas fa-bars"></i>
         </a>
@@ -78,4 +81,69 @@
 
 @section('sheets')
 @include('mobile.partials.donation-sheet')
+
+<div class="mo-sheet-backdrop" data-for="mo-download-sheet"></div>
+<div class="mo-sheet" id="mo-download-sheet" aria-hidden="true">
+    <div class="mo-sheet-handle"></div>
+    <div class="mo-sheet-head">
+        <h3 class="mo-sheet-title"><i class="fas fa-download" style="color:var(--mo-primary);margin-right:6px;"></i>Unduh Donasi</h3>
+        <button type="button" class="mo-sheet-close" aria-label="Tutup"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="mo-sheet-body">
+        <form method="GET" id="mo-download-form">
+            <div class="mo-field">
+                <label>Periode</label>
+                <div style="display:flex;gap:10px;">
+                    <div style="flex:1;">
+                        <input type="date" name="from" class="mo-input" value="{{ request('from') }}">
+                    </div>
+                    <div style="flex:1;">
+                        <input type="date" name="to" class="mo-input" value="{{ request('to') }}">
+                    </div>
+                </div>
+                <div class="mo-form-help">Kosongkan untuk semua tanggal.</div>
+            </div>
+
+            @if(isset($downloadBranches) && $downloadBranches->count())
+                <div class="mo-field">
+                    <label>Cabang</label>
+                    @if($downloadBranches->count() > 1)
+                        <div style="display:flex;flex-direction:column;gap:8px;background:#f6faf9;border-radius:12px;padding:12px 14px;">
+                            @foreach($downloadBranches as $b)
+                                <label style="display:flex;align-items:center;gap:9px;font-size:13px;">
+                                    <input type="checkbox" name="branch_ids[]" value="{{ $b->id }}">
+                                    {{ $b->name }}
+                                </label>
+                            @endforeach
+                        </div>
+                        <div class="mo-form-help">Tanpa pilih cabang = semua cabang yang dapat Anda akses.</div>
+                    @else
+                        @foreach($downloadBranches as $b)
+                            <input type="hidden" name="branch_ids[]" value="{{ $b->id }}">
+                            <div style="font-size:13px;font-weight:600;color:var(--mo-text);">{{ $b->name }}</div>
+                        @endforeach
+                    @endif
+                </div>
+            @endif
+
+            <div style="display:flex;gap:10px;margin-top:6px;">
+                <button type="submit" class="mo-btn mo-btn-primary" style="flex:1;" formaction="{{ route('donations.download') }}">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+                <button type="submit" class="mo-btn mo-btn-primary" style="flex:1;" formaction="{{ route('donations.download-proof') }}">
+                    <i class="fas fa-file-word"></i> Download BT
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        var opener = document.getElementById('mo-open-download');
+        if (opener) opener.addEventListener('click', function () { window.MoApp.sheets.open('mo-download-sheet'); });
+    })();
+</script>
+@endpush

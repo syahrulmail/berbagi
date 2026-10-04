@@ -23,6 +23,8 @@
         @yield('mobile-content')
     </div>
 
+    @include('mobile.partials.flash')
+
     {{-- Bottom Tab Bar --}}
     <nav class="mo-tabbar" id="mo-tabbar">
         @php

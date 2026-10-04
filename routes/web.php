@@ -12,6 +12,7 @@ use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MobileAppController;
 use App\Http\Controllers\MobileAuthController;
 use App\Http\Controllers\MobileCrudController;
+use App\Http\Controllers\MobileModuleController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
@@ -175,5 +176,54 @@ Route::middleware('auth')->group(function () {
         Route::get('/pengguna/{user}/edit', [MobileCrudController::class, 'userEdit'])->name('user.edit')->middleware('role:admin');
         Route::put('/pengguna/{user}', [MobileCrudController::class, 'userUpdate'])->name('user.update')->middleware('role:admin');
         Route::delete('/pengguna/{user}', [MobileCrudController::class, 'userDestroy'])->name('user.destroy')->middleware('role:admin');
+
+        // WhatsApp (semua role)
+        Route::get('/whatsapp', [MobileModuleController::class, 'whatsappIndex'])->name('whatsapp');
+        Route::get('/whatsapp/tambah', [MobileModuleController::class, 'whatsappCreate'])->name('whatsapp.create');
+        Route::post('/whatsapp/tambah', [MobileModuleController::class, 'whatsappStore'])->name('whatsapp.store');
+        Route::delete('/whatsapp/{whatsapp}', [MobileModuleController::class, 'whatsappDestroy'])->name('whatsapp.destroy');
+
+        // Follow-up WA
+        Route::get('/followup', [MobileModuleController::class, 'followupIndex'])->name('followups');
+        Route::delete('/followup/{followup}', [MobileModuleController::class, 'followupDestroy'])->name('followups.destroy')->middleware('role:admin,supervisor');
+
+        // Label Kampanye (admin)
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/label', [MobileModuleController::class, 'campaignTagIndex'])->name('campaign-tags');
+            Route::get('/label/tambah', [MobileModuleController::class, 'campaignTagCreate'])->name('campaign-tags.create');
+            Route::post('/label/tambah', [MobileModuleController::class, 'campaignTagStore'])->name('campaign-tags.store');
+            Route::get('/label/{campaignTag}/edit', [MobileModuleController::class, 'campaignTagEdit'])->name('campaign-tags.edit');
+            Route::put('/label/{campaignTag}', [MobileModuleController::class, 'campaignTagUpdate'])->name('campaign-tags.update');
+            Route::delete('/label/{campaignTag}', [MobileModuleController::class, 'campaignTagDestroy'])->name('campaign-tags.destroy');
+
+            // Pencapaian (admin)
+            Route::get('/pencapaian', [MobileModuleController::class, 'achievementIndex'])->name('achievements');
+            Route::get('/pencapaian/tambah', [MobileModuleController::class, 'achievementCreate'])->name('achievements.create');
+            Route::post('/pencapaian/tambah', [MobileModuleController::class, 'achievementStore'])->name('achievements.store');
+            Route::get('/pencapaian/{achievement}/edit', [MobileModuleController::class, 'achievementEdit'])->name('achievements.edit');
+            Route::put('/pencapaian/{achievement}', [MobileModuleController::class, 'achievementUpdate'])->name('achievements.update');
+            Route::delete('/pencapaian/{achievement}', [MobileModuleController::class, 'achievementDestroy'])->name('achievements.destroy');
+        });
+
+        // Banner & Label (admin, supervisor)
+        Route::middleware('role:admin,supervisor')->group(function () {
+            Route::get('/banner', [MobileModuleController::class, 'bannerIndex'])->name('banners');
+            Route::get('/banner/tambah', [MobileModuleController::class, 'bannerCreate'])->name('banners.create');
+            Route::post('/banner/tambah', [MobileModuleController::class, 'bannerStore'])->name('banners.store');
+            Route::get('/banner/{banner}/edit', [MobileModuleController::class, 'bannerEdit'])->name('banners.edit');
+            Route::put('/banner/{banner}', [MobileModuleController::class, 'bannerUpdate'])->name('banners.update');
+            Route::delete('/banner/{banner}', [MobileModuleController::class, 'bannerDestroy'])->name('banners.destroy');
+
+            // Log Aktivitas (admin, supervisor)
+            Route::get('/log', [MobileModuleController::class, 'activityLogIndex'])->name('activity-logs');
+        });
+
+        // Import / Tempel Kontak (semua role)
+        Route::get('/kontak/impor', [MobileModuleController::class, 'contactImportForm'])->name('contact.import-form');
+        Route::post('/kontak/impor', [MobileModuleController::class, 'contactImportStore'])->name('contact.import');
+        Route::post('/kontak/tempel', [MobileModuleController::class, 'contactPasteStore'])->name('contact.paste');
+
+        // Daftar donatur program (bottom sheet)
+        Route::get('/program/{program}/donatur', [MobileModuleController::class, 'programDonors'])->name('program.donors');
     });
 });

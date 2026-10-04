@@ -9,6 +9,12 @@
             <h1 class="mo-appbar-title"><i class="fas fa-address-book" style="color:var(--mo-primary);font-size:20px;"></i> Kontak</h1>
             <div class="mo-appbar-sub">{{ $statusCounts['all'] }} kontak terhubung</div>
         </div>
+        <a href="{{ route('mo.contact.import-form') }}" class="mo-icon-btn" aria-label="Impor Kontak">
+            <i class="fas fa-file-import"></i>
+        </a>
+        <a href="{{ route('contacts.download', request()->only('search', 'status')) }}" class="mo-icon-btn" aria-label="Unduh Kontak">
+            <i class="fas fa-download"></i>
+        </a>
         <a href="{{ route('mo.more') }}" class="mo-icon-btn" aria-label="Menu">
             <i class="fas fa-bars"></i>
         </a>

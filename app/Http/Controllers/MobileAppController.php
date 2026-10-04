@@ -45,6 +45,22 @@ class MobileAppController extends Controller
         return $query;
     }
 
+    /**
+     * Cabang yang dapat diakses user (untuk filter unduhan).
+     */
+    protected function visibleBranches()
+    {
+        $query = Branch::where('is_active', true)->orderBy('name');
+
+        $user = auth()->user();
+
+        if ($user && ($user->isSupervisor() || $user->isAgen())) {
+            $query->where('id', $user->branch_id);
+        }
+
+        return $query->get();
+    }
+
     protected function branchStats($branch, $month, $year)
     {
         $collected = $branch->donations()
@@ -203,7 +219,9 @@ class MobileAppController extends Controller
             $d->payment_method_label = $this->paymentMethodLabel($d->payment_method);
         });
 
-        return view('mobile.donations', compact('donations'));
+        $downloadBranches = $this->visibleBranches();
+
+        return view('mobile.donations', compact('donations', 'downloadBranches'));
     }
 
     /**

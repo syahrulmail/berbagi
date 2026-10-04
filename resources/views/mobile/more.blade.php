@@ -53,6 +53,20 @@
         </a>
     </div>
 
+    <div class="mo-section-title">Komunikasi</div>
+    <div class="mo-menu">
+        <a href="{{ route('mo.whatsapp') }}" class="mo-menu-item">
+            <i class="fab fa-whatsapp mi" style="background:#e5f8ec;color:#25d366;"></i>
+            <div class="txt">WhatsApp</div>
+            <i class="fas fa-chevron-right chev"></i>
+        </a>
+        <a href="{{ route('mo.followups') }}" class="mo-menu-item">
+            <i class="fas fa-comments mi blue"></i>
+            <div class="txt">Follow-up WA</div>
+            <i class="fas fa-chevron-right chev"></i>
+        </a>
+    </div>
+
     @if($user->isAdmin())
         <div class="mo-section-title">Manajemen</div>
         <div class="mo-menu">
@@ -64,6 +78,32 @@
             <a href="{{ route('mo.users') }}" class="mo-menu-item">
                 <i class="fas fa-users mi blue"></i>
                 <div class="txt">Pengguna</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+            <a href="{{ route('mo.campaign-tags') }}" class="mo-menu-item">
+                <i class="fas fa-tags mi gold"></i>
+                <div class="txt">Label Kampanye</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+            <a href="{{ route('mo.achievements') }}" class="mo-menu-item">
+                <i class="fas fa-trophy mi gold"></i>
+                <div class="txt">Pencapaian</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+        </div>
+    @endif
+
+    @if($user->isAdmin() || $user->isSupervisor())
+        <div class="mo-section-title">Konten &amp; Monitoring</div>
+        <div class="mo-menu">
+            <a href="{{ route('mo.banners') }}" class="mo-menu-item">
+                <i class="fas fa-images mi"></i>
+                <div class="txt">Banner &amp; Label</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+            <a href="{{ route('mo.activity-logs') }}" class="mo-menu-item">
+                <i class="fas fa-clock-rotate-left mi blue"></i>
+                <div class="txt">Log Aktivitas</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
         </div>

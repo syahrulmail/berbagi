@@ -136,6 +136,46 @@
         return div.innerHTML;
     }
 
+    /* ---------- Program donors sheet ---------- */
+    function loadProgramDonors(url, cb) {
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || data.error) throw new Error((data && data.error) || 'Gagal memuat');
+                cb(data);
+            })
+            .catch(function () {
+                var body = document.getElementById('mo-donor-sheet-body');
+                if (body) body.innerHTML = '<div class="mo-empty"><i class="fas fa-circle-exclamation"></i><p>Gagal memuat data.</p></div>';
+            });
+    }
+
+    function renderProgramDonors(data) {
+        var title = document.getElementById('mo-donor-sheet-title');
+        if (title) title.textContent = 'Donatur · ' + (data.program_name || '');
+
+        var body = document.getElementById('mo-donor-sheet-body');
+        if (!body) return;
+
+        if (!data.donors || !data.donors.length) {
+            body.innerHTML = '<div class="mo-empty"><i class="fas fa-users"></i><p>Belum ada donatur pada program ini.</p></div>';
+            return;
+        }
+
+        var html = '<div style="font-size:12px;color:var(--mo-muted);margin-bottom:10px;">' + data.count + ' donatur</div>';
+        data.donors.forEach(function (d) {
+            html += '<div class="mo-row" style="box-shadow:none;background:#f6faf9;padding:11px 13px;border-radius:12px;margin-bottom:8px;align-items:center;">' +
+                '<div class="mo-row-icon blue">' + esc((d.name || '?').charAt(0).toUpperCase()) + '</div>' +
+                '<div class="mo-row-body">' +
+                    '<div class="mo-row-title" style="font-size:13.5px;">' + esc(d.name || '-') + '</div>' +
+                    '<div class="mo-row-sub">' + esc(d.phone || '-') + ' · ' + esc(d.agen || '-') + '</div>' +
+                '</div>' +
+                '<div class="mo-row-end"><div class="amount" style="font-size:12.5px;">' + esc(d.total_formatted || '') + '</div>' +
+                '<div class="date">' + esc(d.count || 0) + 'x donasi</div></div></div>';
+        });
+        body.innerHTML = html;
+    }
+
     /* ---------- Init ---------- */
     onReady(function () {
         // Sheet backdrop click
@@ -194,11 +234,51 @@
 
         // Program cards open public page
         document.addEventListener('click', function (e) {
-            if (e.target.closest('.mo-program-edit')) return;
+            if (e.target.closest('.mo-program-edit') || e.target.closest('.mo-program-edit-btn') || e.target.closest('.mo-program-donors') || e.target.closest('.mo-program-share')) return;
             var card = e.target.closest('[data-program-slug]');
             if (card) {
                 var slug = card.getAttribute('data-program-slug');
                 if (slug) window.location.href = '/program/' + slug;
+            }
+        });
+
+        // Program donors sheet
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-program-donors]');
+            if (!btn) return;
+            e.preventDefault();
+            var url = btn.getAttribute('data-program-donors');
+            var body = document.getElementById('mo-donor-sheet-body');
+            if (body) body.innerHTML =
+                '<div style="padding:6px 2px 18px;">' +
+                    '<div class="mo-skeleton" style="height:16px;width:55%;margin-bottom:12px;"></div>' +
+                    '<div class="mo-skeleton" style="height:56px;margin-bottom:8px;border-radius:12px;"></div>' +
+                    '<div class="mo-skeleton" style="height:56px;margin-bottom:8px;border-radius:12px;"></div>' +
+                    '<div class="mo-skeleton" style="height:56px;border-radius:12px;"></div>' +
+                '</div>';
+            openSheet('mo-donor-sheet');
+            loadProgramDonors(url, renderProgramDonors);
+        });
+
+        // Program share (Web Share API, fallback copy)
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-program-share]');
+            if (!btn) return;
+            e.preventDefault();
+            var url = btn.getAttribute('data-program-share');
+            var title = btn.getAttribute('data-share-title') || 'Program';
+            if (navigator.share) {
+                navigator.share({ title: title, url: url }).catch(function () {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function () {
+                    var toast = document.createElement('div');
+                    toast.className = 'mo-flash-stack';
+                    toast.innerHTML = '<div class="mo-toast mo-toast--success"><i class="fas fa-circle-check"></i><span>Link program disalin.</span></div>';
+                    document.querySelector('.mo-app').appendChild(toast);
+                    setTimeout(function () { toast.remove(); }, 2600);
+                }).catch(function () { window.prompt('Salin link program:', url); });
+            } else {
+                window.prompt('Salin link program:', url);
             }
         });
 
@@ -222,7 +302,7 @@
         });
 
         // Auto close alerts
-        document.querySelectorAll('.mo-flash').forEach(function (el) {
+        document.querySelectorAll('.mo-flash, .mo-toast').forEach(function (el) {
             setTimeout(function () { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; }, 3500);
             setTimeout(function () { el.remove(); }, 4100);
         });

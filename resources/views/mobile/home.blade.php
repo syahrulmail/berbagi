@@ -17,12 +17,6 @@
 </div>
 
 <div class="mo-content" style="padding-top:0;">
-    @if(session('success'))
-        <div class="mo-card mo-flash" style="background:#e5f7ec;color:#1f8a4c;box-shadow:none;padding:13px 15px;">
-            <i class="fas fa-circle-check"></i> {{ session('success') }}
-        </div>
-    @endif
-
     {{-- Hero ringkasan --}}
     <div class="mo-hero">
         <div class="mo-hero-label">Total Donasi Bulan Ini</div>

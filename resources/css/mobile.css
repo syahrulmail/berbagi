@@ -1101,6 +1101,41 @@
         box-shadow: 0 10px 30px rgba(231, 76, 60, 0.35);
     }
 
+    /* ============ FLASH TOAST STACK ============ */
+    .mo-flash-stack {
+        position: absolute;
+        top: calc(12px + env(safe-area-inset-top));
+        left: 12px;
+        right: 12px;
+        z-index: 95;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+    }
+    .mo-toast {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 15px;
+        border-radius: 14px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 12px 30px rgba(4, 61, 58, 0.2);
+        animation: mo-toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: auto;
+    }
+    .mo-toast i { margin-top: 2px; }
+    .mo-toast ul { margin: 6px 0 0; padding-left: 16px; font-weight: 500; }
+    .mo-toast li { margin-bottom: 2px; font-size: 12.5px; }
+    .mo-toast strong { font-weight: 700; }
+    .mo-toast--success { background: #e5f7ec; color: #1f8a4c; }
+    .mo-toast--error { background: #fdeeec; color: #c0392b; }
+    @keyframes mo-toast-in {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
     /* ============ MISC ============ */
     .mo-section-title {
         font-size: 12px;
@@ -1270,4 +1305,84 @@
         font-weight: 600;
         text-decoration: none;
     }
+}
+
+@layer components {
+    /* ============ TABLET ============ */
+    @media (min-width: 768px) {
+        html.mobile-app body {
+            padding: 28px 0;
+        }
+        .mo-app {
+            max-width: 760px;
+            border-radius: 28px;
+            height: calc(100vh - 56px);
+        }
+        .mo-content {
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-bottom: 130px;
+        }
+        .mo-appbar {
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+        .mo-flash-stack {
+            left: auto;
+            right: 24px;
+            width: 420px;
+        }
+        .mo-stats {
+            gap: 14px;
+        }
+        .mo-stat-value {
+            font-size: 20px;
+        }
+        /* Program dua kolom di tablet */
+        .mo-program-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+        .mo-program-grid .mo-program-card {
+            margin-bottom: 0;
+        }
+        /* Donasi / kontak dua kolom */
+        .mo-list--grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            align-items: start;
+        }
+        .mo-list--grid .mo-row {
+            margin-bottom: 0;
+        }
+    }
+}
+
+@layer components {
+    /* ============ PAGER ============ */
+    .mo-pager {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin: 16px 0 4px;
+    }
+    .mo-pager a,
+    .mo-pager .disabled {
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        background: #fff;
+        color: var(--mo-primary);
+        box-shadow: var(--mo-shadow-sm);
+        text-decoration: none;
+        font-size: 13px;
+    }
+    .mo-pager .disabled { color: #c3d6d3; }
+    .mo-pager .info { font-size: 12.5px; color: var(--mo-muted); font-weight: 600; }
 }

@@ -16,17 +16,6 @@
 </div>
 
 <div class="mo-content" style="padding-top:0;">
-    @if($errors->any())
-        <div class="mo-validation-summary">
-            <strong><i class="fas fa-circle-exclamation"></i> Periksa kembali isian:</strong>
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     <form method="POST" action="{{ $program ? route('mo.program.update', $program->id) : route('mo.program.store') }}" enctype="multipart/form-data" class="mo-form">
         @csrf
         @if($program)
