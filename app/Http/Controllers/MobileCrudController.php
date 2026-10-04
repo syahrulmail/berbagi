@@ -36,7 +36,7 @@ class MobileCrudController extends MobileAppController
         $user = auth()->user();
 
         $branches = $this->formBranches($user);
-        $programs = Program::where('is_active', true)->orderBy('name')->get();
+        $programs = $this->formPrograms();
         $agents = $this->formAgents($user);
         $selectedContact = $this->resolveSelectedContact(old('contact_id'));
 
@@ -86,7 +86,7 @@ class MobileCrudController extends MobileAppController
 
         $user = auth()->user();
         $branches = $this->formBranches($user);
-        $programs = Program::where('is_active', true)->orderBy('name')->get();
+        $programs = $this->formPrograms();
         $agents = $this->formAgents($user);
         $selectedContact = $this->resolveSelectedContact(old('contact_id', $donation->contact_id));
 
@@ -697,6 +697,22 @@ class MobileCrudController extends MobileAppController
         }
 
         return User::where('id', $user->id)->get();
+    }
+
+    /**
+     * Program yang boleh dipilih pada form donasi: hanya jenis "Penggalangan"
+     * (atau belum diklasifikasi) yang berstatus aktif. "Penyaluran" disembunyikan.
+     */
+    protected function formPrograms()
+    {
+        return Program::where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('category')
+                    ->orWhere('category', '')
+                    ->orWhere('category', 'penggalangan');
+            })
+            ->orderBy('name')
+            ->get();
     }
 
     protected function resolveSelectedContact($id): ?Contact

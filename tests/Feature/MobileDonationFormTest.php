@@ -51,13 +51,14 @@ class MobileDonationFormTest extends TestCase
         ]);
     }
 
-    protected function makeProgram(): Program
+    protected function makeProgram(string $name = null, ?string $category = 'penggalangan', bool $active = true): Program
     {
         return Program::create([
-            'name' => 'Program ' . uniqid(),
+            'name' => $name ?: 'Program ' . uniqid(),
             'slug' => 'program-' . uniqid(),
             'program_category' => 'WAP',
-            'is_active' => true,
+            'category' => $category,
+            'is_active' => $active,
         ]);
     }
 
@@ -75,6 +76,23 @@ class MobileDonationFormTest extends TestCase
         $response->assertDontSee('Belum ada kontaknya');
         $response->assertSee('mo-quick-contact', false);
         $response->assertSee('value="transfer" selected', false);
+    }
+
+    public function test_donation_form_only_lists_active_penggalangan_programs(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $this->makeProgram('Program Galang Aktif XZQ', 'penggalangan', true);
+        $this->makeProgram('Program Salur Aktif XZQ', 'penyaluran', true);
+        $this->makeProgram('Program Galang Nonaktif XZQ', 'penggalangan', false);
+
+        $response = $this->actingAs($agen)->get(route('mo.donation.create'));
+
+        $response->assertOk();
+        $response->assertSee('Program Galang Aktif XZQ');
+        $response->assertDontSee('Program Salur Aktif XZQ');
+        $response->assertDontSee('Program Galang Nonaktif XZQ');
     }
 
     public function test_agent_can_quick_create_contact_from_donation_form(): void
