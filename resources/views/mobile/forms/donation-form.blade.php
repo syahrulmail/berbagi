@@ -5,6 +5,14 @@
         $donation = new \App\Models\Donation();
     }
     $isEdit = (bool) $donation->id;
+
+    $selectedContactId = old('contact_id', $donation->contact_id ?? '');
+    $selectedContact = $selectedContactId ? $contacts->firstWhere('id', (int) $selectedContactId) : null;
+    $selectedContactLabel = $selectedContact ? $selectedContact->name . ($selectedContact->phone ? ' (' . $selectedContact->phone . ')' : '') : '';
+    $contactsData = $contacts->map(function ($c) {
+        return ['id' => $c->id, 'name' => $c->name, 'phone' => $c->phone];
+    })->values()->all();
+    $programNames = $programs->pluck('name', 'id');
 @endphp
 
 @section('title', $isEdit ? 'Edit Donasi' : 'Catat Donasi')
@@ -65,28 +73,19 @@
                 <input type="date" id="donation_date" name="donation_date" class="mo-input"
                        value="{{ old('donation_date', $donation->donation_date ? $donation->donation_date->toDateString() : now()->toDateString()) }}" required>
             </div>
-
-            <div class="mo-field">
-                <label for="payment_date">Tanggal Pembayaran</label>
-                <input type="date" id="payment_date" name="payment_date" class="mo-input"
-                       value="{{ old('payment_date', $donation && $donation->payment_date ? $donation->payment_date->toDateString() : '') }}">
-            </div>
         </div>
 
         <div class="mo-form-card">
             <h3 class="mo-form-card-title"><i class="fas fa-user"></i> Donatur</h3>
 
             <div class="mo-field">
-                <label for="contact_id">Kontak Donatur</label>
-                <select id="contact_id" name="contact_id" class="mo-select">
-                    <option value="">— Pilih kontak (opsional) —</option>
-                    @foreach($contacts as $c)
-                        <option value="{{ $c->id }}" {{ old('contact_id', $donation->contact_id ?? '') == $c->id ? 'selected' : '' }}>
-                            {{ $c->name }}{{ $c->phone ? ' (' . $c->phone . ')' : '' }}
-                        </option>
-                    @endforeach
-                </select>
-                <div class="mo-form-help">Belum ada kontaknya? Kosongkan dan isi info donatur di bawah.</div>
+                <label for="contact_search">Kontak Donatur</label>
+                <div class="mo-ac" id="mo-contact-ac">
+                    <input type="text" class="mo-input mo-ac-input" id="contact_search" placeholder="Ketik nama atau nomor WA..." autocomplete="off" value="{{ $selectedContactLabel }}">
+                    <input type="hidden" name="contact_id" id="contact_id" value="{{ $selectedContactId }}">
+                    <div class="mo-ac-list" hidden></div>
+                </div>
+                <button type="button" class="mo-ac-add" id="mo-add-contact"><i class="fas fa-plus"></i> Tambah kontak baru</button>
             </div>
 
             <div class="mo-field">
@@ -109,14 +108,11 @@
                 @foreach($items as $i => $item)
                     <div class="mo-item-row" data-item-row>
                         <div class="grow">
-                            <select name="items[{{ $i }}][program_id]" class="mo-select item-program" required style="margin-bottom:8px;">
-                                <option value="">— Pilih program —</option>
-                                @foreach($programs as $prog)
-                                    <option value="{{ $prog->id }}" data-category="{{ $prog->program_category }}" {{ ($item['program_id'] ?? null) == $prog->id ? 'selected' : '' }}>
-                                        {{ $prog->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="mo-ac mo-program-ac">
+                                <input type="text" class="mo-input mo-ac-input item-program-search" placeholder="Ketik nama program..." autocomplete="off" value="{{ ($item['program_id'] ?? null) ? ($programNames[$item['program_id']] ?? '') : '' }}" style="margin-bottom:8px;">
+                                <input type="hidden" name="items[{{ $i }}][program_id]" class="item-program" value="{{ $item['program_id'] ?? '' }}">
+                                <div class="mo-ac-list" hidden></div>
+                            </div>
                             <input type="text" class="item-category-label" value="{{ old('items.'.$i.'.program_category', $item['program_category'] ?? '') }}" placeholder="Kategori program" style="width:100%;border:none;background:transparent;font-size:11px;color:var(--mo-muted);">
                             <input type="hidden" name="items[{{ $i }}][program_category]" class="item-category-input" value="{{ old('items.'.$i.'.program_category', $item['program_category'] ?? '') }}">
                         </div>
@@ -136,6 +132,12 @@
 
         <div class="mo-form-card">
             <h3 class="mo-form-card-title"><i class="fas fa-money-bill-wave"></i> Pembayaran</h3>
+
+            <div class="mo-field">
+                <label for="payment_date">Tanggal Pembayaran</label>
+                <input type="date" id="payment_date" name="payment_date" class="mo-input"
+                       value="{{ old('payment_date', $donation->payment_date ? $donation->payment_date->toDateString() : now()->toDateString()) }}">
+            </div>
 
             <div class="mo-field">
                 <label for="payment_method">Metode Pembayaran <span class="req">*</span></label>
@@ -191,6 +193,40 @@
 </div>
 @endsection
 
+@section('sheets')
+<div class="mo-sheet-backdrop" data-for="mo-quick-contact"></div>
+<div class="mo-sheet" id="mo-quick-contact" aria-hidden="true">
+    <div class="mo-sheet-handle"></div>
+    <div class="mo-sheet-head">
+        <h3 class="mo-sheet-title"><i class="fas fa-user-plus" style="color:var(--mo-primary);margin-right:6px;"></i>Kontak Baru</h3>
+        <button type="button" class="mo-sheet-close" aria-label="Tutup"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="mo-sheet-body">
+        <form id="mo-quick-contact-form" autocomplete="off">
+            <div class="mo-field">
+                <label for="mo-qc-name">Nama <span class="req">*</span></label>
+                <input type="text" id="mo-qc-name" name="name" class="mo-input" required>
+            </div>
+            <div class="mo-field">
+                <label for="mo-qc-phone">No. WhatsApp <span class="req">*</span></label>
+                <input type="tel" id="mo-qc-phone" name="phone" class="mo-input" required placeholder="0812xxxxxxx">
+            </div>
+            <div class="mo-field">
+                <label for="mo-qc-status">Status</label>
+                <select id="mo-qc-status" name="status" class="mo-select">
+                    <option value="prospect">Prospek</option>
+                    <option value="contacted">Simpan</option>
+                    <option value="donated">Wakif</option>
+                    <option value="churned">Stop</option>
+                </select>
+            </div>
+            <div class="mo-form-error" id="mo-quick-contact-error" style="display:none;"></div>
+            <button type="submit" class="mo-btn mo-btn-primary mo-btn-block" style="margin-top:6px;"><i class="fas fa-save"></i> Simpan Kontak</button>
+        </form>
+    </div>
+</div>
+@endsection
+
 @push('scripts')
 @php
     $programsData = $programs->map(function ($p) {
@@ -211,10 +247,89 @@
         var totalEl = document.getElementById('mo-donation-total');
         var itemIndex = itemsWrap.querySelectorAll('[data-item-row]').length;
         var programsData = @json($programsData);
+        var contactsData = @json($contactsData);
 
-        function categoryLabel(code) {
-            var found = programsData.find(function (p) { return p.category === code; });
-            return found ? found.label : code;
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = s == null ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function showToast(msg, isError) {
+            var stack = document.createElement('div');
+            stack.className = 'mo-flash-stack';
+            stack.innerHTML = '<div class="mo-toast ' + (isError ? 'mo-toast--error' : 'mo-toast--success') + '">' +
+                '<i class="fas ' + (isError ? 'fa-circle-exclamation' : 'fa-circle-check') + '"></i><span></span></div>';
+            stack.querySelector('span').textContent = msg;
+            document.querySelector('.mo-app').appendChild(stack);
+            setTimeout(function () { stack.remove(); }, 3200);
+        }
+
+        var programItems = programsData.map(function (p) {
+            return { id: p.id, label: p.name, search: p.name, meta: p.label || '', category: p.category || '' };
+        });
+
+        var contactItems = contactsData.map(function (c) {
+            return { id: c.id, label: c.name + (c.phone ? ' (' + c.phone + ')' : ''), search: c.name, meta: c.phone || '' };
+        });
+
+        function initAutoComplete(ac, items, opts) {
+            opts = opts || {};
+            var input = ac.querySelector('.mo-ac-input');
+            var list = ac.querySelector('.mo-ac-list');
+            var hidden = ac.querySelector('input[type="hidden"]');
+
+            function norm(s) { return String(s == null ? '' : s).toLowerCase().replace(/[\s+\-().]/g, ''); }
+            function digits(s) { return String(s == null ? '' : s).replace(/[^0-9]/g, ''); }
+
+            function close() { list.hidden = true; list.innerHTML = ''; }
+
+            function choose(item) {
+                if (hidden) hidden.value = item.id;
+                input.value = item.label;
+                close();
+                if (opts.onSelect) opts.onSelect(item);
+            }
+
+            function render(q) {
+                var nq = norm(q);
+                var dq = digits(q);
+                var res = items.filter(function (it) {
+                    if (!nq) return true;
+                    if (norm(it.search).indexOf(nq) !== -1) return true;
+                    if (it.meta && dq && digits(it.meta).indexOf(dq) !== -1) return true;
+                    return false;
+                }).slice(0, 50);
+
+                if (!res.length) {
+                    list.innerHTML = '<div class="mo-ac-empty">Tidak ditemukan</div>';
+                    list.hidden = false;
+                    return;
+                }
+
+                list.innerHTML = res.map(function (it) {
+                    return '<button type="button" class="mo-ac-item" data-id="' + esc(it.id) + '">' +
+                        '<span class="mo-ac-name">' + esc(it.search) + '</span>' +
+                        (it.meta ? '<span class="mo-ac-meta">' + esc(it.meta) + '</span>' : '') +
+                        '</button>';
+                }).join('');
+                list.hidden = false;
+            }
+
+            input.addEventListener('focus', function () { render(''); });
+            input.addEventListener('input', function () {
+                if (hidden) hidden.value = '';
+                render(input.value);
+            });
+            list.addEventListener('mousedown', function (e) {
+                var btn = e.target.closest('.mo-ac-item');
+                if (!btn) return;
+                e.preventDefault();
+                var id = btn.getAttribute('data-id');
+                var found = null;
+                items.some(function (it) { if (String(it.id) === String(id)) { found = it; return true; } return false; });
+                if (found) choose(found);
+            });
         }
 
         function recalc() {
@@ -226,15 +341,15 @@
         }
 
         function attachRow(row) {
-            var sel = row.querySelector('.item-program');
+            var ac = row.querySelector('.mo-program-ac');
             var label = row.querySelector('.item-category-label');
-            var hidden = row.querySelector('.item-category-input');
+            var catHidden = row.querySelector('.item-category-input');
 
-            sel.addEventListener('change', function () {
-                var opt = sel.options[sel.selectedIndex];
-                var cat = opt ? opt.getAttribute('data-category') : '';
-                label.value = categoryLabel(cat);
-                hidden.value = cat || '';
+            initAutoComplete(ac, programItems, {
+                onSelect: function (item) {
+                    label.value = item.meta || '';
+                    catHidden.value = item.category || '';
+                }
             });
 
             row.querySelector('.item-amount').addEventListener('input', recalc);
@@ -251,14 +366,13 @@
             row.className = 'mo-item-row';
             row.setAttribute('data-item-row', '');
 
-            var opts = '<option value="">— Pilih program —</option>';
-            programsData.forEach(function (p) {
-                opts += '<option value="' + p.id + '" data-category="' + p.category + '">' + p.name.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</option>';
-            });
-
             row.innerHTML =
                 '<div class="grow">' +
-                    '<select name="items[' + itemIndex + '][program_id]" class="mo-select item-program" required style="margin-bottom:8px;">' + opts + '</select>' +
+                    '<div class="mo-ac mo-program-ac">' +
+                        '<input type="text" class="mo-input mo-ac-input item-program-search" placeholder="Ketik nama program..." autocomplete="off" style="margin-bottom:8px;">' +
+                        '<input type="hidden" name="items[' + itemIndex + '][program_id]" class="item-program" value="">' +
+                        '<div class="mo-ac-list" hidden></div>' +
+                    '</div>' +
                     '<input type="text" class="item-category-label" value="" placeholder="Kategori program" style="width:100%;border:none;background:transparent;font-size:11px;color:var(--mo-muted);">' +
                     '<input type="hidden" name="items[' + itemIndex + '][program_category]" class="item-category-input" value="">' +
                 '</div>' +
@@ -273,6 +387,92 @@
 
         itemsWrap.querySelectorAll('[data-item-row]').forEach(attachRow);
         recalc();
+
+        /* ---------- Kontak Donatur ---------- */
+        var contactAc = document.getElementById('mo-contact-ac');
+        if (contactAc) {
+            initAutoComplete(contactAc, contactItems, {});
+        }
+
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.mo-form .mo-ac').forEach(function (ac) {
+                if (!ac.contains(e.target)) {
+                    var l = ac.querySelector('.mo-ac-list');
+                    if (l) l.hidden = true;
+                }
+            });
+        });
+
+        /* ---------- Modal kontak baru ---------- */
+        var addContactBtn = document.getElementById('mo-add-contact');
+        var quickForm = document.getElementById('mo-quick-contact-form');
+        var quickError = document.getElementById('mo-quick-contact-error');
+
+        if (addContactBtn) {
+            addContactBtn.addEventListener('click', function () {
+                if (quickError) { quickError.style.display = 'none'; quickError.textContent = ''; }
+                if (quickForm) quickForm.reset();
+                window.MoApp.sheets.open('mo-quick-contact');
+            });
+        }
+
+        if (quickForm) {
+            quickForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var submitBtn = quickForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+
+                fetch('{{ route('contacts.quick') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': window.MoApp.csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: new FormData(quickForm)
+                }).then(function (r) {
+                    return r.json().then(function (data) { return { ok: r.ok, data: data }; });
+                }).then(function (res) {
+                    submitBtn.disabled = false;
+                    if (!res.ok || !res.data || !res.data.success) {
+                        var msg = (res.data && res.data.message) || 'Gagal menyimpan kontak.';
+                        if (res.data && res.data.errors) {
+                            var keys = Object.keys(res.data.errors);
+                            if (keys.length) msg = res.data.errors[keys[0]][0];
+                        }
+                        if (quickError) { quickError.textContent = msg; quickError.style.display = 'flex'; }
+                        return;
+                    }
+                    var c = res.data.contact;
+                    var label = c.name + (c.phone ? ' (' + c.phone + ')' : '');
+                    contactItems.push({ id: c.id, label: label, search: c.name, meta: c.phone || '' });
+                    var ch = document.getElementById('contact_id');
+                    var ci = document.getElementById('contact_search');
+                    if (ch) ch.value = c.id;
+                    if (ci) ci.value = label;
+                    window.MoApp.sheets.close('mo-quick-contact');
+                    showToast('Kontak ' + c.name + ' ditambahkan.');
+                }).catch(function () {
+                    submitBtn.disabled = false;
+                    if (quickError) { quickError.textContent = 'Terjadi kesalahan. Coba lagi.'; quickError.style.display = 'flex'; }
+                });
+            });
+        }
+
+        /* ---------- Validasi program wajib ---------- */
+        var donationForm = document.getElementById('mo-donation-form');
+        if (donationForm) {
+            donationForm.addEventListener('submit', function (e) {
+                var missing = false;
+                itemsWrap.querySelectorAll('[data-item-row]').forEach(function (row) {
+                    if (!row.querySelector('.item-program').value) missing = true;
+                });
+                if (missing) {
+                    e.preventDefault();
+                    showToast('Setiap baris program wajib memilih program.', true);
+                }
+            });
+        }
 
         var proofInput = document.querySelector('[data-proof-input]');
         var proofPreview = document.querySelector('[data-proof-preview]');

@@ -890,6 +890,53 @@
         color: var(--mo-muted);
         margin-top: 5px;
     }
+    .mo-ac { position: relative; }
+    .mo-ac-list {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 4px);
+        background: #fff;
+        border: 1.5px solid var(--mo-border);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(8, 110, 102, 0.18);
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 40;
+        padding: 4px;
+    }
+    .mo-ac-item {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: none;
+        border-radius: 9px;
+        padding: 9px 11px;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .mo-ac-item:hover,
+    .mo-ac-item:active { background: #eefaf8; }
+    .mo-ac-name { font-size: 13px; font-weight: 600; color: var(--mo-text); }
+    .mo-ac-meta { font-size: 11px; color: var(--mo-muted); }
+    .mo-ac-empty { padding: 12px; text-align: center; font-size: 12px; color: var(--mo-muted); }
+    .mo-ac-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        background: transparent;
+        border: none;
+        padding: 0;
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--mo-primary);
+        cursor: pointer;
+    }
     .mo-form-error {
         font-size: 11.5px;
         color: var(--mo-danger);
