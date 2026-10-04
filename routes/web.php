@@ -104,6 +104,7 @@ Route::middleware('auth')->group(function () {
         Route::get('contacts/{contact}/detail', [ContactController::class, 'detail'])->name('contacts.detail');
         Route::get('contacts/{contact}/edit-fields', [ContactController::class, 'editFields'])->name('contacts.edit-fields');
         Route::get('donations/download', [DonationController::class, 'download'])->name('donations.download');
+        Route::get('donations/download-proof', [DonationController::class, 'downloadProof'])->name('donations.download-proof');
         Route::resource('donations', DonationController::class)->except('show');
         Route::get('donations/{donation}/detail', [DonationController::class, 'detail'])->name('donations.detail');
         Route::get('donations/{donation}/edit-fields', [DonationController::class, 'editFields'])->name('donations.edit-fields');

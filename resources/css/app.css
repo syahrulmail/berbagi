@@ -930,6 +930,7 @@
 
     .modal-footer {
         @apply flex justify-end gap-3;
+        flex-wrap: wrap;
         padding: 14px 20px 18px;
         border-top: 1px solid var(--gray-200);
     }

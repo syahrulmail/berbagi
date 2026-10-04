@@ -83,6 +83,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn" data-donation-download-close>Batal</button>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-file-excel"></i> Download XLSX</button>
+                <button type="submit" class="btn btn-outline" formaction="{{ route('donations.download-proof') }}"><i class="fas fa-image"></i> Download BT</button>
             </div>
         </form>
     </div>
