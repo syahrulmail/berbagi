@@ -128,7 +128,7 @@ class DonationProofDownloadTest extends TestCase
 
         $response->assertOk();
         $this->assertSame(
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             $response->headers->get('content-type')
         );
 
@@ -137,35 +137,30 @@ class DonationProofDownloadTest extends TestCase
         $this->assertSame('PK', substr((string) file_get_contents($file), 0, 2));
 
         $contentTypes = $this->zipEntry($file, '[Content_Types].xml');
-        $sheet = $this->zipEntry($file, 'xl/worksheets/sheet1.xml');
-        $drawing = $this->zipEntry($file, 'xl/drawings/drawing1.xml');
-        $drawingRels = $this->zipEntry($file, 'xl/drawings/_rels/drawing1.xml.rels');
-        $sheetRels = $this->zipEntry($file, 'xl/worksheets/_rels/sheet1.xml.rels');
+        $document = $this->zipEntry($file, 'word/document.xml');
+        $documentRels = $this->zipEntry($file, 'word/_rels/document.xml.rels');
 
-        $this->assertStringContainsString('drawing1.xml', $contentTypes);
-        $this->assertStringContainsString('<drawing r:id="rId1"/>', $sheet);
-        $this->assertStringContainsString($note, $sheet);
-        $this->assertStringContainsString('<xdr:pic>', $drawing);
-        $this->assertStringContainsString('../media/image1.png', $drawingRels);
-        $this->assertStringContainsString('../drawings/drawing1.xml', $sheetRels);
+        $this->assertStringContainsString('wordprocessingml.document.main+xml', $contentTypes);
+        $this->assertStringContainsString('image/png', $contentTypes);
+        $this->assertStringContainsString($note, $document);
+        $this->assertStringContainsString('<w:drawing>', $document);
+        $this->assertStringContainsString('<pic:pic>', $document);
+        $this->assertStringContainsString('media/image1.png', $documentRels);
 
-        // Gambar dalam satu baris/sel, catatan di sel bawahnya (A2).
-        $this->assertStringContainsString('<xdr:row>0</xdr:row>', $drawing);
-        $this->assertStringContainsString('<c r="A2"', $sheet);
+        // Catatan font 14 bold (sz 28 = 14pt).
+        $this->assertStringContainsString('<w:b/>', $document);
+        $this->assertStringContainsString('<w:sz w:val="28"/>', $document);
 
-        // Ukuran kertas A4, margin narrow, header/footer 0, fit 1 halaman lebar.
-        $this->assertStringContainsString('<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>', $sheet);
-        $this->assertStringContainsString('<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>', $sheet);
-        $this->assertStringContainsString('left="0.25" right="0.25"', $sheet);
-        $this->assertStringContainsString('top="0.75" bottom="0.75"', $sheet);
-        $this->assertStringContainsString('header="0" footer="0"', $sheet);
+        // Kertas 11cm x 15cm, margin 0,5cm.
+        $this->assertStringContainsString('<w:pgSz w:w="6237" w:h="8505"/>', $document);
+        $this->assertStringContainsString('<w:pgMar w:top="284" w:right="284" w:bottom="284" w:left="284"', $document);
 
         $zip = new \ZipArchive();
         $zip->open($file);
-        $this->assertNotFalse($zip->locateName('xl/media/image1.png'));
+        $this->assertNotFalse($zip->locateName('word/media/image1.png'));
         $zip->close();
 
-        $this->assertStringNotContainsString('storage/donation-proofs', $sheet);
+        $this->assertStringNotContainsString('storage/donation-proofs', $document);
     }
 
     public function test_download_proof_skips_donations_without_proof()
@@ -184,10 +179,10 @@ class DonationProofDownloadTest extends TestCase
         $response = $this->actingAs($admin)->get(route('donations.download-proof', ['branch_ids' => [$branch->id]]));
         $response->assertOk();
 
-        $sheet = $this->zipEntry($response->baseResponse->getFile()->getPathname(), 'xl/worksheets/sheet1.xml');
+        $document = $this->zipEntry($response->baseResponse->getFile()->getPathname(), 'word/document.xml');
 
-        $this->assertStringContainsString($withProofNote, $sheet);
-        $this->assertStringNotContainsString($withoutProofNote, $sheet);
+        $this->assertStringContainsString($withProofNote, $document);
+        $this->assertStringNotContainsString($withoutProofNote, $document);
     }
 
     public function test_download_proof_without_images_is_valid_file()
@@ -206,9 +201,9 @@ class DonationProofDownloadTest extends TestCase
         $this->assertFileExists($file);
         $this->assertSame('PK', substr((string) file_get_contents($file), 0, 2));
 
-        $sheet = $this->zipEntry($file, 'xl/worksheets/sheet1.xml');
-        $this->assertStringContainsString('Tidak ada bukti pembayaran', $sheet);
-        $this->assertStringNotContainsString('<drawing r:id', $sheet);
+        $document = $this->zipEntry($file, 'word/document.xml');
+        $this->assertStringContainsString('Tidak ada bukti pembayaran', $document);
+        $this->assertStringNotContainsString('<w:drawing>', $document);
     }
 
     public function test_agent_download_proof_other_branch_is_forbidden()
@@ -221,5 +216,34 @@ class DonationProofDownloadTest extends TestCase
         $this->actingAs($agent)->get(route('donations.download-proof', [
             'branch_ids' => [$branchB->id],
         ]))->assertForbidden();
+    }
+
+    public function test_each_image_gets_its_own_page_with_page_breaks()
+    {
+        $branch = Branch::create(['code' => 'BR-' . uniqid(), 'name' => 'Cabang Paginasi', 'is_active' => true]);
+        $admin = $this->makeUser('admin');
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->makeDonation(
+                $branch,
+                $agen,
+                $program,
+                $this->makeContact(),
+                $this->putProof(),
+                'Catatan halaman ' . $i . ' ' . uniqid()
+            );
+        }
+
+        $response = $this->actingAs($admin)->get(route('donations.download-proof', ['branch_ids' => [$branch->id]]));
+        $response->assertOk();
+
+        $document = $this->zipEntry($response->baseResponse->getFile()->getPathname(), 'word/document.xml');
+
+        // Lima gambar, satu per halaman -> empat page break.
+        $this->assertSame(5, substr_count($document, '<w:drawing>'));
+        $this->assertSame(4, substr_count($document, '<w:br w:type="page"/>'));
+        $this->assertSame(5, substr_count($document, '<w:sz w:val="28"/>'));
     }
 }

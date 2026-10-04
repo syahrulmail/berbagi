@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Donation;
 use App\Models\Program;
 use App\Models\User;
+use App\Services\DocxWriter;
 use App\Services\XlsxWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -156,8 +157,8 @@ class DonationController extends Controller
     }
 
     /**
-     * Unduh bukti pembayaran donasi sebagai XLSX berisi gambar (2 kolom),
-     * dengan catatan ditampilkan di bawah tiap gambar.
+     * Unduh bukti pembayaran donasi sebagai DOCX: tiap halaman memuat satu
+     * gambar bukti transfer beserta catatannya.
      */
     public function downloadProof(Request $request)
     {
@@ -182,8 +183,8 @@ class DonationController extends Controller
             ->orderBy('donations.id')
             ->get();
 
-        $writer = new XlsxWriter('Bukti Transfer');
-        $cardCount = $this->buildProofSheet($writer, $donations);
+        $writer = new DocxWriter();
+        $cardCount = $this->buildProofDocument($writer, $donations);
 
         $path = tempnam(sys_get_temp_dir(), 'bukti_');
 
@@ -195,31 +196,22 @@ class DonationController extends Controller
 
         ActivityLog::record('donation.download_proof', 'Mengunduh bukti pembayaran donasi (' . $cardCount . ' gambar)');
 
-        $filename = 'bukti-transfer-' . now()->format('Ymd-His') . '.xlsx';
+        $filename = 'bukti-transfer-' . now()->format('Ymd-His') . '.docx';
 
         return response()->download($path, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ])->deleteFileAfterSend(true);
     }
 
     /**
-     * Susun lembar bukti pembayaran: gambar dalam 2 kolom, catatan di bawah tiap gambar.
+     * Susun dokumen bukti pembayaran: satu gambar + catatan per halaman.
      *
      * @param  \Illuminate\Support\Collection<int, Donation>  $donations
      * @return int  Jumlah gambar yang berhasil disematkan.
      */
-    protected function buildProofSheet(XlsxWriter $writer, $donations): int
+    protected function buildProofDocument(DocxWriter $writer, $donations): int
     {
-        $columnWidth = 42;
-        $imageCellPx = ($columnWidth * 7) + 5;
-        $maxWidth = $imageCellPx - 4;
-        $maxHeight = 360;
-
-        $writer->setColumnWidths([1 => $columnWidth, 2 => 3, 3 => $columnWidth, 4 => 3]);
-        $writer->setPageSetup(9, 'portrait', 1, 0);
-        $writer->setPageMargins(0.25, 0.25, 0.75, 0.75, 0, 0);
-
-        $cards = [];
+        $count = 0;
 
         foreach ($donations as $donation) {
             $path = Storage::disk('public')->path($donation->payment_proof);
@@ -234,77 +226,15 @@ class DonationController extends Controller
                 continue;
             }
 
-            [$width, $height] = $this->fitImageBox((int) $info[0], (int) $info[1], $maxWidth, $maxHeight);
-
-            $cards[] = [
-                'path' => $path,
-                'width' => $width,
-                'height' => $height,
-                'note' => $donation->note ?: '-',
-            ];
+            $writer->addPage($path, $donation->note ?: '-');
+            $count++;
         }
 
-        if (empty($cards)) {
-            $writer->addRow([
-                ['value' => 'Tidak ada bukti pembayaran pada filter ini.', 'style' => XlsxWriter::STYLE_WRAP],
-            ]);
-
-            return 0;
+        if ($count === 0) {
+            $writer->addPage(null, 'Tidak ada bukti pembayaran pada filter ini.');
         }
 
-        $total = count($cards);
-
-        for ($i = 0; $i < $total; $i += 2) {
-            $left = $cards[$i];
-            $right = $cards[$i + 1] ?? null;
-
-            $startRowNumber = $writer->rowCount() + 1;
-
-            // Baris sel gambar (satu sel per kolom), beri jarak agar gambar
-            // tidak menutupi sel catatan tepat di bawahnya saat dicetak.
-            $writer->addRow(['', '', '', '']);
-            $imageRowPx = max($left['height'], $right['height'] ?? 0) + 8;
-            $writer->setRowHeight($startRowNumber, $imageRowPx * 0.75);
-
-            $writer->addImage($left['path'], 0, $startRowNumber - 1, $left['width'], $left['height']);
-
-            if ($right) {
-                $writer->addImage($right['path'], 2, $startRowNumber - 1, $right['width'], $right['height']);
-            }
-
-            // Baris sel catatan, tepat di bawah sel gambar.
-            $noteRight = $right ? ['value' => $right['note'], 'style' => XlsxWriter::STYLE_WRAP] : '';
-
-            $writer->addRow([
-                ['value' => $left['note'], 'style' => XlsxWriter::STYLE_WRAP],
-                '',
-                $noteRight,
-            ]);
-
-            // Baris pemisah antar baris kartu.
-            $writer->addRow(['', '', '', '']);
-        }
-
-        return $total;
-    }
-
-    /**
-     * Hitung ukuran gambar agar pas di dalam kotak tanpa mengubah rasio.
-     *
-     * @return array{0: int, 1: int}
-     */
-    protected function fitImageBox(int $width, int $height, int $maxWidth, int $maxHeight): array
-    {
-        if ($width <= 0 || $height <= 0) {
-            return [$maxWidth, $maxHeight];
-        }
-
-        $ratio = min($maxWidth / $width, $maxHeight / $height);
-
-        return [
-            max(1, (int) round($width * $ratio)),
-            max(1, (int) round($height * $ratio)),
-        ];
+        return $count;
     }
 
     /**
