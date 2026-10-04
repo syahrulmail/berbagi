@@ -67,9 +67,6 @@
                     <div class="mo-row-sub">
                         {{ $d->branch->name ?? '-' }} · {{ $d->agen->name ?? '-' }}
                     </div>
-                    <div class="mo-row-sub" style="margin-top:4px;">
-                        <span class="mo-badge teal">{{ $d->payment_method_label ?? $d->payment_method }}</span>
-                    </div>
                     @if($d->note)
                         <div class="mo-row-note"><i class="fas fa-note-sticky"></i> {{ $d->note }}</div>
                     @endif
