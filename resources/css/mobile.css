@@ -424,6 +424,48 @@
     .mo-row-donation .amount { font-weight: 700; color: var(--mo-primary); font-variant-numeric: tabular-nums; }
     .mo-row-donation .date { color: var(--mo-muted); }
     .mo-row-donation .empty { font-style: italic; }
+    .mo-contact-donation {
+        border: 1px solid #e2ece9;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        background: #fbfdfc;
+    }
+    .mo-contact-donation-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .mo-contact-donation-top .cd-date {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--mo-text);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .mo-contact-donation-top .cd-cat {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--mo-primary);
+        background: #eefaf8;
+        border-radius: 8px;
+        padding: 2px 7px;
+        white-space: nowrap;
+    }
+    .mo-contact-donation-top .cd-amount {
+        margin-left: auto;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--mo-primary);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .mo-contact-donation .cd-program {
+        margin-top: 4px;
+        font-size: 11.5px;
+        color: var(--mo-muted);
+        word-break: break-word;
+    }
     .mo-row-end {
         text-align: right;
         flex-shrink: 0;
@@ -490,6 +532,20 @@
         background: #fff;
         color: var(--mo-primary);
         box-shadow: var(--mo-shadow-sm);
+    }
+    .mo-segmented--scroll {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .mo-segmented--scroll::-webkit-scrollbar { display: none; }
+    .mo-segmented--scroll .mo-segmented-item {
+        flex: 0 0 auto;
+        min-width: 78px;
+        padding-left: 14px;
+        padding-right: 14px;
     }
 
     /* ============ SEARCH ============ */

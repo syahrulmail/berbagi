@@ -110,6 +110,18 @@
         var statusCls = { prospect: 'gray', contacted: 'blue', donated: 'green', churned: 'red' }[data.status] || 'gray';
         var waHref = data.phone ? 'https://wa.me/' + data.phone.replace(/[^0-9]/g, '') : '#';
 
+        var donationRows = '';
+        (data.donations || []).forEach(function (d) {
+            donationRows += '<div class="mo-contact-donation">' +
+                '<div class="mo-contact-donation-top">' +
+                    '<span class="cd-date">' + esc(d.date || '-') + '</span>' +
+                    '<span class="cd-cat">' + esc(d.category || '-') + '</span>' +
+                    '<span class="cd-amount">' + esc(d.amount_formatted || '') + '</span>' +
+                '</div>' +
+                '<div class="cd-program">' + esc(d.program_name || '-') + '</div>' +
+            '</div>';
+        });
+
         body.innerHTML =
             '<div style="display:flex;align-items:center;gap:13px;margin-bottom:16px;">' +
                 '<div class="mo-avatar">' + esc((data.name || '?').charAt(0).toUpperCase()) + '</div>' +
@@ -126,6 +138,7 @@
                 '<div class="mo-detail-item"><div class="mo-detail-label">Total Donasi</div><div class="mo-detail-value">' + esc(data.donation_total_formatted || '-') + '</div></div>' +
             '</div>' +
             ((data.notes) ? '<div class="mo-detail-item full" style="margin-top:10px;"><div class="mo-detail-label">Catatan</div><div class="mo-detail-value">' + esc(data.notes) + '</div></div>' : '') +
+            ((donationRows) ? '<div class="mo-section-title">Rincian Donasi (' + data.donations.length + ')</div>' + donationRows : '') +
             ((data.phone) ? '<a href="' + waHref + '" target="_blank" rel="noopener" style="display:block;margin-top:14px;text-align:center;background:#25d366;color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat WhatsApp</a>' : '') +
             ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:10px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Kontak</a>' : '');
     }
@@ -309,9 +322,14 @@
             var seg = e.target.closest('.mo-segmented-item');
             if (!seg) return;
             var group = seg.closest('.mo-segmented');
-            group.querySelectorAll('.mo-segmented-item').forEach(function (i) { i.classList.remove('active'); });
+            if (group) {
+                group.querySelectorAll('.mo-segmented-item').forEach(function (i) { i.classList.remove('active'); });
+            }
             seg.classList.add('active');
-            var form = group.closest('form');
+            if (seg.tagName === 'BUTTON' && (seg.getAttribute('type') || 'submit') === 'submit') {
+                return;
+            }
+            var form = group ? group.closest('form') : null;
             if (form) form.submit();
         });
 

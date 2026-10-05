@@ -252,7 +252,13 @@ class MobileAppController extends Controller
         })
         ->when($request->status, fn ($q, $status) => $q->where('status', $status));
 
-        $contacts = $query->orderByDesc('created_at')->limit(80)->get();
+        if ($request->get('sort') === 'donation') {
+            $query->orderByDesc('donation_total');
+        } else {
+            $query->orderByDesc('created_at');
+        }
+
+        $contacts = $query->limit(80)->get();
 
         $contacts->each(function ($c) {
             $c->donation_count = (int) $c->donation_count;
@@ -268,6 +274,7 @@ class MobileAppController extends Controller
             'donated' => (clone $this->scopeContacts(Contact::query()))->where('status', 'donated')->count(),
             'prospect' => (clone $this->scopeContacts(Contact::query()))->where('status', 'prospect')->count(),
             'contacted' => (clone $this->scopeContacts(Contact::query()))->where('status', 'contacted')->count(),
+            'churned' => (clone $this->scopeContacts(Contact::query()))->where('status', 'churned')->count(),
         ];
 
         return view('mobile.contacts', compact('contacts', 'statusCounts'));
@@ -408,6 +415,38 @@ class MobileAppController extends Controller
             return response()->json(['error' => 'Anda tidak memiliki izin untuk melihat kontak ini.'], 403);
         }
 
+        $donationEntries = [];
+        $donations = $contact->donations()
+            ->with(['items.program', 'program'])
+            ->orderByDesc('donation_date')
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get();
+
+        foreach ($donations as $donation) {
+            $date = $donation->donation_date ? $donation->donation_date->format('d/m/y') : '-';
+
+            if ($donation->items->isNotEmpty()) {
+                foreach ($donation->items as $item) {
+                    $donationEntries[] = [
+                        'date' => $date,
+                        'category' => $item->program ? $item->program->category_label : ($item->program_category ?: '-'),
+                        'amount_formatted' => 'Rp ' . number_format((float) $item->amount, 0, ',', '.'),
+                        'program_name' => $item->program->name ?? '-',
+                    ];
+                }
+
+                continue;
+            }
+
+            $donationEntries[] = [
+                'date' => $date,
+                'category' => $donation->program ? $donation->program->category_label : '-',
+                'amount_formatted' => 'Rp ' . number_format((float) $donation->amount, 0, ',', '.'),
+                'program_name' => $donation->program->name ?? '-',
+            ];
+        }
+
         return response()->json([
             'id' => $contact->id,
             'name' => $contact->name,
@@ -419,6 +458,7 @@ class MobileAppController extends Controller
             'notes' => $contact->notes,
             'donation_count' => $contact->donations()->count(),
             'donation_total_formatted' => 'Rp ' . number_format((float) $contact->donations()->sum('amount'), 0, ',', '.'),
+            'donations' => $donationEntries,
             'can_edit' => true,
             'edit_url' => route('mo.contact.edit', $contact->id),
         ]);

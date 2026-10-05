@@ -259,6 +259,95 @@ class MobileModulesTest extends TestCase
         $response->assertDontSee('Simpan Perubahan');
     }
 
+    public function test_contact_list_can_sort_by_donation_total(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $small = Contact::create([
+            'name' => 'Kontak Donasi Kecil ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+        $large = Contact::create([
+            'name' => 'Kontak Donasi Besar ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        foreach ([[$small, 5000], [$large, 120000]] as [$contact, $amount]) {
+            Donation::create([
+                'branch_id' => $branch->id,
+                'agen_id' => $agen->id,
+                'program_id' => $program->id,
+                'contact_id' => $contact->id,
+                'amount' => $amount,
+                'donation_date' => now()->format('Y-m-d'),
+                'payment_method' => 'transfer',
+                'created_by' => $agen->id,
+            ]);
+        }
+
+        $response = $this->actingAs($agen)->get(route('mo.contacts', ['sort' => 'donation']));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([$large->name, $small->name]);
+    }
+
+    public function test_contact_filters_show_all_status_labels_and_horizontal_scroll(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.contacts'));
+
+        $response->assertOk();
+        $response->assertSee('mo-segmented--scroll', false);
+        $response->assertSee('value="donation"', false);
+        foreach (['Semua', 'Donatur', 'Simpan', 'Prospek', 'Stop'] as $label) {
+            $response->assertSee($label);
+        }
+    }
+
+    public function test_contact_detail_json_lists_donation_history(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $contact = Contact::create([
+            'name' => 'Kontak Riwayat ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        Donation::create([
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+            'program_id' => $program->id,
+            'contact_id' => $contact->id,
+            'amount' => 30000,
+            'donation_date' => '2026-03-07',
+            'payment_method' => 'transfer',
+            'created_by' => $agen->id,
+        ]);
+
+        $response = $this->actingAs($agen)->getJson(route('mo.api.contact-detail', $contact->id));
+
+        $response->assertOk()
+            ->assertJsonPath('donations.0.date', '07/03/26')
+            ->assertJsonPath('donations.0.category', 'Quran')
+            ->assertJsonPath('donations.0.amount_formatted', 'Rp 30.000')
+            ->assertJsonPath('donations.0.program_name', $program->name);
+    }
+
     protected function makeDonation(Branch $branch, User $agen, User $contactOwner, Program $program, string $name): void
     {
         $contact = Contact::create([

@@ -12,7 +12,7 @@
         <a href="{{ route('mo.contact.import-form') }}" class="mo-icon-btn" aria-label="Impor Kontak">
             <i class="fas fa-file-import"></i>
         </a>
-        <a href="{{ route('contacts.download', request()->only('search', 'status')) }}" class="mo-icon-btn" aria-label="Unduh Kontak">
+        <a href="{{ route('contacts.download', request()->only('search', 'status', 'sort')) }}" class="mo-icon-btn" aria-label="Unduh Kontak">
             <i class="fas fa-download"></i>
         </a>
         <a href="{{ route('mo.more') }}" class="mo-icon-btn" aria-label="Menu">
@@ -24,6 +24,8 @@
 <div class="mo-content" style="padding-top:0;">
     @php
         $hasStatusFilter = (bool) request('status');
+        $hasSortFilter = in_array(request('sort'), ['donation'], true);
+        $hasActiveFilter = $hasStatusFilter || $hasSortFilter;
     @endphp
     <div class="mo-sticky-filter">
         <form method="GET" action="{{ route('mo.contacts') }}" id="mo-kontak-form">
@@ -32,25 +34,42 @@
                     <i class="fas fa-magnifying-glass"></i>
                     <input type="search" name="search" placeholder="Cari nama / nomor WA..." value="{{ request('search') }}">
                 </div>
-                <button type="button" class="mo-filter-toggle {{ $hasStatusFilter ? 'has-filter' : '' }}" id="mo-contact-filter-toggle" data-filter-toggle="mo-contact-filters" aria-label="Filter status" aria-expanded="false">
+                <button type="button" class="mo-filter-toggle {{ $hasActiveFilter ? 'has-filter' : '' }}" id="mo-contact-filter-toggle" data-filter-toggle="mo-contact-filters" aria-label="Filter status" aria-expanded="false">
                     <i class="fas fa-sliders"></i>
                 </button>
             </div>
 
             <div id="mo-contact-filters" hidden>
-                <div class="mo-segmented" style="margin-top:10px;margin-bottom:6px;">
+                <input type="hidden" name="status" value="{{ request('status') }}">
+                <input type="hidden" name="sort" value="{{ request('sort') }}">
+                <div class="mo-segmented mo-segmented--scroll" style="margin-top:10px;margin-bottom:6px;">
                     <button type="submit" name="status" value="" class="mo-segmented-item {{ !request('status') ? 'active' : '' }}">
                         Semua ({{ $statusCounts['all'] }})
                     </button>
                     <button type="submit" name="status" value="donated" class="mo-segmented-item {{ request('status') === 'donated' ? 'active' : '' }}">
                         Donatur ({{ $statusCounts['donated'] }})
                     </button>
+                    <button type="submit" name="status" value="contacted" class="mo-segmented-item {{ request('status') === 'contacted' ? 'active' : '' }}">
+                        Simpan ({{ $statusCounts['contacted'] }})
+                    </button>
                     <button type="submit" name="status" value="prospect" class="mo-segmented-item {{ request('status') === 'prospect' ? 'active' : '' }}">
                         Prospek ({{ $statusCounts['prospect'] }})
                     </button>
+                    <button type="submit" name="status" value="churned" class="mo-segmented-item {{ request('status') === 'churned' ? 'active' : '' }}">
+                        Stop ({{ $statusCounts['churned'] }})
+                    </button>
                 </div>
 
-                @if(request('search') || $hasStatusFilter)
+                <div class="mo-segmented" style="margin-bottom:6px;">
+                    <button type="submit" name="sort" value="" class="mo-segmented-item {{ !$hasSortFilter ? 'active' : '' }}">
+                        <i class="fas fa-clock"></i> Terbaru
+                    </button>
+                    <button type="submit" name="sort" value="donation" class="mo-segmented-item {{ $hasSortFilter ? 'active' : '' }}">
+                        <i class="fas fa-arrow-down-wide-short"></i> Donasi Terbesar
+                    </button>
+                </div>
+
+                @if(request('search') || $hasActiveFilter)
                     <div style="text-align:right;">
                         <a href="{{ route('mo.contacts') }}" style="font-size:12px;color:var(--mo-muted);text-decoration:none;">
                             <i class="fas fa-rotate-left"></i> Reset filter
