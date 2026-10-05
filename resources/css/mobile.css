@@ -243,6 +243,9 @@
     .mo-collapse-body {
         margin-top: 12px;
     }
+    .mo-collapse-body[hidden] {
+        display: none;
+    }
     .mo-card--list {
         padding-bottom: 6px;
     }
