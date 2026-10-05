@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\CampaignTag;
 use App\Models\Contact;
 use App\Models\Donation;
+use App\Models\DonationItem;
 use App\Models\Program;
 use App\Models\User;
 use App\Models\WaFollowup;
@@ -346,6 +347,138 @@ class MobileModulesTest extends TestCase
             ->assertJsonPath('donations.0.category', 'Quran')
             ->assertJsonPath('donations.0.amount_formatted', 'Rp 30.000')
             ->assertJsonPath('donations.0.program_name', $program->name);
+    }
+
+    protected function makeNamedProgram(string $name): Program
+    {
+        return Program::create([
+            'name' => $name,
+            'slug' => 'program-' . uniqid(),
+            'program_category' => 'WAP',
+            'is_active' => true,
+        ]);
+    }
+
+    protected function makeProgramDonation(Branch $branch, User $agen, Program $program, float $amount, string $date): Donation
+    {
+        $contact = Contact::create([
+            'name' => 'Kontak Program ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        $donation = Donation::create([
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+            'program_id' => $program->id,
+            'contact_id' => $contact->id,
+            'amount' => $amount,
+            'donation_date' => $date,
+            'payment_method' => 'transfer',
+            'created_by' => $agen->id,
+        ]);
+
+        DonationItem::create([
+            'donation_id' => $donation->id,
+            'program_id' => $program->id,
+            'program_category' => 'WAP',
+            'amount' => $amount,
+        ]);
+
+        return $donation;
+    }
+
+    public function test_program_list_hides_progress_and_shows_donation_count(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branch, $agen, $program, 50000, '2026-01-05');
+        $this->makeProgramDonation($branch, $agen, $program, 30000, '2026-02-10');
+
+        $response = $this->actingAs($agen)->get(route('mo.programs'));
+
+        $response->assertOk();
+        $response->assertDontSee('mo-progress-track', false);
+        $response->assertDontSee('mo-progress-fill', false);
+        $response->assertDontSee('Target Rp');
+        $response->assertSee('Rp 80.000');
+        $response->assertSee('dari 2 donasi');
+    }
+
+    public function test_program_donation_total_is_scoped_by_role(): void
+    {
+        $branch = $this->makeBranch();
+        $agenA = $this->makeUser('agen', $branch);
+        $agenB = $this->makeUser('agen', $branch);
+        $program = $this->makeNamedProgram('Program Scope ' . uniqid());
+
+        $this->makeProgramDonation($branch, $agenA, $program, 40000, '2026-02-01');
+        $this->makeProgramDonation($branch, $agenB, $program, 90000, '2026-02-02');
+
+        $response = $this->actingAs($agenA)->get(route('mo.programs'));
+
+        $response->assertOk();
+        $response->assertSee('Rp 40.000');
+        $response->assertSee('dari 1 donasi');
+        $response->assertDontSee('Rp 130.000');
+    }
+
+    public function test_program_date_range_filters_donation_period(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeNamedProgram('Program Periode ' . uniqid());
+
+        $this->makeProgramDonation($branch, $agen, $program, 25000, '2026-01-15');
+        $this->makeProgramDonation($branch, $agen, $program, 70000, '2026-02-20');
+
+        $response = $this->actingAs($agen)->get(route('mo.programs', [
+            'from' => '2026-02-01',
+            'to' => '2026-02-28',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Rp 70.000');
+        $response->assertSee('dari 1 donasi');
+        $response->assertDontSee('Rp 95.000');
+    }
+
+    public function test_program_list_can_sort_by_donation_total(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $small = $this->makeNamedProgram('Program Kecil ' . uniqid());
+        $large = $this->makeNamedProgram('Program Besar ' . uniqid());
+
+        $this->makeProgramDonation($branch, $agen, $small, 10000, '2026-02-01');
+        $this->makeProgramDonation($branch, $agen, $large, 200000, '2026-02-02');
+
+        $response = $this->actingAs($agen)->get(route('mo.programs', ['sort' => 'donation']));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([$large->name, $small->name]);
+    }
+
+    public function test_program_list_can_search_and_has_sticky_hidden_filters(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $target = $this->makeNamedProgram('PencarianKhusus ' . uniqid());
+        $this->makeNamedProgram('Program Lain ' . uniqid());
+
+        $response = $this->actingAs($agen)->get(route('mo.programs', ['search' => 'PencarianKhusus']));
+
+        $response->assertOk();
+        $response->assertSee($target->name);
+        $response->assertSee('mo-sticky-filter', false);
+        $response->assertSee('data-filter-toggle="mo-program-filters"', false);
+        $response->assertSee('id="mo-program-filters" hidden', false);
     }
 
     protected function makeDonation(Branch $branch, User $agen, User $contactOwner, Program $program, string $name): void

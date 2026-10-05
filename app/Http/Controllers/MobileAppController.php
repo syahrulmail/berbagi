@@ -16,14 +16,15 @@ class MobileAppController extends Controller
     /**
      * Scope data donasi berdasarkan peran user.
      */
-    protected function scopeDonations($query)
+    protected function scopeDonations($query, ?string $table = null)
     {
         $user = auth()->user();
+        $column = fn (string $name) => $table ? "{$table}.{$name}" : $name;
 
         if ($user->isAgen()) {
-            $query->where('agen_id', $user->id);
+            $query->where($column('agen_id'), $user->id);
         } elseif ($user->isSupervisor() && $user->branch_id) {
-            $query->where('branch_id', $user->branch_id);
+            $query->where($column('branch_id'), $user->branch_id);
         }
 
         return $query;
@@ -283,21 +284,39 @@ class MobileAppController extends Controller
     /**
      * Daftar program mobile.
      */
-    public function programs()
+    public function programs(Request $request)
     {
         $programs = Program::where('is_active', true)
-            ->withSum('donationItems as total_collected', 'amount')
             ->with('campaignTags')
-            ->orderByDesc('created_at')
+            ->when($request->search, fn ($q, $search) => $q->where('name', 'like', '%' . trim($search) . '%'))
             ->get();
 
-        $programs->each(function ($p) {
-            $p->collected = (float) $p->total_collected;
-            $p->goal = (float) $p->goal_amount;
-            $p->progress = $p->goal > 0 ? round(($p->collected / $p->goal) * 100, 1) : 0;
+        $aggregates = \Illuminate\Support\Facades\DB::table('donation_items')
+            ->join('donations', 'donations.id', '=', 'donation_items.donation_id')
+            ->whereIn('donation_items.program_id', $programs->pluck('id'))
+            ->when($request->from, fn ($q, $from) => $q->whereDate('donations.donation_date', '>=', $from))
+            ->when($request->to, fn ($q, $to) => $q->whereDate('donations.donation_date', '<=', $to));
+
+        $this->scopeDonations($aggregates, 'donations');
+
+        $aggregates = $aggregates
+            ->groupBy('donation_items.program_id')
+            ->selectRaw('donation_items.program_id as program_id, COALESCE(SUM(donation_items.amount), 0) as total_collected, COUNT(DISTINCT donation_items.donation_id) as donation_count')
+            ->get()
+            ->keyBy('program_id');
+
+        $programs->each(function ($p) use ($aggregates) {
+            $row = $aggregates->get($p->id);
+            $p->collected = $row ? (float) $row->total_collected : 0.0;
+            $p->donation_count = $row ? (int) $row->donation_count : 0;
             $p->collected_formatted = 'Rp ' . number_format($p->collected, 0, ',', '.');
-            $p->goal_formatted = $p->goal > 0 ? 'Rp ' . number_format($p->goal, 0, ',', '.') : '';
         });
+
+        if ($request->get('sort') === 'donation') {
+            $programs = $programs->sortByDesc('collected')->values();
+        } else {
+            $programs = $programs->sortByDesc('created_at')->values();
+        }
 
         return view('mobile.programs', compact('programs'));
     }
