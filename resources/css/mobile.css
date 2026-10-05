@@ -389,13 +389,9 @@
         font-weight: 700;
         font-variant-numeric: tabular-nums;
     }
-    .mo-trend-h-row.is-weekend .mo-trend-h-label,
-    .mo-trend-h-row.is-weekend .mo-trend-h-value {
+    .mo-trend-h-row.is-weekend .mo-trend-h-label {
         color: var(--mo-danger);
         font-weight: 700;
-    }
-    .mo-trend-h-row.is-weekend .mo-trend-h-bar {
-        background: linear-gradient(90deg, #f08a8a, var(--mo-danger));
     }
 
     /* ============ LIST ROW ============ */
