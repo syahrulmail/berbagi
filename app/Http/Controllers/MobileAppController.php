@@ -246,9 +246,13 @@ class MobileAppController extends Controller
 
         $query->when($request->search, function ($q, $search) {
             $search = trim($search);
-            return $q->where(function ($inner) use ($search) {
-                $inner->where('name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+            $digits = preg_replace('/[^0-9]/', '', $search);
+
+            return $q->where(function ($inner) use ($search, $digits) {
+                $inner->where('name', 'like', "%{$search}%");
+                if ($digits !== '') {
+                    $inner->orWhere('phone', 'like', "%{$digits}%");
+                }
             });
         })
         ->when($request->status, fn ($q, $status) => $q->where('status', $status));

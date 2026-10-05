@@ -246,6 +246,26 @@ class MobileModulesTest extends TestCase
         $response->assertSee('id="mo-contact-filters" hidden', false);
     }
 
+    public function test_contact_search_ignores_phone_separators(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $contact = Contact::create([
+            'name' => 'Kontak WA ' . uniqid(),
+            'phone' => '628123456789',
+            'status' => 'prospect',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        $response = $this->actingAs($agen)->get(route('mo.contacts', ['search' => '+62 812-3456-789']));
+
+        $response->assertOk();
+        $response->assertSee($contact->name);
+        $response->assertSee('628123456789');
+    }
+
     public function test_contact_form_footer_is_not_sticky_and_uses_short_save_label(): void
     {
         $branch = $this->makeBranch();
