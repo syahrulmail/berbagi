@@ -176,7 +176,7 @@ class MobileAppController extends Controller
             ->with(['branch', 'agen', 'contact', 'items.program'])
             ->orderByDesc('donation_date')
             ->orderByDesc('id')
-            ->limit(6)
+            ->limit(10)
             ->get();
 
         $recentDonations->each(function ($d) {

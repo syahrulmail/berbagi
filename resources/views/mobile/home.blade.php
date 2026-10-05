@@ -67,49 +67,64 @@
 
     {{-- Tren bulan ini --}}
     <div class="mo-card">
-        <div class="mo-card-head">
+        <div class="mo-card-head mo-card-head--collapse">
             <h2 class="mo-card-title"><i class="fas fa-chart-column"></i> Tren Bulan ini</h2>
-            <a href="{{ route('mo.donations') }}" class="mo-card-link">Lihat Semua</a>
+            <div class="mo-card-head-actions">
+                <a href="{{ route('mo.donations') }}" class="mo-card-link">Lihat Semua</a>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-trend-body" aria-expanded="false" aria-label="Tampilkan tren">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
         </div>
-        <div class="mo-trend-h">
-            @foreach($trend as $t)
-                <div class="mo-trend-h-row {{ $t['is_weekend'] ? 'is-weekend' : '' }}">
-                    <div class="mo-trend-h-label">{{ $t['label'] }}</div>
-                    <div class="mo-trend-h-track">
-                        <div class="mo-trend-h-bar"
-                             style="width: {{ $t['value'] > 0 ? max(4, round(($t['value'] / $trendMax) * 100)) : 0 }}%"
-                             title="Rp {{ number_format($t['value'], 0, ',', '.') }}"></div>
+        <div id="mo-trend-body" class="mo-collapse-body" hidden>
+            <div class="mo-trend-h">
+                @foreach($trend as $t)
+                    <div class="mo-trend-h-row {{ $t['is_weekend'] ? 'is-weekend' : '' }}">
+                        <div class="mo-trend-h-label">{{ $t['label'] }}</div>
+                        <div class="mo-trend-h-track">
+                            <div class="mo-trend-h-bar"
+                                 style="width: {{ $t['value'] > 0 ? max(4, round(($t['value'] / $trendMax) * 100)) : 0 }}%"
+                                 title="Rp {{ number_format($t['value'], 0, ',', '.') }}"></div>
+                        </div>
+                        <div class="mo-trend-h-value">{{ $t['value'] > 0 ? number_format($t['value'], 0, ',', '.') : '-' }}</div>
                     </div>
-                    <div class="mo-trend-h-value">{{ $t['value'] > 0 ? number_format($t['value'], 0, ',', '.') : '-' }}</div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
     </div>
 
     {{-- Donasi terbaru --}}
-    <div class="mo-card-head" style="margin:4px 2px 10px;">
-        <h2 class="mo-card-title"><i class="fas fa-clock-rotate-left"></i> Donasi Terbaru</h2>
-        <a href="{{ route('mo.donations') }}" class="mo-card-link">Semua</a>
+    <div class="mo-card mo-card--list">
+        <div class="mo-card-head mo-card-head--collapse">
+            <h2 class="mo-card-title"><i class="fas fa-clock-rotate-left"></i> Donasi Terbaru</h2>
+            <div class="mo-card-head-actions">
+                <a href="{{ route('mo.donations') }}" class="mo-card-link">Semua</a>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-recent-body" aria-expanded="false" aria-label="Tampilkan donasi terbaru">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mo-recent-body" class="mo-collapse-body mo-list" hidden>
+            @forelse($recentDonations as $d)
+                <div class="mo-row" data-donation-detail="{{ $d->id }}">
+                    <div class="mo-row-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+                    <div class="mo-row-body">
+                        <div class="mo-row-title">{{ $d->contact->name ?? ($d->donor_info ?: 'Donatur') }}</div>
+                        <div class="mo-row-sub">{{ $d->program_label }}</div>
+                    </div>
+                    <div class="mo-row-end">
+                        <div class="amount">{{ $d->amount_formatted }}</div>
+                        <div class="date">{{ $d->date_formatted }}</div>
+                    </div>
+                </div>
+            @empty
+                <div class="mo-empty">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                    <p>Belum ada donasi tercatat.</p>
+                </div>
+            @endforelse
+        </div>
     </div>
-
-    @forelse($recentDonations as $d)
-        <div class="mo-row" data-donation-detail="{{ $d->id }}">
-            <div class="mo-row-icon"><i class="fas fa-hand-holding-dollar"></i></div>
-            <div class="mo-row-body">
-                <div class="mo-row-title">{{ $d->contact->name ?? ($d->donor_info ?: 'Donatur') }}</div>
-                <div class="mo-row-sub">{{ $d->program_label }}</div>
-            </div>
-            <div class="mo-row-end">
-                <div class="amount">{{ $d->amount_formatted }}</div>
-                <div class="date">{{ $d->date_formatted }}</div>
-            </div>
-        </div>
-    @empty
-        <div class="mo-card mo-empty" style="box-shadow:none;background:transparent;">
-            <i class="fas fa-hand-holding-dollar"></i>
-            <p>Belum ada donasi tercatat.</p>
-        </div>
-    @endforelse
 </div>
 
 <a href="{{ route('mo.donations') }}" class="mo-fab" title="Catat Donasi" data-href="{{ route('mo.donation.create') }}" aria-label="Catat Donasi">

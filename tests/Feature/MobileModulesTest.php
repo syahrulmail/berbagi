@@ -399,6 +399,27 @@ class MobileModulesTest extends TestCase
         }
     }
 
+    public function test_dashboard_cards_are_collapsible_and_recent_shows_ten(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        for ($i = 0; $i < 12; $i++) {
+            $this->makeProgramDonation($branch, $agen, $program, 1000, now()->toDateString());
+        }
+
+        $response = $this->actingAs($agen)->get(route('mo.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('mo-card--list', false);
+        $response->assertSee('data-filter-toggle="mo-trend-body"', false);
+        $response->assertSee('data-filter-toggle="mo-recent-body"', false);
+        $response->assertSee('id="mo-trend-body" class="mo-collapse-body" hidden', false);
+        $response->assertSee('id="mo-recent-body" class="mo-collapse-body mo-list" hidden', false);
+        $this->assertSame(10, substr_count($response->getContent(), 'data-donation-detail'));
+    }
+
     protected function makeNamedProgram(string $name): Program
     {
         return Program::create([

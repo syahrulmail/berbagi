@@ -214,6 +214,51 @@
         border-radius: 999px;
         text-decoration: none;
     }
+    .mo-card-head--collapse {
+        margin-bottom: 0;
+    }
+    .mo-card-head-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .mo-collapse-btn {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 9px;
+        background: #eefaf8;
+        color: var(--mo-primary);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .mo-collapse-chevron {
+        transition: transform 0.25s ease;
+    }
+    .mo-collapse-btn.open .mo-collapse-chevron {
+        transform: rotate(180deg);
+    }
+    .mo-collapse-body {
+        margin-top: 12px;
+    }
+    .mo-card--list {
+        padding-bottom: 6px;
+    }
+    .mo-card--list .mo-list {
+        gap: 0;
+    }
+    .mo-card--list .mo-row {
+        box-shadow: none;
+        background: transparent;
+        border-radius: 0;
+        padding: 11px 0;
+        border-bottom: 1px solid #eef2f1;
+    }
+    .mo-card--list .mo-row:last-child {
+        border-bottom: none;
+    }
 
     /* ============ HERO STAT ============ */
     .mo-hero {
