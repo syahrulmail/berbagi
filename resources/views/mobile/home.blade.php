@@ -20,7 +20,7 @@
     {{-- Hero ringkasan --}}
     <div class="mo-hero">
         <div class="mo-hero-label">Total Donasi Tercatat</div>
-        <div class="mo-hero-amount">Rp {{ number_format((int) $totalRecorded, 0, ',', '.') }}</div>
+        <div class="mo-hero-amount mo-hero-amount--sm">Rp {{ number_format((int) $totalRecorded, 0, ',', '.') }}</div>
         <div class="mo-hero-sub">{{ number_format($totalTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($totalDonors, 0, ',', '.') }} Donatur (seluruh data tercatat)</div>
 
         <div class="mo-hero-divider"></div>

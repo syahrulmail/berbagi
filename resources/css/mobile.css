@@ -248,6 +248,9 @@
         margin: 4px 0 2px;
         font-variant-numeric: tabular-nums;
     }
+    .mo-hero-amount--sm {
+        font-size: 21px;
+    }
     .mo-hero-sub {
         font-size: 12px;
         opacity: 0.9;
@@ -374,7 +377,7 @@
     .mo-trend-h-bar {
         height: 100%;
         border-radius: 99px;
-        background: linear-gradient(90deg, var(--mo-accent), var(--mo-primary));
+        background: var(--mo-primary);
         transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .mo-trend-h-value {
@@ -382,7 +385,8 @@
         width: 54px;
         text-align: right;
         font-size: 10.5px;
-        color: var(--mo-muted);
+        color: var(--mo-primary);
+        font-weight: 700;
         font-variant-numeric: tabular-nums;
     }
     .mo-trend-h-row.is-weekend .mo-trend-h-label,

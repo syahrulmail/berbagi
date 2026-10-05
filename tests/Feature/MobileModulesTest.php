@@ -383,6 +383,7 @@ class MobileModulesTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Total Donasi Tercatat');
+        $response->assertSee('mo-hero-amount--sm', false);
         $response->assertSee('Rp 115.000');
         $response->assertSee('Rp 75.000');
         $response->assertSee('3 Transaksi dari 3 Donatur (seluruh data tercatat)');
@@ -390,8 +391,12 @@ class MobileModulesTest extends TestCase
         $response->assertSee('Donatur (hari ini)');
         $response->assertSee('Tren Bulan ini');
         $response->assertSee('mo-trend-h', false);
-        $response->assertSee('is-weekend', false);
         $response->assertDontSee('Tren 7 Hari');
+
+        $tomorrow = now()->addDay();
+        if ($tomorrow->month === now()->month) {
+            $response->assertDontSee($tomorrow->format('d/m'));
+        }
     }
 
     protected function makeNamedProgram(string $name): Program

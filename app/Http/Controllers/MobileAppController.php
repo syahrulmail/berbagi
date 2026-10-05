@@ -160,8 +160,8 @@ class MobileAppController extends Controller
             ->pluck('total', 'day');
 
         $trend = [];
-        $daysInMonth = now()->daysInMonth;
-        for ($day = 1; $day <= $daysInMonth; $day++) {
+        $lastDay = now()->day;
+        for ($day = 1; $day <= $lastDay; $day++) {
             $date = Carbon::create($year, $month, $day);
             $trend[] = [
                 'label' => $date->format('d/m'),
