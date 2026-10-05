@@ -61,7 +61,7 @@
         <div class="mo-stat">
             <div class="mo-stat-icon gold"><i class="fas fa-hand-holding-dollar"></i></div>
             <div class="mo-stat-value">{{ number_format($donorsToday, 0, ',', '.') }}</div>
-            <div class="mo-stat-label">Donatur (hari ini)</div>
+            <div class="mo-stat-label">Donatur</div>
         </div>
     </div>
 
@@ -70,7 +70,7 @@
         <div class="mo-card-head mo-card-head--collapse">
             <h2 class="mo-card-title"><i class="fas fa-chart-column"></i> Tren Bulan ini</h2>
             <div class="mo-card-head-actions">
-                <a href="{{ route('mo.donations') }}" class="mo-card-link">Lihat Semua</a>
+                <a href="{{ route('mo.donations') }}" class="mo-card-link">Semua</a>
                 <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-trend-body" aria-expanded="false" aria-label="Tampilkan tren">
                     <i class="fas fa-chevron-down mo-collapse-chevron"></i>
                 </button>

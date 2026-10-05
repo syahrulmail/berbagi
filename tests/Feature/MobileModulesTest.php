@@ -388,7 +388,7 @@ class MobileModulesTest extends TestCase
         $response->assertSee('Rp 75.000');
         $response->assertSee('3 Transaksi dari 3 Donatur (seluruh data tercatat)');
         $response->assertSee('2 Transaksi dari 2 Donatur (bulan ini)');
-        $response->assertSee('Donatur (hari ini)');
+        $response->assertSee('>Donatur<', false);
         $response->assertSee('Tren Bulan ini');
         $response->assertSee('mo-trend-h', false);
         $response->assertDontSee('Tren 7 Hari');
