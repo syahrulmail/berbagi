@@ -325,9 +325,12 @@
     /* ============ STAT GRID ============ */
     .mo-stats {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 10px;
         margin-bottom: 16px;
+    }
+    .mo-stats .mo-stat:first-child {
+        grid-column: 1 / -1;
     }
     .mo-stat {
         background: var(--mo-surface);
