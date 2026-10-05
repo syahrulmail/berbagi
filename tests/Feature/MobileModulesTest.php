@@ -198,6 +198,40 @@ class MobileModulesTest extends TestCase
             ->assertJson(['count' => 2]);
     }
 
+    public function test_contact_list_shows_total_and_last_donation(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $contact = Contact::create([
+            'name' => 'Donatur Rekap',
+            'phone' => '628123000111',
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        foreach ([['2026-01-05', 25000], ['2026-02-10', 17500]] as [$date, $amount]) {
+            Donation::create([
+                'branch_id' => $branch->id,
+                'agen_id' => $agen->id,
+                'program_id' => $program->id,
+                'contact_id' => $contact->id,
+                'amount' => $amount,
+                'donation_date' => $date,
+                'payment_method' => 'transfer',
+                'created_by' => $agen->id,
+            ]);
+        }
+
+        $response = $this->actingAs($agen)->get(route('mo.contacts'));
+
+        $response->assertOk();
+        $response->assertSee('Rp 42.500');
+        $response->assertSee('Terakhir 10 Feb 2026');
+    }
+
     public function test_contact_list_has_sticky_search_and_hidden_status_filters(): void
     {
         $branch = $this->makeBranch();

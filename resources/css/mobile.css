@@ -409,6 +409,21 @@
         word-break: break-word;
     }
     .mo-row-note i { color: var(--mo-primary); font-size: 10px; margin-right: 3px; }
+    .mo-row-donation {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        font-size: 11.5px;
+        color: var(--mo-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .mo-row-donation i { color: var(--mo-primary); font-size: 11px; }
+    .mo-row-donation .amount { font-weight: 700; color: var(--mo-primary); font-variant-numeric: tabular-nums; }
+    .mo-row-donation .date { color: var(--mo-muted); }
+    .mo-row-donation .empty { font-style: italic; }
     .mo-row-end {
         text-align: right;
         flex-shrink: 0;

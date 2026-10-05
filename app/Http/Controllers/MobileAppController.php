@@ -239,7 +239,8 @@ class MobileAppController extends Controller
     {
         $query = Contact::with(['agen', 'branch'])
             ->withCount('donations as donation_count')
-            ->withSum('donations as donation_total', 'amount');
+            ->withSum('donations as donation_total', 'amount')
+            ->withMax('donations as last_donation_date', 'donation_date');
         $this->scopeContacts($query);
 
         $query->when($request->search, function ($q, $search) {
@@ -257,6 +258,9 @@ class MobileAppController extends Controller
             $c->donation_count = (int) $c->donation_count;
             $c->donation_total = (float) $c->donation_total;
             $c->donation_total_formatted = 'Rp ' . number_format($c->donation_total, 0, ',', '.');
+            $c->last_donation_date_formatted = $c->last_donation_date
+                ? \Illuminate\Support\Carbon::parse($c->last_donation_date)->format('d M Y')
+                : null;
         });
 
         $statusCounts = [

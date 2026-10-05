@@ -75,6 +75,17 @@
                     <div style="margin-top:5px;">
                         <span class="mo-badge {{ $statusCls }}">{{ $c->statusLabel() }}</span>
                     </div>
+                    <div class="mo-row-donation">
+                        @if($c->donation_count > 0)
+                            <i class="fas fa-hand-holding-dollar"></i>
+                            <span class="amount">{{ $c->donation_total_formatted }}</span>
+                            @if($c->last_donation_date_formatted)
+                                <span class="date">· Terakhir {{ $c->last_donation_date_formatted }}</span>
+                            @endif
+                        @else
+                            <span class="empty">Belum ada donasi</span>
+                        @endif
+                    </div>
                 </div>
                 <div class="mo-row-end">
                     <i class="fas fa-chevron-right chev"></i>
