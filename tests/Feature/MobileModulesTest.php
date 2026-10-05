@@ -369,6 +369,31 @@ class MobileModulesTest extends TestCase
             ->assertJsonPath('donations.0.program_name', $program->name);
     }
 
+    public function test_dashboard_shows_recorded_totals_and_monthly_trend(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branch, $agen, $program, 50000, now()->toDateString());
+        $this->makeProgramDonation($branch, $agen, $program, 25000, now()->toDateString());
+        $this->makeProgramDonation($branch, $agen, $program, 40000, now()->subMonth()->startOfMonth()->toDateString());
+
+        $response = $this->actingAs($agen)->get(route('mo.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Total Donasi Tercatat');
+        $response->assertSee('Rp 115.000');
+        $response->assertSee('Rp 75.000');
+        $response->assertSee('3 Transaksi dari 3 Donatur (seluruh data tercatat)');
+        $response->assertSee('2 Transaksi dari 2 Donatur (bulan ini)');
+        $response->assertSee('Donatur (hari ini)');
+        $response->assertSee('Tren Bulan ini');
+        $response->assertSee('mo-trend-h', false);
+        $response->assertSee('is-weekend', false);
+        $response->assertDontSee('Tren 7 Hari');
+    }
+
     protected function makeNamedProgram(string $name): Program
     {
         return Program::create([

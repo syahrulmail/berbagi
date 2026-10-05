@@ -119,6 +119,25 @@ class MobileAppController extends Controller
             ? round((($monthTotal - $prevMonthTotal) / $prevMonthTotal) * 100, 1)
             : 0;
 
+        // Rekap seluruh data tercatat (sesuai role)
+        $totalRecorded = (clone $donationsQuery)->sum('amount');
+        $totalTransactions = (clone $donationsQuery)->count();
+        $totalDonors = (clone $donationsQuery)->whereNotNull('contact_id')->distinct()->count('contact_id');
+
+        // Donatur bulan ini & hari ini
+        $monthDonors = (clone $donationsQuery)
+            ->whereYear('donation_date', $year)
+            ->whereMonth('donation_date', $month)
+            ->whereNotNull('contact_id')
+            ->distinct()
+            ->count('contact_id');
+
+        $donorsToday = (clone $donationsQuery)
+            ->where('donation_date', $today)
+            ->whereNotNull('contact_id')
+            ->distinct()
+            ->count('contact_id');
+
         // Target: admin melihat total semua cabang aktif, selain itu target cabang sendiri
         if ($user->isAdmin()) {
             $totalTarget = Branch::where('is_active', true)->sum('target_amount');
@@ -132,13 +151,22 @@ class MobileAppController extends Controller
             ? round(($monthTotal / $totalTarget) * 100, 1)
             : 0;
 
-        // Tren 7 hari
+        // Tren bulan ini (harian)
+        $monthlyTotals = (clone $donationsQuery)
+            ->whereYear('donation_date', $year)
+            ->whereMonth('donation_date', $month)
+            ->selectRaw('DAY(donation_date) as day, SUM(amount) as total')
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
         $trend = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
+        $daysInMonth = now()->daysInMonth;
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = Carbon::create($year, $month, $day);
             $trend[] = [
-                'label' => Carbon::parse($date)->format('d M'),
-                'value' => (int) (clone $donationsQuery)->where('donation_date', $date)->sum('amount'),
+                'label' => $date->format('d/m'),
+                'is_weekend' => $date->isWeekend(),
+                'value' => (int) ($monthlyTotals[$day] ?? 0),
             ];
         }
         $trendMax = max(1, max(array_column($trend, 'value')));
@@ -178,7 +206,8 @@ class MobileAppController extends Controller
             'user', 'greeting', 'todayTotal', 'monthTotal', 'growthPercent',
             'overallProgress', 'totalTarget', 'trend', 'trendMax',
             'recentDonations', 'totalPrograms', 'totalContacts',
-            'donatedContacts', 'monthDonations', 'waNumber'
+            'donatedContacts', 'monthDonations', 'waNumber',
+            'totalRecorded', 'totalTransactions', 'totalDonors', 'monthDonors', 'donorsToday'
         ));
     }
 

@@ -19,9 +19,16 @@
 <div class="mo-content" style="padding-top:0;">
     {{-- Hero ringkasan --}}
     <div class="mo-hero">
+        <div class="mo-hero-label">Total Donasi Tercatat</div>
+        <div class="mo-hero-amount">Rp {{ number_format((int) $totalRecorded, 0, ',', '.') }}</div>
+        <div class="mo-hero-sub">{{ number_format($totalTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($totalDonors, 0, ',', '.') }} Donatur (seluruh data tercatat)</div>
+
+        <div class="mo-hero-divider"></div>
+
         <div class="mo-hero-label">Total Donasi Bulan Ini</div>
         <div class="mo-hero-amount">Rp {{ number_format((int) $monthTotal, 0, ',', '.') }}</div>
-        <div class="mo-hero-sub">
+        <div class="mo-hero-sub">{{ number_format($monthDonations, 0, ',', '.') }} Transaksi dari {{ number_format($monthDonors, 0, ',', '.') }} Donatur (bulan ini)</div>
+        <div class="mo-hero-sub" style="margin-top:6px;">
             @if($growthPercent >= 0)
                 <i class="fas fa-arrow-trend-up"></i> Naik {{ abs($growthPercent) }}%
             @else
@@ -52,26 +59,28 @@
             <div class="mo-stat-label">Transaksi</div>
         </div>
         <div class="mo-stat">
-            <div class="mo-stat-icon gold"><i class="fas fa-address-book"></i></div>
-            <div class="mo-stat-value">{{ $totalContacts }}</div>
-            <div class="mo-stat-label">Kontak</div>
+            <div class="mo-stat-icon gold"><i class="fas fa-hand-holding-dollar"></i></div>
+            <div class="mo-stat-value">{{ number_format($donorsToday, 0, ',', '.') }}</div>
+            <div class="mo-stat-label">Donatur (hari ini)</div>
         </div>
     </div>
 
-    {{-- Tren 7 hari --}}
+    {{-- Tren bulan ini --}}
     <div class="mo-card">
         <div class="mo-card-head">
-            <h2 class="mo-card-title"><i class="fas fa-chart-column"></i> Tren 7 Hari</h2>
+            <h2 class="mo-card-title"><i class="fas fa-chart-column"></i> Tren Bulan ini</h2>
             <a href="{{ route('mo.donations') }}" class="mo-card-link">Lihat Semua</a>
         </div>
-        <div class="mo-trend">
+        <div class="mo-trend-h">
             @foreach($trend as $t)
-                <div class="mo-trend-col">
-                    <div class="mo-trend-bar-wrap">
-                        <div class="mo-trend-bar" style="height: {{ max(6, round(($t['value'] / $trendMax) * 100)) }}%"
+                <div class="mo-trend-h-row {{ $t['is_weekend'] ? 'is-weekend' : '' }}">
+                    <div class="mo-trend-h-label">{{ $t['label'] }}</div>
+                    <div class="mo-trend-h-track">
+                        <div class="mo-trend-h-bar"
+                             style="width: {{ $t['value'] > 0 ? max(4, round(($t['value'] / $trendMax) * 100)) : 0 }}%"
                              title="Rp {{ number_format($t['value'], 0, ',', '.') }}"></div>
                     </div>
-                    <div class="mo-trend-label">{{ $t['label'] }}</div>
+                    <div class="mo-trend-h-value">{{ $t['value'] > 0 ? number_format($t['value'], 0, ',', '.') : '-' }}</div>
                 </div>
             @endforeach
         </div>
