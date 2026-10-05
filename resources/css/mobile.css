@@ -322,49 +322,33 @@
         transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    /* ============ STAT GRID ============ */
-    .mo-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+    /* ============ TODAY CARD ============ */
+    .mo-today-card {
         margin-bottom: 16px;
     }
-    .mo-stats .mo-stat:first-child {
-        grid-column: 1 / -1;
-    }
-    .mo-stat {
-        background: var(--mo-surface);
-        border-radius: 16px;
-        box-shadow: var(--mo-shadow-sm);
-        padding: 12px;
+    .mo-today-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--mo-muted);
         display: flex;
         align-items: center;
-        gap: 9px;
+        gap: 7px;
     }
-    .mo-stat-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        display: grid;
-        place-items: center;
-        font-size: 13px;
-        flex-shrink: 0;
+    .mo-today-label i {
+        color: var(--mo-primary);
+        font-size: 12px;
     }
-    .mo-stat-icon.green { background: #e6f7f3; color: var(--mo-primary); }
-    .mo-stat-icon.blue  { background: #e8f2fb; color: #1a6bb5; }
-    .mo-stat-icon.gold  { background: #fdf3e0; color: var(--mo-gold); }
-    .mo-stat-icon.red   { background: #fdeeec; color: var(--mo-danger); }
-    .mo-stat-value {
-        font-size: 17px;
+    .mo-today-amount {
+        font-size: 27px;
         font-weight: 800;
-        line-height: 1.2;
+        color: var(--mo-primary);
+        letter-spacing: -0.5px;
+        margin: 4px 0 3px;
         font-variant-numeric: tabular-nums;
-        white-space: nowrap;
     }
-    .mo-stat-label {
-        font-size: 11px;
+    .mo-today-sub {
+        font-size: 12px;
         color: var(--mo-muted);
-        white-space: nowrap;
     }
 
     /* ============ TREND / BAR CHART ============ */
@@ -1707,11 +1691,8 @@
             right: 24px;
             width: 420px;
         }
-        .mo-stats {
-            gap: 14px;
-        }
-        .mo-stat-value {
-            font-size: 20px;
+        .mo-today-amount {
+            font-size: 30px;
         }
         /* Program dua kolom di tablet */
         .mo-program-grid {

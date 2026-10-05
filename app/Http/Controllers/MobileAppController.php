@@ -138,6 +138,10 @@ class MobileAppController extends Controller
             ->distinct()
             ->count('contact_id');
 
+        $todayTransactions = (clone $donationsQuery)
+            ->where('donation_date', $today)
+            ->count();
+
         // Target: admin melihat total semua cabang aktif, selain itu target cabang sendiri
         if ($user->isAdmin()) {
             $totalTarget = Branch::where('is_active', true)->sum('target_amount');
@@ -207,7 +211,7 @@ class MobileAppController extends Controller
             'overallProgress', 'totalTarget', 'trend', 'trendMax',
             'recentDonations', 'totalPrograms', 'totalContacts',
             'donatedContacts', 'monthDonations', 'waNumber',
-            'totalRecorded', 'totalTransactions', 'totalDonors', 'monthDonors', 'donorsToday'
+            'totalRecorded', 'totalTransactions', 'totalDonors', 'monthDonors', 'donorsToday', 'todayTransactions'
         ));
     }
 

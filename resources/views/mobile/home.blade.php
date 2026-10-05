@@ -46,23 +46,11 @@
         @endif
     </div>
 
-    {{-- Statistik ringkas --}}
-    <div class="mo-stats">
-        <div class="mo-stat">
-            <div class="mo-stat-icon green"><i class="fas fa-wallet"></i></div>
-            <div class="mo-stat-value">Rp {{ number_format((int) $todayTotal, 0, ',', '.') }}</div>
-            <div class="mo-stat-label">Hari Ini</div>
-        </div>
-        <div class="mo-stat">
-            <div class="mo-stat-icon blue"><i class="fas fa-file-invoice-dollar"></i></div>
-            <div class="mo-stat-value">{{ $monthDonations }}</div>
-            <div class="mo-stat-label">Transaksi</div>
-        </div>
-        <div class="mo-stat">
-            <div class="mo-stat-icon gold"><i class="fas fa-hand-holding-dollar"></i></div>
-            <div class="mo-stat-value">{{ number_format($donorsToday, 0, ',', '.') }}</div>
-            <div class="mo-stat-label">Donatur</div>
-        </div>
+    {{-- Total donasi hari ini --}}
+    <div class="mo-card mo-today-card">
+        <div class="mo-today-label"><i class="fas fa-wallet"></i> Total Donasi Hari Ini</div>
+        <div class="mo-today-amount">Rp {{ number_format((int) $todayTotal, 0, ',', '.') }}</div>
+        <div class="mo-today-sub">{{ number_format($todayTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($donorsToday, 0, ',', '.') }} Donatur (Hari ini)</div>
     </div>
 
     {{-- Tren bulan ini --}}
