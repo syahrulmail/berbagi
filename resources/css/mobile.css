@@ -336,7 +336,10 @@
         background: var(--mo-surface);
         border-radius: 16px;
         box-shadow: var(--mo-shadow-sm);
-        padding: 13px 12px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
     }
     .mo-stat-icon {
         width: 32px;
@@ -345,7 +348,7 @@
         display: grid;
         place-items: center;
         font-size: 13px;
-        margin-bottom: 8px;
+        flex-shrink: 0;
     }
     .mo-stat-icon.green { background: #e6f7f3; color: var(--mo-primary); }
     .mo-stat-icon.blue  { background: #e8f2fb; color: #1a6bb5; }
@@ -356,11 +359,12 @@
         font-weight: 800;
         line-height: 1.2;
         font-variant-numeric: tabular-nums;
+        white-space: nowrap;
     }
     .mo-stat-label {
         font-size: 11px;
         color: var(--mo-muted);
-        margin-top: 2px;
+        white-space: nowrap;
     }
 
     /* ============ TREND / BAR CHART ============ */
