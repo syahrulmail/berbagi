@@ -270,10 +270,10 @@
         // Program cards open public page
         document.addEventListener('click', function (e) {
             if (e.target.closest('.mo-program-edit') || e.target.closest('.mo-program-edit-btn') || e.target.closest('.mo-program-donors') || e.target.closest('.mo-program-share')) return;
-            var card = e.target.closest('[data-program-slug]');
+            var card = e.target.closest('[data-program-url]');
             if (card) {
-                var slug = card.getAttribute('data-program-slug');
-                if (slug) window.location.href = '/program/' + slug;
+                var url = card.getAttribute('data-program-url');
+                if (url) window.open(url, '_blank');
             }
         });
 

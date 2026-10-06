@@ -66,12 +66,19 @@
 
     <div class="mo-program-grid">
         @forelse($programs as $p)
-            <div class="mo-program-card" data-program-slug="{{ $p->slug }}">
+            @php
+                $moUser = auth()->user();
+                $moCanShareAsAgent = ($moUser->isAgen() || $moUser->isSupervisor()) && $moUser->slug;
+                $moProgramUrl = $moCanShareAsAgent
+                    ? route('public.agent-program', ['agentSlug' => $moUser->slug, 'program' => $p->slug])
+                    : route('public.program', $p->slug);
+            @endphp
+            <div class="mo-program-card" data-program-url="{{ $moProgramUrl }}">
                 <div class="mo-program-actions" style="position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:3;">
                     <button type="button" class="mo-program-donors" data-program-donors="{{ route('mo.program.donors', $p->id) }}" aria-label="Lihat donatur" style="width:34px;height:34px;border:none;border-radius:11px;background:rgba(0,0,0,.35);color:#fff;display:grid;place-items:center;">
                         <i class="fas fa-users"></i>
                     </button>
-                    <button type="button" class="mo-program-share" data-program-share="{{ url('/program/' . $p->slug) }}" data-share-title="{{ $p->name }}" aria-label="Bagikan program" style="width:34px;height:34px;border:none;border-radius:11px;background:rgba(0,0,0,.35);color:#fff;display:grid;place-items:center;">
+                    <button type="button" class="mo-program-share" data-program-share="{{ $moProgramUrl }}" data-share-title="{{ $p->name }}" aria-label="Bagikan program" style="width:34px;height:34px;border:none;border-radius:11px;background:rgba(0,0,0,.35);color:#fff;display:grid;place-items:center;">
                         <i class="fas fa-share-nodes"></i>
                     </button>
                     @if(auth()->user()->isAdmin())

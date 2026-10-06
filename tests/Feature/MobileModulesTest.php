@@ -501,6 +501,29 @@ class MobileModulesTest extends TestCase
         $response->assertSee('dari 2 donasi');
     }
 
+    public function test_program_card_urls_follow_role(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $agentUrl = route('public.agent-program', ['agentSlug' => $agen->slug, 'program' => $program->slug]);
+
+        $response = $this->actingAs($agen)->get(route('mo.programs'));
+
+        $response->assertOk();
+        $response->assertSee('data-program-url="' . $agentUrl . '"', false);
+        $response->assertSee('data-program-share="' . $agentUrl . '"', false);
+
+        $publicUrl = route('public.program', $program->slug);
+
+        $adminResponse = $this->actingAs($this->makeUser('admin'))->get(route('mo.programs'));
+
+        $adminResponse->assertOk();
+        $adminResponse->assertSee('data-program-url="' . $publicUrl . '"', false);
+        $adminResponse->assertSee('data-program-share="' . $publicUrl . '"', false);
+    }
+
     public function test_program_donation_total_is_scoped_by_role(): void
     {
         $branch = $this->makeBranch();
