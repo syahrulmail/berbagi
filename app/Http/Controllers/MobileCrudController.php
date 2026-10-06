@@ -257,7 +257,7 @@ class MobileCrudController extends MobileAppController
     public function contactCreate()
     {
         $user = auth()->user();
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->formBranches($user);
         $agents = $this->formAgents($user);
 
         return view('mobile.forms.contact-form', compact('user', 'branches', 'agents'))->with('contact', null);
@@ -298,7 +298,7 @@ class MobileCrudController extends MobileAppController
         }
 
         $user = auth()->user();
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->formBranches($user);
         $agents = $this->formAgents($user);
 
         return view('mobile.forms.contact-form', compact('contact', 'user', 'branches', 'agents'));

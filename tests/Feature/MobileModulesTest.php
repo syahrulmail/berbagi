@@ -280,6 +280,25 @@ class MobileModulesTest extends TestCase
         $response->assertDontSee('Simpan Perubahan');
     }
 
+    public function test_contact_form_branch_options_are_scoped_by_role(): void
+    {
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+        $supervisor = $this->makeUser('supervisor', $branchA);
+
+        $response = $this->actingAs($supervisor)->get(route('mo.contact.create'));
+
+        $response->assertOk();
+        $response->assertSee($branchA->name);
+        $response->assertDontSee($branchB->name);
+
+        $adminResponse = $this->actingAs($this->makeUser('admin'))->get(route('mo.contact.create'));
+
+        $adminResponse->assertOk();
+        $adminResponse->assertSee($branchA->name);
+        $adminResponse->assertSee($branchB->name);
+    }
+
     public function test_contact_list_can_sort_by_donation_total(): void
     {
         $branch = $this->makeBranch();
