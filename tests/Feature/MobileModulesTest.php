@@ -524,6 +524,51 @@ class MobileModulesTest extends TestCase
         $adminResponse->assertSee('data-program-share="' . $publicUrl . '"', false);
     }
 
+    public function test_program_list_can_filter_by_category(): void
+    {
+        $agen = $this->makeUser('agen', $this->makeBranch());
+
+        $gali = Program::create([
+            'name' => 'Penggalangan ' . uniqid(),
+            'slug' => 'gali-' . uniqid(),
+            'program_category' => 'WAP',
+            'category' => 'penggalangan',
+            'is_active' => true,
+        ]);
+        $salur = Program::create([
+            'name' => 'Penyaluran ' . uniqid(),
+            'slug' => 'salur-' . uniqid(),
+            'program_category' => 'WAP',
+            'category' => 'penyaluran',
+            'is_active' => true,
+        ]);
+        $default = Program::create([
+            'name' => 'Tanpa Jenis ' . uniqid(),
+            'slug' => 'default-' . uniqid(),
+            'program_category' => 'WAP',
+            'category' => null,
+            'is_active' => true,
+        ]);
+
+        $all = $this->actingAs($agen)->get(route('mo.programs'));
+        $all->assertOk();
+        $all->assertSee($gali->name);
+        $all->assertSee($salur->name);
+        $all->assertSee($default->name);
+
+        $galiOnly = $this->actingAs($agen)->get(route('mo.programs', ['jenis' => 'penggalangan']));
+        $galiOnly->assertOk();
+        $galiOnly->assertSee($gali->name);
+        $galiOnly->assertSee($default->name);
+        $galiOnly->assertDontSee($salur->name);
+
+        $salurOnly = $this->actingAs($agen)->get(route('mo.programs', ['jenis' => 'penyaluran']));
+        $salurOnly->assertOk();
+        $salurOnly->assertSee($salur->name);
+        $salurOnly->assertDontSee($gali->name);
+        $salurOnly->assertDontSee($default->name);
+    }
+
     public function test_program_donation_total_is_scoped_by_role(): void
     {
         $branch = $this->makeBranch();

@@ -17,7 +17,7 @@
 
 <div class="mo-content" style="padding-top:0;">
     @php
-        $hasAdvancedFilter = request('from') || request('to') || in_array(request('sort'), ['donation'], true);
+        $hasAdvancedFilter = request('from') || request('to') || in_array(request('sort'), ['donation'], true) || in_array(request('jenis'), ['penggalangan', 'penyaluran'], true);
     @endphp
     <div class="mo-sticky-filter">
         <form method="GET" action="{{ route('mo.programs') }}" id="mo-program-form">
@@ -33,6 +33,23 @@
 
             <div id="mo-program-filters" hidden>
                 <input type="hidden" name="sort" value="{{ request('sort') }}">
+                <input type="hidden" name="jenis" value="{{ request('jenis') }}">
+
+                <div style="margin-top:10px;">
+                    <label style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Jenis Program</label>
+                    <div class="mo-segmented">
+                        <button type="submit" name="jenis" value="" class="mo-segmented-item {{ !in_array(request('jenis'), ['penggalangan', 'penyaluran'], true) ? 'active' : '' }}">
+                            Semua
+                        </button>
+                        <button type="submit" name="jenis" value="penggalangan" class="mo-segmented-item {{ request('jenis') === 'penggalangan' ? 'active' : '' }}">
+                            Penggalangan
+                        </button>
+                        <button type="submit" name="jenis" value="penyaluran" class="mo-segmented-item {{ request('jenis') === 'penyaluran' ? 'active' : '' }}">
+                            Penyaluran
+                        </button>
+                    </div>
+                </div>
+
                 <div style="display:flex;gap:10px;margin-top:10px;">
                     <div style="flex:1;">
                         <label for="program_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>

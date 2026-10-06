@@ -326,6 +326,10 @@ class MobileAppController extends Controller
         $programs = Program::where('is_active', true)
             ->with('campaignTags')
             ->when($request->search, fn ($q, $search) => $q->where('name', 'like', '%' . trim($search) . '%'))
+            ->when($request->jenis === 'penggalangan', fn ($q) => $q->where(function ($sub) {
+                $sub->whereNull('category')->orWhere('category', '')->orWhere('category', 'penggalangan');
+            }))
+            ->when($request->jenis === 'penyaluran', fn ($q) => $q->where('category', 'penyaluran'))
             ->get();
 
         $aggregates = \Illuminate\Support\Facades\DB::table('donation_items')
