@@ -35,6 +35,17 @@
                 <input type="hidden" name="sort" value="{{ request('sort') }}">
                 <input type="hidden" name="jenis" value="{{ request('jenis') }}">
 
+                <div style="display:flex;gap:10px;margin-top:10px;">
+                    <div style="flex:1;">
+                        <label for="program_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>
+                        <input type="date" id="program_from" name="from" class="mo-input" value="{{ request('from') }}" data-autosubmit>
+                    </div>
+                    <div style="flex:1;">
+                        <label for="program_to" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Sampai tanggal</label>
+                        <input type="date" id="program_to" name="to" class="mo-input" value="{{ request('to') }}" data-autosubmit>
+                    </div>
+                </div>
+
                 <div style="margin-top:10px;">
                     <label style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Jenis Program</label>
                     <div class="mo-segmented">
@@ -47,17 +58,6 @@
                         <button type="submit" name="jenis" value="penyaluran" class="mo-segmented-item {{ request('jenis') === 'penyaluran' ? 'active' : '' }}">
                             Penyaluran
                         </button>
-                    </div>
-                </div>
-
-                <div style="display:flex;gap:10px;margin-top:10px;">
-                    <div style="flex:1;">
-                        <label for="program_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>
-                        <input type="date" id="program_from" name="from" class="mo-input" value="{{ request('from') }}" data-autosubmit>
-                    </div>
-                    <div style="flex:1;">
-                        <label for="program_to" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Sampai tanggal</label>
-                        <input type="date" id="program_to" name="to" class="mo-input" value="{{ request('to') }}" data-autosubmit>
                     </div>
                 </div>
 

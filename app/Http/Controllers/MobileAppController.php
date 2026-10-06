@@ -246,10 +246,17 @@ class MobileAppController extends Controller
         ->when($request->period === 'today', fn ($q) => $q->whereDate('donations.donation_date', now()->toDateString()))
         ->when($request->period === 'week', fn ($q) => $q->whereDate('donations.donation_date', '>=', now()->subDays(6)->toDateString()));
 
-        $donations = $query->orderByDesc('donations.donation_date')
-            ->orderByDesc('donations.id')
-            ->limit(50)
-            ->get();
+        if ($request->get('sort') === 'amount') {
+            $donations = $query->orderByDesc('donations.amount')
+                ->orderByDesc('donations.id')
+                ->limit(50)
+                ->get();
+        } else {
+            $donations = $query->orderByDesc('donations.donation_date')
+                ->orderByDesc('donations.id')
+                ->limit(50)
+                ->get();
+        }
 
         $donations->each(function ($d) {
             $d->amount_formatted = 'Rp ' . number_format((float) $d->amount, 0, ',', '.');

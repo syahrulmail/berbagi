@@ -20,7 +20,7 @@
 
 <div class="mo-content" style="padding-top:0;">
     @php
-        $hasDateFilter = request('period') || request('from') || request('to');
+        $hasDateFilter = request('period') || request('from') || request('to') || request('sort');
     @endphp
     <div class="mo-sticky-filter">
         <form method="GET" action="{{ route('mo.donations') }}" id="mo-donasi-form">
@@ -35,6 +35,9 @@
             </div>
 
             <div id="mo-advanced-filters" hidden>
+                <input type="hidden" name="period" value="{{ request('period') }}">
+                <input type="hidden" name="sort" value="{{ request('sort') }}">
+
                 <div style="display:flex;gap:10px;margin-top:10px;">
                     <div style="flex:1;">
                         <label for="filter_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>
@@ -50,6 +53,15 @@
                     <button type="submit" name="period" value="" class="mo-segmented-item {{ !request('period') ? 'active' : '' }}">Semua</button>
                     <button type="submit" name="period" value="today" class="mo-segmented-item {{ request('period') === 'today' ? 'active' : '' }}">Hari Ini</button>
                     <button type="submit" name="period" value="week" class="mo-segmented-item {{ request('period') === 'week' ? 'active' : '' }}">7 Hari</button>
+                </div>
+
+                <div class="mo-segmented" style="margin-bottom:6px;">
+                    <button type="submit" name="sort" value="" class="mo-segmented-item {{ !in_array(request('sort'), ['amount'], true) ? 'active' : '' }}">
+                        <i class="fas fa-clock"></i> Terbaru
+                    </button>
+                    <button type="submit" name="sort" value="amount" class="mo-segmented-item {{ request('sort') === 'amount' ? 'active' : '' }}">
+                        <i class="fas fa-arrow-down-wide-short"></i> Donasi Terbesar
+                    </button>
                 </div>
 
                 @if(request('search') || $hasDateFilter)

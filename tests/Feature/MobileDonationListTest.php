@@ -151,4 +151,34 @@ class MobileDonationListTest extends TestCase
         $response->assertSee('Donatur Dalam Rentang');
         $response->assertDontSee('Donatur Luar Rentang');
     }
+
+    public function test_mobile_list_can_sort_by_largest_amount(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+        $small = $this->makeContact('Sort Kecil', '628111000111', $agen, $branch);
+        $big = $this->makeContact('Sort Besar', '628222000222', $agen, $branch);
+
+        foreach ([[$small, 10000, now()->format('Y-m-d')], [$big, 500000, now()->subDays(5)->format('Y-m-d')]] as [$contact, $amount, $date]) {
+            Donation::create([
+                'branch_id' => $branch->id,
+                'agen_id' => $agen->id,
+                'program_id' => $program->id,
+                'contact_id' => $contact->id,
+                'amount' => $amount,
+                'donation_date' => $date,
+                'payment_method' => 'transfer',
+                'created_by' => $agen->id,
+            ]);
+        }
+
+        $default = $this->actingAs($agen)->get(route('mo.donations'));
+        $default->assertOk();
+        $default->assertSeeInOrder(['Sort Kecil', 'Sort Besar']);
+
+        $sorted = $this->actingAs($agen)->get(route('mo.donations', ['sort' => 'amount']));
+        $sorted->assertOk();
+        $sorted->assertSeeInOrder(['Sort Besar', 'Sort Kecil']);
+    }
 }
