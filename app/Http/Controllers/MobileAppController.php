@@ -93,7 +93,7 @@ class MobileAppController extends Controller
     /**
      * Dashboard mobile (/mo/dashboard).
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $user = auth()->user();
         $today = now()->toDateString();
@@ -103,6 +103,24 @@ class MobileAppController extends Controller
         // Ringkasan donasi (scoped)
         $donationsQuery = Donation::query();
         $this->scopeDonations($donationsQuery);
+
+        // Pemilihan cabang (khusus admin, bisa lebih dari satu)
+        $isAdmin = $user->isAdmin();
+        $branches = $isAdmin
+            ? Branch::where('is_active', true)->orderBy('name')->get()
+            : collect();
+
+        $selectedBranches = [];
+        if ($isAdmin) {
+            $selectedBranches = array_values(array_filter(
+                array_map('intval', (array) $request->query('branches', [])),
+                fn ($value) => $value > 0
+            ));
+
+            if (! empty($selectedBranches)) {
+                $donationsQuery->whereIn('branch_id', $selectedBranches);
+            }
+        }
 
         $todayTotal = (clone $donationsQuery)->where('donation_date', $today)->sum('amount');
         $monthTotal = (clone $donationsQuery)
@@ -143,9 +161,12 @@ class MobileAppController extends Controller
             ->where('donation_date', $today)
             ->count();
 
-        // Target: admin melihat total semua cabang aktif, selain itu target cabang sendiri
-        if ($user->isAdmin()) {
-            $totalTarget = Branch::where('is_active', true)->sum('target_amount');
+        // Target: admin melihat total cabang yang dipilih (atau semua cabang aktif),
+        // selain itu target cabang sendiri.
+        if ($isAdmin) {
+            $totalTarget = empty($selectedBranches)
+                ? Branch::where('is_active', true)->sum('target_amount')
+                : Branch::whereIn('id', $selectedBranches)->sum('target_amount');
         } elseif ($user->isSupervisor() && $user->branch) {
             $totalTarget = (float) $user->branch->target_amount;
         } else {
@@ -207,12 +228,25 @@ class MobileAppController extends Controller
 
         $waNumber = Setting::get('wa_public_number', '');
 
+        if ($isAdmin) {
+            if (empty($selectedBranches)) {
+                $branchSummary = 'Semua Cabang';
+            } elseif (count($selectedBranches) === 1) {
+                $branchSummary = optional($branches->firstWhere('id', $selectedBranches[0]))->name ?: '1 Cabang';
+            } else {
+                $branchSummary = count($selectedBranches) . ' Cabang';
+            }
+        } else {
+            $branchSummary = $user->branch->name ?? '-';
+        }
+
         return view('mobile.home', compact(
             'user', 'greeting', 'todayTotal', 'monthTotal', 'growthPercent',
             'overallProgress', 'totalTarget', 'trend', 'trendMax',
             'recentDonations', 'totalPrograms', 'totalContacts',
             'donatedContacts', 'monthDonations', 'waNumber',
-            'totalRecorded', 'totalTransactions', 'totalDonors', 'monthDonors', 'donorsToday', 'todayTransactions'
+            'totalRecorded', 'totalTransactions', 'totalDonors', 'monthDonors', 'donorsToday', 'todayTransactions',
+            'branches', 'selectedBranches', 'branchSummary', 'isAdmin'
         ));
     }
 

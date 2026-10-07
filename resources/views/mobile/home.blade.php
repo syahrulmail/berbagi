@@ -19,6 +19,39 @@
 <div class="mo-content" style="padding-top:0;">
     {{-- Hero ringkasan --}}
     <div class="mo-hero">
+        @if($isAdmin)
+            <div class="mo-hero-filter">
+                <button type="button" class="mo-hero-filter-toggle {{ !empty($selectedBranches) ? 'open' : '' }}"
+                        data-filter-toggle="mo-branch-panel"
+                        aria-expanded="{{ !empty($selectedBranches) ? 'true' : 'false' }}" aria-label="Pilih cabang">
+                    <i class="fas fa-code-branch"></i>
+                    <span>{{ $branchSummary }}</span>
+                    <i class="fas fa-chevron-down chev"></i>
+                </button>
+                <div class="mo-hero-filter-panel" id="mo-branch-panel" @if(empty($selectedBranches)) hidden @endif>
+                    <form method="GET" action="{{ route('mo.dashboard') }}" id="mo-branch-form">
+                        <label class="mo-hero-check">
+                            <input type="checkbox" id="mo-branch-all" {{ empty($selectedBranches) ? 'checked' : '' }}>
+                            <span>Semua Cabang</span>
+                        </label>
+                        @foreach($branches as $branch)
+                            <label class="mo-hero-check">
+                                <input type="checkbox" name="branches[]" value="{{ $branch->id }}"
+                                    {{ in_array($branch->id, $selectedBranches, true) ? 'checked' : '' }}>
+                                <span>{{ $branch->name }}</span>
+                            </label>
+                        @endforeach
+                    </form>
+                </div>
+            </div>
+        @else
+            <div class="mo-hero-filter-static">
+                <i class="fas fa-code-branch"></i>
+                <span>{{ $branchSummary }}</span>
+                <i class="fas fa-lock lock"></i>
+            </div>
+        @endif
+
         <div class="mo-hero-label">Total Donasi Tercatat</div>
         <div class="mo-hero-amount mo-hero-amount--sm">Rp {{ number_format((int) $totalRecorded, 0, ',', '.') }}</div>
         <div class="mo-hero-sub">{{ number_format($totalTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($totalDonors, 0, ',', '.') }} Donatur (seluruh data tercatat)</div>
@@ -123,3 +156,35 @@
 @section('sheets')
 @include('mobile.partials.donation-sheet')
 @endsection
+
+@if($isAdmin)
+@push('scripts')
+<script>
+    (function () {
+        var form = document.getElementById('mo-branch-form');
+        if (!form) return;
+
+        var all = document.getElementById('mo-branch-all');
+        var boxes = Array.prototype.slice.call(form.querySelectorAll('input[name="branches[]"]'));
+
+        function submit() { form.submit(); }
+
+        if (all) {
+            all.addEventListener('change', function () {
+                if (all.checked) {
+                    boxes.forEach(function (b) { b.checked = false; });
+                }
+                submit();
+            });
+        }
+
+        boxes.forEach(function (b) {
+            b.addEventListener('change', function () {
+                if (b.checked && all) all.checked = false;
+                submit();
+            });
+        });
+    })();
+</script>
+@endpush
+@endif

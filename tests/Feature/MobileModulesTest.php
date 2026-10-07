@@ -501,6 +501,73 @@ class MobileModulesTest extends TestCase
         $this->assertSame(10, substr_count($response->getContent(), 'data-donation-detail'));
     }
 
+    public function test_admin_dashboard_shows_multi_branch_checklist(): void
+    {
+        $admin = $this->makeUser('admin');
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('mo-hero-filter-toggle', false)
+            ->assertSee('data-filter-toggle="mo-branch-panel"', false)
+            ->assertSee('Semua Cabang')
+            ->assertSee('name="branches[]"', false)
+            ->assertSee($branchA->name)
+            ->assertSee($branchB->name);
+    }
+
+    public function test_non_admin_dashboard_branch_is_static_and_locked(): void
+    {
+        $branch = $this->makeBranch('S');
+        $supervisor = $this->makeUser('supervisor', $branch);
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('mo-hero-filter-static', false)
+            ->assertSee($branch->name)
+            ->assertDontSee('mo-branch-form', false)
+            ->assertDontSee('name="branches[]"', false);
+
+        $agent = $this->makeUser('agen', $branch);
+        $this->actingAs($agent)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('mo-hero-filter-static', false)
+            ->assertSee($branch->name);
+    }
+
+    public function test_admin_dashboard_branch_filter_scopes_all_totals(): void
+    {
+        $admin = $this->makeUser('admin');
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+        $agenA = $this->makeUser('agen', $branchA);
+        $agenB = $this->makeUser('agen', $branchB);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branchA, $agenA, $program, 100000, now()->toDateString());
+        $this->makeProgramDonation($branchB, $agenB, $program, 50000, now()->toDateString());
+
+        $this->actingAs($admin)->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('Rp 150.000');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['branches' => [$branchA->id]]))
+            ->assertOk()
+            ->assertSee('Rp 100.000')
+            ->assertDontSee('Rp 150.000')
+            ->assertSee('1 Transaksi dari 1 Donatur (seluruh data tercatat)');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['branches' => [$branchA->id, $branchB->id]]))
+            ->assertOk()
+            ->assertSee('Rp 150.000');
+    }
+
     protected function makeNamedProgram(string $name): Program
     {
         return Program::create([
@@ -510,6 +577,7 @@ class MobileModulesTest extends TestCase
             'is_active' => true,
         ]);
     }
+
 
     protected function makeProgramDonation(Branch $branch, User $agen, Program $program, float $amount, string $date): Donation
     {
