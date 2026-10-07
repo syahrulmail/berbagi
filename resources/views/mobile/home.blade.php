@@ -126,12 +126,12 @@
             <h2 class="mo-card-title"><i class="fas fa-trophy"></i> Tertinggi - Kontak</h2>
             <div class="mo-card-head-actions">
                 <a href="{{ route('mo.contacts') }}" class="mo-card-link">Semua</a>
-                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-top-contact-body" aria-expanded="true" aria-label="Tampilkan kontak tertinggi">
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-top-contact-body" aria-expanded="false" aria-label="Tampilkan kontak tertinggi">
                     <i class="fas fa-chevron-down mo-collapse-chevron"></i>
                 </button>
             </div>
         </div>
-        <div id="mo-top-contact-body" class="mo-collapse-body mo-list">
+        <div id="mo-top-contact-body" class="mo-collapse-body mo-list" hidden>
             @forelse($topContacts as $c)
                 <div class="mo-row" data-contact-detail="{{ $c->contact_id }}">
                     <div class="mo-row-icon gold">{{ $c->initial }}</div>

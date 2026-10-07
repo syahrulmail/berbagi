@@ -499,7 +499,7 @@ class MobileModulesTest extends TestCase
         $response->assertSee('data-filter-toggle="mo-top-program-body"', false);
         $response->assertSee('Tertinggi - Kontak');
         $response->assertSee('Tertinggi - Program');
-        $response->assertSee('id="mo-top-contact-body" class="mo-collapse-body mo-list"', false);
+        $response->assertSee('id="mo-top-contact-body" class="mo-collapse-body mo-list" hidden', false);
         $response->assertSee('id="mo-top-program-body" class="mo-collapse-body mo-list" hidden', false);
         $this->assertSame(10, substr_count($response->getContent(), 'data-contact-detail'));
     }
