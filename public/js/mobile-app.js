@@ -187,6 +187,7 @@
                 '<div class="mo-detail-item"><div class="mo-detail-label">Status</div><div class="mo-detail-value">' + (data.is_active ? 'Aktif' : 'Nonaktif') + '</div></div>' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Jumlah Donasi</div><div class="mo-detail-value">' + esc(data.donation_count != null ? data.donation_count : 0) + '</div></div>' +
                 '<div class="mo-detail-item"><div class="mo-detail-label">Total Donasi</div><div class="mo-detail-value amount">' + esc(data.donation_total_formatted || 'Rp 0') + '</div></div>' +
+                ((data.public_url) ? '<div class="mo-detail-item full"><div class="mo-detail-label">Profil Publik</div><div class="mo-detail-value"><a href="' + esc(data.public_url) + '" target="_blank" rel="noopener" style="color:var(--mo-primary);word-break:break-all;font-weight:600;">' + esc(data.public_url) + '</a></div></div>' : '') +
             '</div>' +
             ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:14px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Pengguna</a>' : '');
     }

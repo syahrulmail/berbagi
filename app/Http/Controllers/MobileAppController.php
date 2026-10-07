@@ -427,32 +427,83 @@ class MobileAppController extends Controller
     /**
      * Pengguna (admin: semua; supervisor: agen cabangnya).
      */
-    public function users()
+    public function users(Request $request)
     {
+        $actor = auth()->user();
         $profiles = Setting::where('key', 'like', 'agent_profile_%')->pluck('value', 'key');
 
-        $users = User::with('branch')
-            ->visibleTo(auth()->user())
-            ->orderBy('role')
-            ->orderBy('name')
-            ->get()
-            ->map(function ($u) use ($profiles) {
-                $profile = json_decode($profiles->get('agent_profile_' . $u->slug, '{}'), true);
-                $photo = is_array($profile) ? (string) ($profile['photo'] ?? '') : '';
+        $from = $request->get('from');
+        $to = $request->get('to');
+        $sortDonation = $request->get('sort') === 'donation';
+        $search = trim((string) $request->get('search', ''));
+        $branchFilter = $actor->isAdmin() && $request->filled('branch_id') ? $request->get('branch_id') : null;
 
-                return [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'role_label' => $u->roleLabel(),
-                    'role' => $u->role,
-                    'branch' => $u->branch->name ?? '-',
-                    'is_active' => (bool) $u->is_active,
-                    'initial' => strtoupper(substr($u->name, 0, 1)),
-                    'photo_url' => $photo !== '' ? asset_photo_url($photo) : '',
-                ];
+        $hasFilter = $search !== '' || $branchFilter !== null || $from || $to || $sortDonation;
+
+        $query = User::with('branch')->visibleTo($actor);
+
+        if ($search !== '') {
+            $digits = preg_replace('/[^0-9]/', '', $search);
+            $query->where(function ($inner) use ($search, $digits) {
+                $inner->where('name', 'like', "%{$search}%");
+                if ($digits !== '') {
+                    $inner->orWhere('phone', 'like', "%{$digits}%");
+                }
             });
+        }
 
-        return view('mobile.users', compact('users'));
+        if ($branchFilter !== null) {
+            $query->where('branch_id', $branchFilter);
+        }
+
+        $users = $query->orderBy('role')->orderBy('name')->get();
+
+        $aggregates = Donation::query()
+            ->whereIn('agen_id', $users->pluck('id'))
+            ->when($from, fn ($q, $value) => $q->whereDate('donation_date', '>=', $value))
+            ->when($to, fn ($q, $value) => $q->whereDate('donation_date', '<=', $value))
+            ->groupBy('agen_id')
+            ->selectRaw('agen_id, COALESCE(SUM(amount), 0) as total, COUNT(*) as transactions, COUNT(DISTINCT contact_id) as donors')
+            ->get()
+            ->keyBy('agen_id');
+
+        $users = $users->map(function ($u) use ($profiles, $aggregates) {
+            $profile = json_decode($profiles->get('agent_profile_' . $u->slug, '{}'), true);
+            $photo = is_array($profile) ? (string) ($profile['photo'] ?? '') : '';
+
+            $row = $aggregates->get($u->id);
+            $total = $row ? (float) $row->total : 0.0;
+            $transactions = $row ? (int) $row->transactions : 0;
+            $donors = $row ? (int) $row->donors : 0;
+
+            return [
+                'id' => $u->id,
+                'name' => $u->name,
+                'role_label' => $u->roleLabel(),
+                'role' => $u->role,
+                'branch' => $u->branch->name ?? '-',
+                'is_active' => (bool) $u->is_active,
+                'initial' => strtoupper(substr($u->name, 0, 1)),
+                'photo_url' => $photo !== '' ? asset_photo_url($photo) : '',
+                'donation_total' => $total,
+                'donation_count' => $transactions,
+                'donor_count' => $donors,
+                'donation_total_formatted' => 'Rp ' . number_format($total, 0, ',', '.'),
+                'donation_meta' => $transactions > 0
+                    ? ($transactions . ' transaksi · ' . $donors . ' donatur')
+                    : null,
+            ];
+        });
+
+        if ($sortDonation) {
+            $users = $users->sortByDesc('donation_total')->values();
+        }
+
+        $branches = $actor->isAdmin()
+            ? Branch::where('is_active', true)->orderBy('name')->get()
+            : collect();
+
+        return view('mobile.users', compact('users', 'branches', 'hasFilter', 'sortDonation'));
     }
 
     /**
@@ -531,6 +582,7 @@ class MobileAppController extends Controller
             'initial' => strtoupper(substr($user->name, 0, 1)),
             'donation_count' => $donations->count(),
             'donation_total_formatted' => 'Rp ' . number_format((float) $donations->sum('amount'), 0, ',', '.'),
+            'public_url' => $user->slug ? route('public.agent', $user->slug) : null,
             'can_edit' => true,
             'edit_url' => route('mo.user.edit', $user->id),
         ]);

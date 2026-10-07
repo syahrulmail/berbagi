@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Branch;
+use App\Models\Contact;
 use App\Models\Donation;
 use App\Models\Program;
 use App\Models\Setting;
@@ -477,5 +478,150 @@ class UserManagementTest extends TestCase
             ->assertSee('data-user-detail="' . $agent->id . '"', false)
             ->assertSee('mo-user-sheet', false)
             ->assertDontSee(route('mo.user.edit', $agent));
+    }
+
+    protected function makeContact(Branch $branch, User $agent, array $overrides = []): Contact
+    {
+        return Contact::create(array_merge([
+            'name' => 'Donor ' . uniqid(),
+            'phone' => '628' . random_int(100000000, 999999999),
+            'status' => Contact::STATUS_DONATED,
+            'agen_id' => $agent->id,
+            'branch_id' => $branch->id,
+        ], $overrides));
+    }
+
+    protected function makeDonation(Branch $branch, User $agent, User $creator, Program $program, float $amount, ?Contact $contact = null, ?string $date = null): Donation
+    {
+        return Donation::create([
+            'branch_id' => $branch->id,
+            'agen_id' => $agent->id,
+            'program_id' => $program->id,
+            'contact_id' => $contact ? $contact->id : null,
+            'amount' => $amount,
+            'donation_date' => $date ?: now()->toDateString(),
+            'payment_method' => 'transfer',
+            'created_by' => $creator->id,
+        ]);
+    }
+
+    public function test_users_list_shows_donation_summary(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $donorA = $this->makeContact($branch, $agent);
+        $donorB = $this->makeContact($branch, $agent);
+        $this->makeDonation($branch, $agent, $supervisor, $program, 100000, $donorA);
+        $this->makeDonation($branch, $agent, $supervisor, $program, 100000, $donorB);
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.users'))
+            ->assertOk()
+            ->assertSee('Rp 200.000')
+            ->assertSee('dari 2 transaksi · 2 donatur');
+    }
+
+    public function test_users_search_by_name_and_phone_ignores_symbols(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $target = $this->makeUser('agen', $branch);
+        $other = $this->makeUser('agen', $branch);
+        $target->forceFill(['name' => 'Zulkifli Ramadhan', 'phone' => '628123456789'])->save();
+        $other->forceFill(['name' => 'Budi Santoso', 'phone' => '628999999999'])->save();
+
+        $this->actingAs($admin)->get(route('mo.users', ['search' => 'Zulkifli']))
+            ->assertOk()->assertSee('Zulkifli Ramadhan')->assertDontSee('Budi Santoso');
+
+        $this->actingAs($admin)->get(route('mo.users', ['search' => '+62 812-3456-789']))
+            ->assertOk()->assertSee('Zulkifli Ramadhan')->assertDontSee('Budi Santoso');
+    }
+
+    public function test_users_branch_filter_only_for_admin(): void
+    {
+        $branchA = $this->makeBranch();
+        $branchB = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $agentA = $this->makeUser('agen', $branchA);
+        $agentB = $this->makeUser('agen', $branchB);
+
+        $this->actingAs($admin)->get(route('mo.users', ['branch_id' => $branchA->id]))
+            ->assertOk()->assertSee($agentA->name)->assertDontSee($agentB->name);
+
+        $this->actingAs($admin)->get(route('mo.users'))
+            ->assertOk()->assertSee('name="branch_id"', false);
+
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $this->actingAs($supervisor)->get(route('mo.users', ['branch_id' => $branchB->id]))
+            ->assertOk()->assertDontSee('name="branch_id"', false);
+    }
+
+    public function test_users_date_range_filters_donation_totals(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeDonation($branch, $agent, $supervisor, $program, 300000, null, '2026-01-15');
+        $this->makeDonation($branch, $agent, $supervisor, $program, 700000, null, '2026-03-15');
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.users', ['from' => '2026-03-01', 'to' => '2026-03-31']))
+            ->assertOk()
+            ->assertSee('Rp 700.000')
+            ->assertSee('dari 1 transaksi · 0 donatur');
+    }
+
+    public function test_users_sorted_by_largest_donation(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $big = $this->makeUser('agen', $branch);
+        $small = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeDonation($branch, $big, $supervisor, $program, 900000);
+        $this->makeDonation($branch, $small, $supervisor, $program, 100000);
+
+        $html = $this->actingAs($supervisor)
+            ->get(route('mo.users', ['sort' => 'donation']))
+            ->assertOk()->getContent();
+
+        $this->assertLessThan(
+            mb_strpos($html, $small->name),
+            mb_strpos($html, $big->name),
+            'Agen dengan donasi terbesar harus tampil lebih dulu.'
+        );
+    }
+
+    public function test_user_detail_json_includes_public_profile_url(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.api.user-detail', $agent))
+            ->assertOk()
+            ->assertJsonPath('public_url', route('public.agent', $agent->slug));
+    }
+
+    public function test_mobile_user_form_uses_plain_non_sticky_save_button(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        foreach ([route('mo.user.create'), route('mo.user.edit', $agent)] as $url) {
+            $this->actingAs($supervisor)->get($url)
+                ->assertOk()
+                ->assertSee('mo-form-footer mo-form-footer--static', false)
+                ->assertSee('Simpan</button>', false)
+                ->assertDontSee('Simpan Perubahan');
+        }
     }
 }
