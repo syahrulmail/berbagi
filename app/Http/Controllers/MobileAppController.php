@@ -322,8 +322,18 @@ class MobileAppController extends Controller
             ];
         });
 
+        // Papan peringkat cabang & agen: terlihat semua role, sesuai periode.
+        $leaderboardQuery = Donation::query();
+        if (! $periodIsAll) {
+            $leaderboardQuery->whereDate('donation_date', '>=', $from)
+                ->whereDate('donation_date', '<=', $to);
+        }
+        if ($isAdmin && ! empty($selectedBranches)) {
+            $leaderboardQuery->whereIn('branch_id', $selectedBranches);
+        }
+
         // Cabang dengan total donasi tertinggi (sesuai periode)
-        $topBranchRows = (clone $periodQuery)
+        $topBranchRows = (clone $leaderboardQuery)
             ->whereNotNull('branch_id')
             ->selectRaw('branch_id, SUM(amount) as total, COUNT(*) as transactions')
             ->groupBy('branch_id')
@@ -345,7 +355,7 @@ class MobileAppController extends Controller
         });
 
         // Agen dengan total donasi tertinggi (> 0) sesuai periode
-        $topAgentRows = (clone $periodQuery)
+        $topAgentRows = (clone $leaderboardQuery)
             ->whereNotNull('agen_id')
             ->selectRaw('agen_id, SUM(amount) as total, COUNT(*) as transactions')
             ->groupBy('agen_id')

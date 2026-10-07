@@ -738,6 +738,35 @@ class MobileModulesTest extends TestCase
             ->assertDontSee('Rp 70.000');
     }
 
+    public function test_branch_and_agent_leaderboards_visible_to_all_roles(): void
+    {
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+        $agenA = $this->makeUser('agen', $branchA);
+        $agenB = $this->makeUser('agen', $branchB);
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branchA, $agenA, $program, 100000, now()->toDateString());
+        $this->makeProgramDonation($branchB, $agenB, $program, 50000, now()->toDateString());
+
+        // Agen cabang A tetap melihat cabang & agen lain
+        $this->actingAs($agenA)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('Tertinggi - Cabang')
+            ->assertSee('Tertinggi - Agent')
+            ->assertSee($branchB->name)
+            ->assertSee($agenB->name);
+
+        // Supervisor cabang A juga melihat cabang & agen lain
+        $this->actingAs($supervisor)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee($branchB->name)
+            ->assertSee($agenB->name);
+    }
+
     public function test_today_card_shows_branch_summary(): void
     {
         $branchA = $this->makeBranch('A');
