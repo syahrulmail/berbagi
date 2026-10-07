@@ -559,6 +559,19 @@ class UserManagementTest extends TestCase
             ->assertOk()->assertDontSee('name="branch_id"', false);
     }
 
+    public function test_users_search_bar_matches_contact_style(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('mo.users'))
+            ->assertOk()
+            ->assertSee('placeholder="Cari nama / nomor HP..."', false)
+            ->assertSee('data-filter-toggle="mo-user-filters"', false)
+            ->assertSee('fa-sliders', false)
+            ->assertDontSee('Terapkan');
+    }
+
     public function test_users_date_range_filters_donation_totals(): void
     {
         $branch = $this->makeBranch();

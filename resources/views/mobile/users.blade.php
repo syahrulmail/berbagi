@@ -24,22 +24,21 @@
     <div class="mo-sticky-filter">
         <form method="GET" action="{{ route('mo.users') }}" id="mo-user-form">
             <div class="mo-search-flex">
-                <button type="button" class="mo-filter-toggle {{ $hasFilter ? 'has-filter' : '' }}" id="mo-user-filter-toggle"
-                        data-filter-toggle="mo-user-filters" aria-label="Cari &amp; filter pengguna" aria-expanded="false">
+                <div class="mo-search">
                     <i class="fas fa-magnifying-glass"></i>
+                    <input type="search" name="search" placeholder="Cari nama / nomor HP..." value="{{ request('search') }}">
+                </div>
+                <button type="button" class="mo-filter-toggle {{ $hasFilter ? 'has-filter' : '' }}" id="mo-user-filter-toggle"
+                        data-filter-toggle="mo-user-filters" aria-label="Filter pengguna" aria-expanded="false">
+                    <i class="fas fa-sliders"></i>
                 </button>
             </div>
 
             <div id="mo-user-filters" hidden>
-                <div class="mo-search" style="margin-top:10px;">
-                    <i class="fas fa-magnifying-glass"></i>
-                    <input type="search" name="search" placeholder="Cari nama / nomor HP..." value="{{ request('search') }}">
-                </div>
-
                 @if(auth()->user()->isAdmin())
-                    <div class="mo-field">
+                    <div class="mo-field" style="margin-top:10px;">
                         <label for="mo-user-branch">Cabang</label>
-                        <select id="mo-user-branch" name="branch_id" class="mo-select">
+                        <select id="mo-user-branch" name="branch_id" class="mo-select" onchange="this.form.submit()">
                             <option value="">— Semua Cabang —</option>
                             @foreach($branches as $branch)
                                 <option value="{{ $branch->id }}" {{ (string) request('branch_id') === (string) $branch->id ? 'selected' : '' }}>
@@ -53,11 +52,11 @@
                 <div style="display:flex;gap:10px;">
                     <div class="mo-field" style="flex:1;">
                         <label for="mo-user-from">Dari Tanggal</label>
-                        <input type="date" id="mo-user-from" name="from" class="mo-input" value="{{ request('from') }}">
+                        <input type="date" id="mo-user-from" name="from" class="mo-input" value="{{ request('from') }}" onchange="this.form.submit()">
                     </div>
                     <div class="mo-field" style="flex:1;">
                         <label for="mo-user-to">Sampai Tanggal</label>
-                        <input type="date" id="mo-user-to" name="to" class="mo-input" value="{{ request('to') }}">
+                        <input type="date" id="mo-user-to" name="to" class="mo-input" value="{{ request('to') }}" onchange="this.form.submit()">
                     </div>
                 </div>
 
@@ -71,14 +70,13 @@
                     </button>
                 </div>
 
-                <div style="display:flex;gap:10px;">
-                    <button type="submit" class="mo-btn mo-btn-primary" style="flex:1;"><i class="fas fa-check"></i> Terapkan</button>
-                    @if($hasFilter)
-                        <a href="{{ route('mo.users') }}" class="mo-btn mo-btn-ghost" style="flex:0 0 auto;" aria-label="Reset filter">
-                            <i class="fas fa-rotate-left"></i>
+                @if($hasFilter)
+                    <div style="text-align:right;">
+                        <a href="{{ route('mo.users') }}" style="font-size:12px;color:var(--mo-muted);text-decoration:none;">
+                            <i class="fas fa-rotate-left"></i> Reset filter
                         </a>
-                    @endif
-                </div>
+                    </div>
+                @endif
             </div>
         </form>
     </div>
