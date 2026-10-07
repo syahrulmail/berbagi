@@ -429,12 +429,17 @@ class MobileAppController extends Controller
      */
     public function users()
     {
+        $profiles = Setting::where('key', 'like', 'agent_profile_%')->pluck('value', 'key');
+
         $users = User::with('branch')
             ->visibleTo(auth()->user())
             ->orderBy('role')
             ->orderBy('name')
             ->get()
-            ->map(function ($u) {
+            ->map(function ($u) use ($profiles) {
+                $profile = json_decode($profiles->get('agent_profile_' . $u->slug, '{}'), true);
+                $photo = is_array($profile) ? (string) ($profile['photo'] ?? '') : '';
+
                 return [
                     'id' => $u->id,
                     'name' => $u->name,
@@ -443,6 +448,7 @@ class MobileAppController extends Controller
                     'branch' => $u->branch->name ?? '-',
                     'is_active' => (bool) $u->is_active,
                     'initial' => strtoupper(substr($u->name, 0, 1)),
+                    'photo_url' => $photo !== '' ? asset_photo_url($photo) : '',
                 ];
             });
 

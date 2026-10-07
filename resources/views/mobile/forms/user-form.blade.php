@@ -16,7 +16,7 @@
 </div>
 
 <div class="mo-content" style="padding-top:0;">
-    <form method="POST" action="{{ $editUser ? route('mo.user.update', $editUser->id) : route('mo.user.store') }}" class="mo-form">
+    <form method="POST" action="{{ $editUser ? route('mo.user.update', $editUser->id) : route('mo.user.store') }}" class="mo-form" enctype="multipart/form-data">
         @csrf
         @if($editUser)
             @method('PUT')
@@ -41,8 +41,37 @@
             </div>
 
             <div class="mo-field">
-                <label for="phone">No. Handphone</label>
-                <input type="tel" id="phone" name="phone" class="mo-input" value="{{ old('phone', $editUser->phone ?? '') }}" placeholder="628xxxxxxx">
+                <label for="phone">No. Handphone <span class="req">*</span></label>
+                <input type="tel" id="phone" name="phone" class="mo-input" value="{{ old('phone', $editUser->phone ?? '') }}" required placeholder="628xxxxxxx">
+            </div>
+        </div>
+
+        @php $photoUrl = asset_photo_url($profile['photo'] ?? ''); @endphp
+        <div class="mo-form-card">
+            <h3 class="mo-form-card-title"><i class="fas fa-camera"></i> Foto Profil</h3>
+
+            <div style="text-align:center;">
+                <div class="mo-avatar" style="width:88px;height:88px;font-size:34px;margin:2px auto 12px;">
+                    <img id="moUserPhotoPreview" src="{{ $photoUrl }}" alt="Foto profil {{ $editUser->name ?? '' }}"
+                         style="width:100%;height:100%;object-fit:cover;border-radius:50%;{{ $photoUrl === '' ? 'display:none;' : '' }}">
+                    <span id="moUserPhotoPlaceholder" style="{{ $photoUrl !== '' ? 'display:none;' : '' }}">{{ strtoupper(substr($editUser->name ?? '?', 0, 1)) }}</span>
+                </div>
+
+                <input type="file" id="moUserPhoto" name="photo" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                <input type="hidden" name="existing_photo" value="{{ $profile['photo'] ?? '' }}">
+                <input type="hidden" name="photo_remove" id="moUserPhotoRemove" value="0">
+
+                <label for="moUserPhoto" class="mo-btn mo-btn-ghost" style="display:inline-flex;width:auto;">
+                    <i class="fas fa-camera"></i> Pilih Foto
+                </label>
+                <button type="button" id="moUserPhotoDelete" class="mo-btn mo-btn-ghost" style="display:{{ $photoUrl !== '' ? 'inline-flex' : 'none' }};width:auto;">
+                    <i class="fas fa-trash-can"></i> Hapus
+                </button>
+
+                <div style="font-size:11px;color:var(--mo-muted);margin-top:10px;">JPG/PNG/WebP maks. 2MB.</div>
+                @error('photo')
+                    <small style="color:var(--mo-danger);display:block;margin-top:4px;">{{ $message }}</small>
+                @enderror
             </div>
         </div>
 
@@ -50,12 +79,12 @@
             <h3 class="mo-form-card-title"><i class="fas fa-key"></i> Keamanan</h3>
 
             <div class="mo-field">
-                <label for="password">{{ $editUser ? 'Password Baru' : 'Password' }} {{ $editUser ? '' : '<span class="req">*</span>' }}</label>
+                <label for="password">{{ $editUser ? 'Password Baru' : 'Password' }} @if(!$editUser)<span class="req">*</span>@endif</label>
                 <input type="password" id="password" name="password" class="mo-input" {{ $editUser ? '' : 'required' }} placeholder="{{ $editUser ? 'Kosongkan bila tidak diubah' : 'Minimal 8 karakter' }}" autocomplete="new-password">
             </div>
 
             <div class="mo-field" style="margin-bottom:0;">
-                <label for="password_confirmation">{{ $editUser ? 'Konfirmasi Password Baru' : 'Konfirmasi Password' }} {{ $editUser ? '' : '<span class="req">*</span>' }}</label>
+                <label for="password_confirmation">{{ $editUser ? 'Konfirmasi Password Baru' : 'Konfirmasi Password' }} @if(!$editUser)<span class="req">*</span>@endif</label>
                 <input type="password" id="password_confirmation" name="password_confirmation" class="mo-input" {{ $editUser ? '' : 'required' }} placeholder="Ulangi password" autocomplete="new-password">
             </div>
         </div>
@@ -117,3 +146,43 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        var input = document.getElementById('moUserPhoto');
+        if (!input) return;
+
+        var preview = document.getElementById('moUserPhotoPreview');
+        var placeholder = document.getElementById('moUserPhotoPlaceholder');
+        var removeField = document.getElementById('moUserPhotoRemove');
+        var deleteBtn = document.getElementById('moUserPhotoDelete');
+
+        input.addEventListener('change', function () {
+            var file = input.files && input.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.style.display = '';
+                placeholder.style.display = 'none';
+                if (removeField) removeField.value = '0';
+                if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+                input.value = '';
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+                placeholder.style.display = '';
+                if (removeField) removeField.value = '1';
+                deleteBtn.style.display = 'none';
+            });
+        }
+    })();
+</script>
+@endpush

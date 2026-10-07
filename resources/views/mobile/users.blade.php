@@ -24,8 +24,12 @@
         @forelse($users as $u)
             <a href="{{ route('mo.user.edit', $u['id']) }}" style="text-decoration:none;color:inherit;display:block;">
                 <div class="mo-row" style="cursor:pointer;">
-                    <div class="mo-row-icon {{ $u['role'] === 'admin' ? 'red' : ($u['role'] === 'supervisor' ? 'blue' : '') }}">
-                        {{ $u['initial'] }}
+                    <div class="mo-row-icon {{ $u['role'] === 'admin' ? 'red' : ($u['role'] === 'supervisor' ? 'blue' : '') }}" style="overflow:hidden;">
+                        @if($u['photo_url'])
+                            <img src="{{ $u['photo_url'] }}" alt="{{ $u['name'] }}" style="width:100%;height:100%;object-fit:cover;">
+                        @else
+                            {{ $u['initial'] }}
+                        @endif
                     </div>
                     <div class="mo-row-body">
                         <div class="mo-row-title">{{ $u['name'] }}</div>

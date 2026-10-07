@@ -15,16 +15,7 @@ class ProfileService
      */
     public function data(User $user): array
     {
-        $decoded = json_decode(Setting::get('agent_profile_' . $user->slug, '{}'), true);
-
-        if (! is_array($decoded)) {
-            return ['photo' => '', 'intro' => ''];
-        }
-
-        return [
-            'photo' => (string) ($decoded['photo'] ?? ''),
-            'intro' => (string) ($decoded['intro'] ?? ''),
-        ];
+        return $this->decode(Setting::get('agent_profile_' . $user->slug, '{}'));
     }
 
     /**
@@ -70,5 +61,61 @@ class ProfileService
         }
 
         Storage::disk('public')->delete($path);
+    }
+
+    /**
+     * Simpan hanya foto profil user (sambutan dipertahankan).
+     * Mendukung perpindahan key bila slug/username berubah.
+     */
+    public function savePhoto(User $user, Request $request, ?string $oldSlug = null): void
+    {
+        $data = $request->validate([
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'existing_photo' => ['nullable', 'string', 'max:255'],
+            'photo_remove' => ['nullable', 'string', 'in:0,1'],
+        ]);
+
+        $oldSlug = $oldSlug ?: $user->slug;
+        $oldKey = 'agent_profile_' . $oldSlug;
+        $newKey = 'agent_profile_' . $user->slug;
+
+        $profile = $this->decode(Setting::get($oldKey, '{}'));
+        $photo = (string) ($data['existing_photo'] ?? $profile['photo']);
+        $removeFlag = (string) ($data['photo_remove'] ?? '0');
+
+        $file = $request->file('photo');
+        if ($file !== null && $file->isValid()) {
+            $newPath = $file->store('agents', 'public');
+            if ($newPath && $photo && $photo !== $newPath) {
+                $this->deleteStoredPhoto($photo);
+            }
+            $photo = $newPath ?: $photo;
+        } elseif ($removeFlag === '1' && $photo) {
+            $this->deleteStoredPhoto($photo);
+            $photo = '';
+        }
+
+        if ($oldKey !== $newKey) {
+            Setting::where('key', $oldKey)->delete();
+        }
+
+        Setting::set($newKey, json_encode([
+            'photo' => $photo,
+            'intro' => $profile['intro'],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
+    protected function decode(string $json): array
+    {
+        $decoded = json_decode($json, true);
+
+        if (! is_array($decoded)) {
+            return ['photo' => '', 'intro' => ''];
+        }
+
+        return [
+            'photo' => (string) ($decoded['photo'] ?? ''),
+            'intro' => (string) ($decoded['intro'] ?? ''),
+        ];
     }
 }

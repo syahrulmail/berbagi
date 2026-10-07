@@ -9,6 +9,7 @@ use App\Models\Donation;
 use App\Models\Program;
 use App\Models\User;
 use App\Services\ContactImportService;
+use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -579,7 +580,11 @@ class MobileCrudController extends MobileAppController
     {
         $branches = $this->formBranches(auth()->user());
 
-        return view('mobile.forms.user-form', compact('branches'))->with('editUser', null);
+        return view('mobile.forms.user-form', [
+            'branches' => $branches,
+            'editUser' => null,
+            'profile' => ['photo' => '', 'intro' => ''],
+        ]);
     }
 
     public function userStore(Request $request)
@@ -593,7 +598,7 @@ class MobileCrudController extends MobileAppController
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
             'branch_id' => ['nullable', 'exists:branches,id'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['required', 'string', 'max:30'],
         ]);
 
         if (! $actor->isAdmin()) {
@@ -607,6 +612,7 @@ class MobileCrudController extends MobileAppController
 
         $user = User::create($data);
         $this->syncSupervisorBranch($user, $data);
+        $this->saveUserPhoto($request, $user);
 
         ActivityLog::record('user.create', 'Membuat user ' . $user->name);
 
@@ -618,8 +624,9 @@ class MobileCrudController extends MobileAppController
         $editUser = User::findOrFail($id);
         $this->authorizeUserManage($editUser);
         $branches = $this->formBranches(auth()->user());
+        $profile = (new ProfileService())->data($editUser);
 
-        return view('mobile.forms.user-form', compact('editUser', 'branches'));
+        return view('mobile.forms.user-form', compact('editUser', 'branches', 'profile'));
     }
 
     public function userUpdate(Request $request, $id)
@@ -635,7 +642,7 @@ class MobileCrudController extends MobileAppController
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
             'branch_id' => ['nullable', 'exists:branches,id'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['required', 'string', 'max:30'],
         ]);
 
         if (! $actor->isAdmin()) {
@@ -650,14 +657,33 @@ class MobileCrudController extends MobileAppController
         }
 
         $data['is_active'] = $request->boolean('is_active');
+        $oldSlug = $user->slug;
         $data['slug'] = User::uniqueSlug($data['username'], $user->id);
 
         $user->update($data);
         $this->syncSupervisorBranch($user, $data);
+        $this->saveUserPhoto($request, $user, $oldSlug);
 
         ActivityLog::record('user.update', 'Memperbarui user ' . $user->name);
 
         return redirect()->route('mo.users')->with('success', 'Pengguna berhasil diperbarui.');
+    }
+
+    /**
+     * Simpan foto profil user bila ada perubahan (upload/hapus/ganti slug).
+     */
+    protected function saveUserPhoto(Request $request, User $user, ?string $oldSlug = null): void
+    {
+        $hasFile = $request->hasFile('photo');
+        $remove = (string) $request->input('photo_remove', '0') === '1';
+        $existing = (string) $request->input('existing_photo', '');
+        $slugMoved = $oldSlug !== null && $oldSlug !== $user->slug;
+
+        if (! $hasFile && ! $remove && $existing === '' && ! $slugMoved) {
+            return;
+        }
+
+        (new ProfileService())->savePhoto($user, $request, $oldSlug);
     }
 
     public function userDestroy($id)

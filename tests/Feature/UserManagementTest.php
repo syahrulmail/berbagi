@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Branch;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -45,6 +48,7 @@ class UserManagementTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'role' => 'agen',
+            'phone' => '628123456789',
         ], $overrides);
     }
 
@@ -308,5 +312,77 @@ class UserManagementTest extends TestCase
             ->get(route('mo.user.create'))
             ->assertOk()
             ->assertSee('value="' . $branch->id . '" selected', false);
+    }
+
+    public function test_mobile_user_form_has_photo_field_and_required_labels(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.user.create'))
+            ->assertOk()
+            ->assertSee('Foto Profil')
+            ->assertSee('name="photo"', false)
+            ->assertSee('<span class="req">*</span>', false)
+            ->assertSee('enctype="multipart/form-data"', false);
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.user.edit', $agent))
+            ->assertOk()
+            ->assertSee('Foto Profil')
+            ->assertSee('name="photo"', false);
+    }
+
+    public function test_mobile_user_store_requires_phone(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+
+        $payload = $this->payload(['role' => 'agen', 'branch_id' => $branch->id]);
+        unset($payload['phone']);
+
+        $this->actingAs($supervisor)
+            ->post(route('mo.user.store'), $payload)
+            ->assertSessionHasErrors('phone');
+    }
+
+    public function test_mobile_supervisor_can_upload_agent_photo(): void
+    {
+        Storage::fake('public');
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+
+        $payload = $this->payload([
+            'role' => 'agen',
+            'branch_id' => $branch->id,
+            'photo' => UploadedFile::fake()->image('agent.jpg'),
+        ]);
+
+        $this->actingAs($supervisor)
+            ->post(route('mo.user.store'), $payload)
+            ->assertRedirect(route('mo.users'));
+
+        $agent = User::where('username', $payload['username'])->firstOrFail();
+        $stored = json_decode(Setting::get('agent_profile_' . $agent->slug, '{}'), true);
+        $this->assertNotEmpty($stored['photo'] ?? '');
+        Storage::disk('public')->assertExists($stored['photo']);
+    }
+
+    public function test_mobile_users_list_shows_profile_photo(): void
+    {
+        Storage::fake('public');
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        $path = 'agents/photo-' . uniqid() . '.jpg';
+        Setting::set('agent_profile_' . $agent->slug, json_encode(['photo' => $path, 'intro' => '']));
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.users'))
+            ->assertOk()
+            ->assertSee(asset_photo_url($path));
     }
 }
