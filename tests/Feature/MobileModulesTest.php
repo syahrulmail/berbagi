@@ -693,6 +693,51 @@ class MobileModulesTest extends TestCase
             ->assertDontSee('vs periode sebelumnya');
     }
 
+    public function test_dashboard_shows_top_branches_and_agents(): void
+    {
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+        $admin = $this->makeUser('admin');
+        $agenA = $this->makeUser('agen', $branchA);
+        $agenB = $this->makeUser('agen', $branchB);
+        $idleAgen = $this->makeUser('agen', $branchB);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branchA, $agenA, $program, 100000, now()->toDateString());
+        $this->makeProgramDonation($branchB, $agenB, $program, 50000, now()->toDateString());
+
+        $response = $this->actingAs($admin)->get(route('mo.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Tertinggi - Cabang');
+        $response->assertSee('Tertinggi - Agent');
+        $response->assertSee('id="mo-top-branch-body" class="mo-collapse-body mo-list" hidden', false);
+        $response->assertSee('id="mo-top-agent-body" class="mo-collapse-body mo-list" hidden', false);
+        $response->assertSee($branchA->name);
+        $response->assertSee($agenA->name);
+        $response->assertSee($agenB->name);
+        $response->assertDontSee($idleAgen->name);
+    }
+
+    public function test_top_branches_and_agents_are_scoped_by_period(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branch, $agen, $program, 70000, '2026-01-10');
+        $this->makeProgramDonation($branch, $agen, $program, 30000, '2026-07-10');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['from' => '2026-07-01', 'to' => '2026-07-31']))
+            ->assertOk()
+            ->assertSee('Tertinggi - Cabang')
+            ->assertSee('Tertinggi - Agent')
+            ->assertSee('Rp 30.000')
+            ->assertDontSee('Rp 70.000');
+    }
+
     public function test_today_card_shows_branch_summary(): void
     {
         $branchA = $this->makeBranch('A');

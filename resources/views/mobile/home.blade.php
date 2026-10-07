@@ -222,6 +222,69 @@
             @endforelse
         </div>
     </div>
+
+    {{-- Tertinggi - Cabang --}}
+    <div class="mo-card mo-card--list">
+        <div class="mo-card-head mo-card-head--collapse">
+            <h2 class="mo-card-title"><i class="fas fa-trophy"></i> Tertinggi - Cabang</h2>
+            <div class="mo-card-head-actions">
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-top-branch-body" aria-expanded="false" aria-label="Tampilkan cabang tertinggi">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mo-top-branch-body" class="mo-collapse-body mo-list" hidden>
+            @forelse($topBranches as $b)
+                <div class="mo-row">
+                    <div class="mo-row-icon blue"><i class="fas fa-code-branch"></i></div>
+                    <div class="mo-row-body">
+                        <div class="mo-row-title">{{ $b->name }}</div>
+                        <div class="mo-row-sub">{{ number_format($b->transactions, 0, ',', '.') }}x donasi</div>
+                    </div>
+                    <div class="mo-row-end">
+                        <div class="amount">{{ $b->total_formatted }}</div>
+                    </div>
+                </div>
+            @empty
+                <div class="mo-empty">
+                    <i class="fas fa-code-branch"></i>
+                    <p>Belum ada donasi pada periode ini.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- Tertinggi - Agent --}}
+    <div class="mo-card mo-card--list">
+        <div class="mo-card-head mo-card-head--collapse">
+            <h2 class="mo-card-title"><i class="fas fa-trophy"></i> Tertinggi - Agent</h2>
+            <div class="mo-card-head-actions">
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-top-agent-body" aria-expanded="false" aria-label="Tampilkan agen tertinggi">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mo-top-agent-body" class="mo-collapse-body mo-list" hidden>
+            @forelse($topAgents as $a)
+                <div class="mo-row">
+                    <div class="mo-row-icon gold">{{ $a->initial }}</div>
+                    <div class="mo-row-body">
+                        <div class="mo-row-title">{{ $a->name }}</div>
+                        <div class="mo-row-sub">{{ $a->branch_name ?: '-' }}</div>
+                    </div>
+                    <div class="mo-row-end">
+                        <div class="amount">{{ $a->total_formatted }}</div>
+                        <div class="date">{{ number_format($a->transactions, 0, ',', '.') }}x donasi</div>
+                    </div>
+                </div>
+            @empty
+                <div class="mo-empty">
+                    <i class="fas fa-user-tie"></i>
+                    <p>Belum ada donasi pada periode ini.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
 </div>
 
 <a href="{{ route('mo.donations') }}" class="mo-fab" title="Catat Donasi" data-href="{{ route('mo.donation.create') }}" aria-label="Catat Donasi">

@@ -322,6 +322,53 @@ class MobileAppController extends Controller
             ];
         });
 
+        // Cabang dengan total donasi tertinggi (sesuai periode)
+        $topBranchRows = (clone $periodQuery)
+            ->whereNotNull('branch_id')
+            ->selectRaw('branch_id, SUM(amount) as total, COUNT(*) as transactions')
+            ->groupBy('branch_id')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $branchesById = Branch::whereIn('id', $topBranchRows->pluck('branch_id'))->get()->keyBy('id');
+
+        $topBranches = $topBranchRows->map(function ($row) use ($branchesById) {
+            $branch = $branchesById->get($row->branch_id);
+
+            return (object) [
+                'branch_id' => $row->branch_id,
+                'name' => $branch->name ?? 'Cabang',
+                'total_formatted' => 'Rp ' . number_format((float) $row->total, 0, ',', '.'),
+                'transactions' => (int) $row->transactions,
+            ];
+        });
+
+        // Agen dengan total donasi tertinggi (> 0) sesuai periode
+        $topAgentRows = (clone $periodQuery)
+            ->whereNotNull('agen_id')
+            ->selectRaw('agen_id, SUM(amount) as total, COUNT(*) as transactions')
+            ->groupBy('agen_id')
+            ->havingRaw('SUM(amount) > 0')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $agentsById = User::with('branch')->whereIn('id', $topAgentRows->pluck('agen_id'))->get()->keyBy('id');
+
+        $topAgents = $topAgentRows->map(function ($row) use ($agentsById) {
+            $agent = $agentsById->get($row->agen_id);
+
+            return (object) [
+                'agent_id' => $row->agen_id,
+                'name' => $agent->name ?? 'Agen',
+                'branch_name' => ($agent && $agent->branch) ? $agent->branch->name : null,
+                'initial' => strtoupper(substr($agent->name ?? '?', 0, 1)),
+                'total_formatted' => 'Rp ' . number_format((float) $row->total, 0, ',', '.'),
+                'transactions' => (int) $row->transactions,
+            ];
+        });
+
         $totalPrograms = Program::where('is_active', true)->count();
         $totalContacts = (clone $this->scopeContacts(Contact::query()))->count();
         $donatedContacts = (clone $this->scopeContacts(Contact::query()))->where('status', 'donated')->count();
@@ -368,6 +415,7 @@ class MobileAppController extends Controller
             'periodTotal', 'periodTransactions', 'periodDonors', 'periodLabel', 'growthPercent',
             'overallProgress', 'totalTarget', 'trend', 'trendMax',
             'topContacts', 'topPrograms', 'totalPrograms', 'totalContacts',
+            'topBranches', 'topAgents',
             'donatedContacts', 'waNumber',
             'totalRecorded', 'totalTransactions', 'totalDonors',
             'branches', 'selectedBranches', 'branchSummary', 'isAdmin', 'from', 'to',
