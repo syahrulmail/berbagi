@@ -73,9 +73,11 @@
                 <a href="{{ route('activity-logs.index') }}" class="nav-item {{ request()->routeIs('activity-logs.*') ? 'active' : '' }}">
                     <i class="fas fa-clipboard-list"></i><span class="nav-text">Log Aktivitas</span>
                 </a>
-                <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                    <i class="fas fa-gear"></i><span class="nav-text">Pengaturan</span>
-                </a>
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+                        <i class="fas fa-gear"></i><span class="nav-text">Pengaturan</span>
+                    </a>
+                @endif
             @endif
         </nav>
 
