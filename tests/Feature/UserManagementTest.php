@@ -385,4 +385,20 @@ class UserManagementTest extends TestCase
             ->assertOk()
             ->assertSee(asset_photo_url($path));
     }
+
+    public function test_photo_field_card_is_first(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        foreach ([route('mo.user.create'), route('mo.user.edit', $agent)] as $url) {
+            $html = $this->actingAs($supervisor)->get($url)->assertOk()->getContent();
+            $this->assertLessThan(
+                mb_strpos($html, 'Identitas'),
+                mb_strpos($html, 'Foto Profil'),
+                'Kartu Foto Profil harus berada sebelum Identitas.'
+            );
+        }
+    }
 }

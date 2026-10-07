@@ -22,30 +22,6 @@
             @method('PUT')
         @endif
 
-        <div class="mo-form-card">
-            <h3 class="mo-form-card-title"><i class="fas fa-user"></i> Identitas</h3>
-
-            <div class="mo-field">
-                <label for="name">Nama Lengkap <span class="req">*</span></label>
-                <input type="text" id="name" name="name" class="mo-input" value="{{ old('name', $editUser->name ?? '') }}" required placeholder="Nama lengkap pengguna">
-            </div>
-
-            <div class="mo-field">
-                <label for="username">Username <span class="req">*</span></label>
-                <input type="text" id="username" name="username" class="mo-input" value="{{ old('username', $editUser->username ?? '') }}" required placeholder="nama.pengguna">
-            </div>
-
-            <div class="mo-field">
-                <label for="email">Email <span class="req">*</span></label>
-                <input type="email" id="email" name="email" class="mo-input" value="{{ old('email', $editUser->email ?? '') }}" required placeholder="nama@email.com">
-            </div>
-
-            <div class="mo-field">
-                <label for="phone">No. Handphone <span class="req">*</span></label>
-                <input type="tel" id="phone" name="phone" class="mo-input" value="{{ old('phone', $editUser->phone ?? '') }}" required placeholder="628xxxxxxx">
-            </div>
-        </div>
-
         @php $photoUrl = asset_photo_url($profile['photo'] ?? ''); @endphp
         <div class="mo-form-card">
             <h3 class="mo-form-card-title"><i class="fas fa-camera"></i> Foto Profil</h3>
@@ -72,6 +48,30 @@
                 @error('photo')
                     <small style="color:var(--mo-danger);display:block;margin-top:4px;">{{ $message }}</small>
                 @enderror
+            </div>
+        </div>
+
+        <div class="mo-form-card">
+            <h3 class="mo-form-card-title"><i class="fas fa-user"></i> Identitas</h3>
+
+            <div class="mo-field">
+                <label for="name">Nama Lengkap <span class="req">*</span></label>
+                <input type="text" id="name" name="name" class="mo-input" value="{{ old('name', $editUser->name ?? '') }}" required placeholder="Nama lengkap pengguna">
+            </div>
+
+            <div class="mo-field">
+                <label for="username">Username <span class="req">*</span></label>
+                <input type="text" id="username" name="username" class="mo-input" value="{{ old('username', $editUser->username ?? '') }}" required placeholder="nama.pengguna">
+            </div>
+
+            <div class="mo-field">
+                <label for="email">Email <span class="req">*</span></label>
+                <input type="email" id="email" name="email" class="mo-input" value="{{ old('email', $editUser->email ?? '') }}" required placeholder="nama@email.com">
+            </div>
+
+            <div class="mo-field">
+                <label for="phone">No. Handphone <span class="req">*</span></label>
+                <input type="tel" id="phone" name="phone" class="mo-input" value="{{ old('phone', $editUser->phone ?? '') }}" required placeholder="628xxxxxxx">
             </div>
         </div>
 
