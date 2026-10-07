@@ -211,16 +211,18 @@ Route::middleware('auth')->group(function () {
             Route::delete('/pencapaian/{achievement}', [MobileModuleController::class, 'achievementDestroy'])->name('achievements.destroy');
         });
 
-        // Banner & Label (admin, supervisor)
-        Route::middleware('role:admin,supervisor')->group(function () {
+        // Banner & Label (admin)
+        Route::middleware('role:admin')->group(function () {
             Route::get('/banner', [MobileModuleController::class, 'bannerIndex'])->name('banners');
             Route::get('/banner/tambah', [MobileModuleController::class, 'bannerCreate'])->name('banners.create');
             Route::post('/banner/tambah', [MobileModuleController::class, 'bannerStore'])->name('banners.store');
             Route::get('/banner/{banner}/edit', [MobileModuleController::class, 'bannerEdit'])->name('banners.edit');
             Route::put('/banner/{banner}', [MobileModuleController::class, 'bannerUpdate'])->name('banners.update');
             Route::delete('/banner/{banner}', [MobileModuleController::class, 'bannerDestroy'])->name('banners.destroy');
+        });
 
-            // Log Aktivitas (admin, supervisor)
+        // Log Aktivitas (admin, supervisor)
+        Route::middleware('role:admin,supervisor')->group(function () {
             Route::get('/log', [MobileModuleController::class, 'activityLogIndex'])->name('activity-logs');
         });
 

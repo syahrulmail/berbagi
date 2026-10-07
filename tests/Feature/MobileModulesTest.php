@@ -82,16 +82,17 @@ class MobileModulesTest extends TestCase
         }
     }
 
-    public function test_supervisor_can_open_content_monitoring_but_not_admin_only(): void
+    public function test_supervisor_can_open_activity_log_but_not_admin_only(): void
     {
         $supervisor = $this->makeUser('supervisor', $this->makeBranch());
 
-        foreach (['mo.banners', 'mo.banners.create', 'mo.activity-logs', 'mo.whatsapp', 'mo.followups', 'mo.contact.import-form'] as $name) {
+        foreach (['mo.activity-logs', 'mo.whatsapp', 'mo.followups', 'mo.contact.import-form'] as $name) {
             $this->actingAs($supervisor)->get(route($name))->assertOk();
         }
 
-        $this->actingAs($supervisor)->get(route('mo.campaign-tags'))->assertForbidden();
-        $this->actingAs($supervisor)->get(route('mo.achievements'))->assertForbidden();
+        foreach (['mo.banners', 'mo.banners.create', 'mo.campaign-tags', 'mo.achievements'] as $name) {
+            $this->actingAs($supervisor)->get(route($name))->assertForbidden();
+        }
     }
 
     public function test_agen_can_open_communication_but_not_management(): void

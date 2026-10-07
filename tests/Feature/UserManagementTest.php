@@ -267,6 +267,18 @@ class UserManagementTest extends TestCase
             ->assertSee('Banner & Label');
     }
 
+    public function test_supervisor_cannot_access_banner_page(): void
+    {
+        $supervisor = $this->makeUser('supervisor', $this->makeBranch());
+
+        $this->actingAs($supervisor)->get(route('mo.banners'))->assertForbidden();
+    }
+
+    public function test_admin_can_access_banner_page(): void
+    {
+        $this->actingAs($this->makeUser('admin'))->get(route('mo.banners'))->assertOk();
+    }
+
     public function test_supervisor_sees_add_agent_in_sheet_on_users_page(): void
     {
         $supervisor = $this->makeUser('supervisor', $this->makeBranch());
