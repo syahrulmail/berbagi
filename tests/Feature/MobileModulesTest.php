@@ -543,6 +543,24 @@ class MobileModulesTest extends TestCase
             ->assertSee($branchB->name);
     }
 
+    public function test_dashboard_branch_panel_is_hidden_after_selection(): void
+    {
+        $admin = $this->makeUser('admin');
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('id="mo-branch-panel" hidden', false);
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['branches' => [$branchA->id, $branchB->id]]))
+            ->assertOk()
+            ->assertSee('id="mo-branch-panel" hidden', false)
+            ->assertSee('2 Cabang');
+    }
+
     public function test_non_admin_dashboard_branch_is_static_and_locked(): void
     {
         $branch = $this->makeBranch('S');

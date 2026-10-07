@@ -21,14 +21,14 @@
     <form method="GET" action="{{ route('mo.dashboard') }}" id="mo-dash-form" class="mo-dash-filters">
         @if($isAdmin)
             <div class="mo-hero-filter">
-                <button type="button" class="mo-hero-filter-toggle {{ !empty($selectedBranches) ? 'open' : '' }}"
+                <button type="button" class="mo-hero-filter-toggle"
                         data-filter-toggle="mo-branch-panel"
-                        aria-expanded="{{ !empty($selectedBranches) ? 'true' : 'false' }}" aria-label="Pilih cabang">
+                        aria-expanded="false" aria-label="Pilih cabang">
                     <i class="fas fa-code-branch"></i>
                     <span>{{ $branchSummary }}</span>
                     <i class="fas fa-chevron-down chev"></i>
                 </button>
-                <div class="mo-hero-filter-panel" id="mo-branch-panel" @if(empty($selectedBranches)) hidden @endif>
+                <div class="mo-hero-filter-panel" id="mo-branch-panel" hidden>
                     <label class="mo-hero-check">
                         <input type="checkbox" id="mo-branch-all" {{ empty($selectedBranches) ? 'checked' : '' }}>
                         <span>Semua Cabang</span>
