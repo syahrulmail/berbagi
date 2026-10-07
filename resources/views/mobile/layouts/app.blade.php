@@ -75,6 +75,16 @@
                 </span>
                 <i class="fas fa-chevron-right mo-add-action-chevron"></i>
             </a>
+            @if(auth()->user()->isSupervisor() && request()->routeIs('mo.users'))
+                <a href="{{ route('mo.user.create') }}" class="mo-add-action">
+                    <span class="mo-add-action-icon mo-add-action-icon--agent"><i class="fas fa-user-plus"></i></span>
+                    <span class="mo-add-action-text">
+                        <strong>Tambah Agen</strong>
+                        <small>Daftarkan agen baru di cabang Anda</small>
+                    </span>
+                    <i class="fas fa-chevron-right mo-add-action-chevron"></i>
+                </a>
+            @endif
         </div>
     </div>
 

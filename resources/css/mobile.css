@@ -843,6 +843,7 @@
     }
     .mo-add-action-icon--donation { background: linear-gradient(135deg, var(--mo-accent), var(--mo-primary)); }
     .mo-add-action-icon--contact { background: linear-gradient(135deg, #5aa0e0, #2f7fcd); }
+    .mo-add-action-icon--agent { background: linear-gradient(135deg, #3fbf9f, #0f8a7e); }
     .mo-add-action-text {
         flex: 1;
         display: flex;

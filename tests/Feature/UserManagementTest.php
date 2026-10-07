@@ -246,4 +246,55 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($agent)->get(route('mo.users'))->assertForbidden();
     }
+
+    public function test_supervisor_more_hides_banner_label(): void
+    {
+        $supervisor = $this->makeUser('supervisor', $this->makeBranch());
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.more'))
+            ->assertOk()
+            ->assertDontSee('Banner & Label')
+            ->assertSee('Log Aktivitas')
+            ->assertSee('Pengguna');
+    }
+
+    public function test_admin_more_shows_banner_label(): void
+    {
+        $this->actingAs($this->makeUser('admin'))
+            ->get(route('mo.more'))
+            ->assertOk()
+            ->assertSee('Banner & Label');
+    }
+
+    public function test_supervisor_sees_add_agent_in_sheet_on_users_page(): void
+    {
+        $supervisor = $this->makeUser('supervisor', $this->makeBranch());
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.users'))
+            ->assertOk()
+            ->assertSee('Tambah Agen');
+    }
+
+    public function test_add_agent_hidden_off_users_page(): void
+    {
+        $supervisor = $this->makeUser('supervisor', $this->makeBranch());
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.more'))
+            ->assertOk()
+            ->assertDontSee('Tambah Agen');
+    }
+
+    public function test_add_agent_form_preselects_supervisor_branch(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.user.create'))
+            ->assertOk()
+            ->assertSee('value="' . $branch->id . '" selected', false);
+    }
 }

@@ -82,7 +82,7 @@
                 <select id="branch_id" name="branch_id" class="mo-select">
                     <option value="">— Pilih Cabang —</option>
                     @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}" {{ old('branch_id', $editUser->branch_id ?? '') == $branch->id ? 'selected' : '' }}>
+                        <option value="{{ $branch->id }}" {{ old('branch_id', $editUser->branch_id ?? (auth()->user()->isSupervisor() ? auth()->user()->branch_id : '')) == $branch->id ? 'selected' : '' }}>
                             {{ $branch->name }}
                         </option>
                     @endforeach
