@@ -32,6 +32,22 @@ class MobileAppController extends Controller
     }
 
     /**
+     * Normalisasi input tanggal menjadi Y-m-d (atau null bila tidak valid).
+     */
+    protected function sanitizeDate($value): ?string
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->toDateString();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Scope data kontak berdasarkan peran user.
      */
     protected function scopeContacts($query)
@@ -97,8 +113,6 @@ class MobileAppController extends Controller
     {
         $user = auth()->user();
         $today = now()->toDateString();
-        $month = now()->month;
-        $year = now()->year;
 
         // Ringkasan donasi (scoped)
         $donationsQuery = Donation::query();
@@ -123,43 +137,53 @@ class MobileAppController extends Controller
         }
 
         $todayTotal = (clone $donationsQuery)->where('donation_date', $today)->sum('amount');
-        $monthTotal = (clone $donationsQuery)
-            ->whereYear('donation_date', $year)
-            ->whereMonth('donation_date', $month)
-            ->sum('amount');
-
-        $prevDate = now()->subMonth();
-        $prevMonthTotal = (clone $donationsQuery)
-            ->whereYear('donation_date', $prevDate->year)
-            ->whereMonth('donation_date', $prevDate->month)
-            ->sum('amount');
-
-        $growthPercent = $prevMonthTotal > 0
-            ? round((($monthTotal - $prevMonthTotal) / $prevMonthTotal) * 100, 1)
-            : 0;
-
-        // Rekap seluruh data tercatat (sesuai role)
-        $totalRecorded = (clone $donationsQuery)->sum('amount');
-        $totalTransactions = (clone $donationsQuery)->count();
-        $totalDonors = (clone $donationsQuery)->whereNotNull('contact_id')->distinct()->count('contact_id');
-
-        // Donatur bulan ini & hari ini
-        $monthDonors = (clone $donationsQuery)
-            ->whereYear('donation_date', $year)
-            ->whereMonth('donation_date', $month)
-            ->whereNotNull('contact_id')
-            ->distinct()
-            ->count('contact_id');
-
         $donorsToday = (clone $donationsQuery)
             ->where('donation_date', $today)
             ->whereNotNull('contact_id')
             ->distinct()
             ->count('contact_id');
-
         $todayTransactions = (clone $donationsQuery)
             ->where('donation_date', $today)
             ->count();
+
+        // Periode (default: tanggal 1 bulan ini s/d hari ini)
+        $from = $this->sanitizeDate($request->get('from')) ?: now()->startOfMonth()->toDateString();
+        $to = $this->sanitizeDate($request->get('to')) ?: $today;
+        if ($from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        $fromDate = Carbon::parse($from);
+        $toDate = Carbon::parse($to);
+
+        $periodQuery = (clone $donationsQuery)
+            ->whereDate('donation_date', '>=', $from)
+            ->whereDate('donation_date', '<=', $to);
+
+        $periodTotal = (clone $periodQuery)->sum('amount');
+        $periodTransactions = (clone $periodQuery)->count();
+        $periodDonors = (clone $periodQuery)
+            ->whereNotNull('contact_id')
+            ->distinct()
+            ->count('contact_id');
+
+        // Periode sebelumnya (panjang sama) untuk menghitung pertumbuhan
+        $days = $fromDate->diffInDays($toDate) + 1;
+        $prevTo = $fromDate->copy()->subDay();
+        $prevFrom = $prevTo->copy()->subDays($days - 1);
+        $prevPeriodTotal = (clone $donationsQuery)
+            ->whereDate('donation_date', '>=', $prevFrom->toDateString())
+            ->whereDate('donation_date', '<=', $prevTo->toDateString())
+            ->sum('amount');
+
+        $growthPercent = $prevPeriodTotal > 0
+            ? round((($periodTotal - $prevPeriodTotal) / $prevPeriodTotal) * 100, 1)
+            : 0;
+
+        // Rekap seluruh data tercatat (tidak terpengaruh periode)
+        $totalRecorded = (clone $donationsQuery)->sum('amount');
+        $totalTransactions = (clone $donationsQuery)->count();
+        $totalDonors = (clone $donationsQuery)->whereNotNull('contact_id')->distinct()->count('contact_id');
 
         // Target: admin melihat total cabang yang dipilih (atau semua cabang aktif),
         // selain itu target cabang sendiri.
@@ -174,31 +198,52 @@ class MobileAppController extends Controller
         }
 
         $overallProgress = $totalTarget > 0
-            ? round(($monthTotal / $totalTarget) * 100, 1)
+            ? round(($periodTotal / $totalTarget) * 100, 1)
             : 0;
 
-        // Tren bulan ini (harian)
-        $monthlyTotals = (clone $donationsQuery)
-            ->whereYear('donation_date', $year)
-            ->whereMonth('donation_date', $month)
-            ->selectRaw('DAY(donation_date) as day, SUM(amount) as total')
-            ->groupBy('day')
-            ->pluck('total', 'day');
-
+        // Tren sesuai periode terpilih
         $trend = [];
-        $lastDay = now()->day;
-        for ($day = 1; $day <= $lastDay; $day++) {
-            $date = Carbon::create($year, $month, $day);
-            $trend[] = [
-                'label' => $date->format('d/m'),
-                'is_weekend' => $date->isWeekend(),
-                'value' => (int) ($monthlyTotals[$day] ?? 0),
-            ];
+        if ($days <= 31) {
+            $rows = (clone $periodQuery)
+                ->selectRaw('YEAR(donation_date) as yr, MONTH(donation_date) as mon, DAY(donation_date) as day, SUM(amount) as total')
+                ->groupBy('yr', 'mon', 'day')
+                ->get();
+
+            $map = [];
+            foreach ($rows as $row) {
+                $map[sprintf('%04d-%02d-%02d', $row->yr, $row->mon, $row->day)] = (int) $row->total;
+            }
+
+            for ($date = $fromDate->copy(); $date->lte($toDate); $date->addDay()) {
+                $trend[] = [
+                    'label' => $date->format('d/m'),
+                    'is_weekend' => $date->isWeekend(),
+                    'value' => $map[$date->toDateString()] ?? 0,
+                ];
+            }
+        } else {
+            $rows = (clone $periodQuery)
+                ->selectRaw('YEAR(donation_date) as yr, MONTH(donation_date) as mon, SUM(amount) as total')
+                ->groupBy('yr', 'mon')
+                ->get();
+
+            $map = [];
+            foreach ($rows as $row) {
+                $map[sprintf('%04d-%02d', $row->yr, $row->mon)] = (int) $row->total;
+            }
+
+            for ($date = $fromDate->copy()->startOfMonth(); $date->lte($toDate); $date->addMonth()) {
+                $trend[] = [
+                    'label' => $date->format('m/Y'),
+                    'is_weekend' => false,
+                    'value' => $map[$date->format('Y-m')] ?? 0,
+                ];
+            }
         }
         $trendMax = max(1, max(array_column($trend, 'value')));
 
-        // Donasi terbaru
-        $recentDonations = (clone $donationsQuery)
+        // Donasi terbaru dalam periode terpilih
+        $recentDonations = (clone $periodQuery)
             ->with(['branch', 'agen', 'contact', 'items.program'])
             ->orderByDesc('donation_date')
             ->orderByDesc('id')
@@ -217,11 +262,7 @@ class MobileAppController extends Controller
         $totalContacts = (clone $this->scopeContacts(Contact::query()))->count();
         $donatedContacts = (clone $this->scopeContacts(Contact::query()))->where('status', 'donated')->count();
 
-        // Statistik tambahan bulan ini
-        $monthDonations = (clone $donationsQuery)
-            ->whereYear('donation_date', $year)
-            ->whereMonth('donation_date', $month)
-            ->count();
+        $periodLabel = $fromDate->format('d M Y') . ' - ' . $toDate->format('d M Y');
 
         $hour = (int) now()->format('G');
         $greeting = $hour < 11 ? 'Selamat Pagi' : ($hour < 15 ? 'Selamat Siang' : ($hour < 19 ? 'Selamat Sore' : 'Selamat Malam'));
@@ -241,12 +282,13 @@ class MobileAppController extends Controller
         }
 
         return view('mobile.home', compact(
-            'user', 'greeting', 'todayTotal', 'monthTotal', 'growthPercent',
+            'user', 'greeting', 'todayTotal', 'todayTransactions', 'donorsToday',
+            'periodTotal', 'periodTransactions', 'periodDonors', 'periodLabel', 'growthPercent',
             'overallProgress', 'totalTarget', 'trend', 'trendMax',
             'recentDonations', 'totalPrograms', 'totalContacts',
-            'donatedContacts', 'monthDonations', 'waNumber',
-            'totalRecorded', 'totalTransactions', 'totalDonors', 'monthDonors', 'donorsToday', 'todayTransactions',
-            'branches', 'selectedBranches', 'branchSummary', 'isAdmin'
+            'donatedContacts', 'waNumber',
+            'totalRecorded', 'totalTransactions', 'totalDonors',
+            'branches', 'selectedBranches', 'branchSummary', 'isAdmin', 'from', 'to'
         ));
     }
 

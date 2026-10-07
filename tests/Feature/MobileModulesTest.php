@@ -466,11 +466,11 @@ class MobileModulesTest extends TestCase
         $response->assertSee('Rp 115.000');
         $response->assertSee('Rp 75.000');
         $response->assertSee('3 Transaksi dari 3 Donatur (seluruh data tercatat)');
-        $response->assertSee('2 Transaksi dari 2 Donatur (bulan ini)');
+        $response->assertSee('2 Transaksi dari 2 Donatur (' . now()->startOfMonth()->format('d M Y') . ' - ' . now()->format('d M Y') . ')');
         $response->assertSee('Total Donasi Hari Ini');
         $response->assertSee('2 Transaksi dari 2 Donatur (Hari ini)');
         $response->assertDontSee('mo-stats', false);
-        $response->assertSee('Tren Bulan ini');
+        $response->assertSee('Tren Periode');
         $response->assertSee('mo-trend-h', false);
         $response->assertDontSee('Tren 7 Hari');
 
@@ -566,6 +566,42 @@ class MobileModulesTest extends TestCase
             ->get(route('mo.dashboard', ['branches' => [$branchA->id, $branchB->id]]))
             ->assertOk()
             ->assertSee('Rp 150.000');
+    }
+
+    public function test_dashboard_has_period_inputs_with_month_defaults(): void
+    {
+        $agent = $this->makeUser('agen', $this->makeBranch());
+
+        $this->actingAs($agent)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('name="from"', false)
+            ->assertSee('name="to"', false)
+            ->assertSee('value="' . now()->startOfMonth()->toDateString() . '"', false)
+            ->assertSee('value="' . now()->toDateString() . '"', false)
+            ->assertSee('mo-hero-period', false);
+    }
+
+    public function test_dashboard_period_scopes_period_total_but_not_recorded_total(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branch, $agen, $program, 40000, '2026-01-10');
+        $this->makeProgramDonation($branch, $agen, $program, 60000, now()->toDateString());
+
+        $label = \Illuminate\Support\Carbon::parse('2026-01-01')->format('d M Y')
+            . ' - ' . \Illuminate\Support\Carbon::parse('2026-01-31')->format('d M Y');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['from' => '2026-01-01', 'to' => '2026-01-31']))
+            ->assertOk()
+            ->assertSee('Total Donasi Tercatat')
+            ->assertSee('Rp 100.000')
+            ->assertSee('Rp 40.000')
+            ->assertSee('1 Transaksi dari 1 Donatur (' . $label . ')');
     }
 
     protected function makeNamedProgram(string $name): Program

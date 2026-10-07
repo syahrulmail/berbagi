@@ -19,17 +19,17 @@
 <div class="mo-content" style="padding-top:0;">
     {{-- Hero ringkasan --}}
     <div class="mo-hero">
-        @if($isAdmin)
-            <div class="mo-hero-filter">
-                <button type="button" class="mo-hero-filter-toggle {{ !empty($selectedBranches) ? 'open' : '' }}"
-                        data-filter-toggle="mo-branch-panel"
-                        aria-expanded="{{ !empty($selectedBranches) ? 'true' : 'false' }}" aria-label="Pilih cabang">
-                    <i class="fas fa-code-branch"></i>
-                    <span>{{ $branchSummary }}</span>
-                    <i class="fas fa-chevron-down chev"></i>
-                </button>
-                <div class="mo-hero-filter-panel" id="mo-branch-panel" @if(empty($selectedBranches)) hidden @endif>
-                    <form method="GET" action="{{ route('mo.dashboard') }}" id="mo-branch-form">
+        <form method="GET" action="{{ route('mo.dashboard') }}" id="mo-dash-form">
+            @if($isAdmin)
+                <div class="mo-hero-filter">
+                    <button type="button" class="mo-hero-filter-toggle {{ !empty($selectedBranches) ? 'open' : '' }}"
+                            data-filter-toggle="mo-branch-panel"
+                            aria-expanded="{{ !empty($selectedBranches) ? 'true' : 'false' }}" aria-label="Pilih cabang">
+                        <i class="fas fa-code-branch"></i>
+                        <span>{{ $branchSummary }}</span>
+                        <i class="fas fa-chevron-down chev"></i>
+                    </button>
+                    <div class="mo-hero-filter-panel" id="mo-branch-panel" @if(empty($selectedBranches)) hidden @endif>
                         <label class="mo-hero-check">
                             <input type="checkbox" id="mo-branch-all" {{ empty($selectedBranches) ? 'checked' : '' }}>
                             <span>Semua Cabang</span>
@@ -41,16 +41,22 @@
                                 <span>{{ $branch->name }}</span>
                             </label>
                         @endforeach
-                    </form>
+                    </div>
                 </div>
+            @else
+                <div class="mo-hero-filter-static">
+                    <i class="fas fa-code-branch"></i>
+                    <span>{{ $branchSummary }}</span>
+                    <i class="fas fa-lock lock"></i>
+                </div>
+            @endif
+
+            <div class="mo-hero-period">
+                <input type="date" name="from" class="mo-hero-date" value="{{ $from }}" aria-label="Dari tanggal" onchange="this.form.submit()">
+                <span class="mo-hero-period-sep">–</span>
+                <input type="date" name="to" class="mo-hero-date" value="{{ $to }}" aria-label="Sampai tanggal" onchange="this.form.submit()">
             </div>
-        @else
-            <div class="mo-hero-filter-static">
-                <i class="fas fa-code-branch"></i>
-                <span>{{ $branchSummary }}</span>
-                <i class="fas fa-lock lock"></i>
-            </div>
-        @endif
+        </form>
 
         <div class="mo-hero-label">Total Donasi Tercatat</div>
         <div class="mo-hero-amount mo-hero-amount--sm">Rp {{ number_format((int) $totalRecorded, 0, ',', '.') }}</div>
@@ -58,16 +64,16 @@
 
         <div class="mo-hero-divider"></div>
 
-        <div class="mo-hero-label">Total Donasi Bulan Ini</div>
-        <div class="mo-hero-amount">Rp {{ number_format((int) $monthTotal, 0, ',', '.') }}</div>
-        <div class="mo-hero-sub">{{ number_format($monthDonations, 0, ',', '.') }} Transaksi dari {{ number_format($monthDonors, 0, ',', '.') }} Donatur (bulan ini)</div>
+        <div class="mo-hero-label">Total Donasi Periode</div>
+        <div class="mo-hero-amount">Rp {{ number_format((int) $periodTotal, 0, ',', '.') }}</div>
+        <div class="mo-hero-sub">{{ number_format($periodTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($periodDonors, 0, ',', '.') }} Donatur ({{ $periodLabel }})</div>
         <div class="mo-hero-sub" style="margin-top:6px;">
             @if($growthPercent >= 0)
                 <i class="fas fa-arrow-trend-up"></i> Naik {{ abs($growthPercent) }}%
             @else
                 <i class="fas fa-arrow-trend-down"></i> Turun {{ abs($growthPercent) }}%
             @endif
-            vs bulan lalu
+            vs periode sebelumnya
         </div>
         @if($totalTarget > 0)
             <div class="mo-hero-progress">
@@ -86,10 +92,10 @@
         <div class="mo-today-sub">{{ number_format($todayTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($donorsToday, 0, ',', '.') }} Donatur (Hari ini)</div>
     </div>
 
-    {{-- Tren bulan ini --}}
+    {{-- Tren periode --}}
     <div class="mo-card">
         <div class="mo-card-head mo-card-head--collapse">
-            <h2 class="mo-card-title"><i class="fas fa-chart-column"></i> Tren Bulan ini</h2>
+            <h2 class="mo-card-title"><i class="fas fa-chart-column"></i> Tren Periode</h2>
             <div class="mo-card-head-actions">
                 <a href="{{ route('mo.donations') }}" class="mo-card-link">Semua</a>
                 <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-trend-body" aria-expanded="false" aria-label="Tampilkan tren">
@@ -161,7 +167,7 @@
 @push('scripts')
 <script>
     (function () {
-        var form = document.getElementById('mo-branch-form');
+        var form = document.getElementById('mo-dash-form');
         if (!form) return;
 
         var all = document.getElementById('mo-branch-all');
