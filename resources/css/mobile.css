@@ -348,7 +348,7 @@
         text-align: left;
         box-shadow: var(--mo-shadow-sm);
     }
-    .mo-hero-filter-toggle span { flex: 1; min-width: 0; }
+    .mo-hero-filter-toggle span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mo-hero-filter-toggle .chev {
         font-size: 11px;
         color: var(--mo-primary);
@@ -459,6 +459,43 @@
     .mo-dash-filters .mo-hero-filter { margin-bottom: 8px; }
     .mo-dash-filters .mo-hero-filter-static { margin-bottom: 8px; }
     .mo-dash-filters .mo-hero-period { margin-bottom: 0; }
+
+    .mo-period-panel {
+        margin-top: 8px;
+        background: #fff;
+        border: 1px solid rgba(8, 110, 102, 0.18);
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: var(--mo-shadow);
+    }
+    .mo-period-tabs {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+    .mo-period-tabs::-webkit-scrollbar { display: none; }
+    .mo-period-tab {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(8, 110, 102, 0.18);
+        background: #fff;
+        color: var(--mo-primary);
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: var(--mo-shadow-sm);
+    }
+    .mo-period-tab.active {
+        background: var(--mo-primary);
+        border-color: var(--mo-primary);
+        color: #fff;
+    }
 
     /* ============ TODAY CARD ============ */
     .mo-today-card {

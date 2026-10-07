@@ -146,9 +146,29 @@ class MobileAppController extends Controller
             ->where('donation_date', $today)
             ->count();
 
-        // Periode (default: tanggal 1 bulan ini s/d hari ini)
-        $from = $this->sanitizeDate($request->get('from')) ?: now()->startOfMonth()->toDateString();
-        $to = $this->sanitizeDate($request->get('to')) ?: $today;
+        // Periode cepat (quick tabs): all | 7d | month | year
+        $range = $request->query('range');
+        $range = in_array($range, ['all', '7d', 'month', 'year'], true) ? $range : null;
+        $periodIsAll = ($range === 'all');
+
+        if ($periodIsAll) {
+            $earliest = (clone $donationsQuery)->min('donation_date');
+            $from = $this->sanitizeDate($request->get('from')) ?: ($earliest ?: $today);
+            $to = $this->sanitizeDate($request->get('to')) ?: $today;
+        } else {
+            $rangeFrom = null;
+            if ($range === '7d') {
+                $rangeFrom = now()->subDays(6)->toDateString();
+            } elseif ($range === 'month') {
+                $rangeFrom = now()->startOfMonth()->toDateString();
+            } elseif ($range === 'year') {
+                $rangeFrom = now()->startOfYear()->toDateString();
+            }
+
+            $from = $this->sanitizeDate($request->get('from')) ?: ($rangeFrom ?: now()->startOfMonth()->toDateString());
+            $to = $this->sanitizeDate($request->get('to')) ?: $today;
+        }
+
         if ($from > $to) {
             [$from, $to] = [$to, $from];
         }
@@ -156,9 +176,11 @@ class MobileAppController extends Controller
         $fromDate = Carbon::parse($from);
         $toDate = Carbon::parse($to);
 
-        $periodQuery = (clone $donationsQuery)
-            ->whereDate('donation_date', '>=', $from)
-            ->whereDate('donation_date', '<=', $to);
+        $periodQuery = (clone $donationsQuery);
+        if (! $periodIsAll) {
+            $periodQuery->whereDate('donation_date', '>=', $from)
+                ->whereDate('donation_date', '<=', $to);
+        }
 
         $periodTotal = (clone $periodQuery)->sum('amount');
         $periodTransactions = (clone $periodQuery)->count();
@@ -169,16 +191,20 @@ class MobileAppController extends Controller
 
         // Periode sebelumnya (panjang sama) untuk menghitung pertumbuhan
         $days = $fromDate->diffInDays($toDate) + 1;
-        $prevTo = $fromDate->copy()->subDay();
-        $prevFrom = $prevTo->copy()->subDays($days - 1);
-        $prevPeriodTotal = (clone $donationsQuery)
-            ->whereDate('donation_date', '>=', $prevFrom->toDateString())
-            ->whereDate('donation_date', '<=', $prevTo->toDateString())
-            ->sum('amount');
+        if ($periodIsAll) {
+            $growthPercent = 0;
+        } else {
+            $prevTo = $fromDate->copy()->subDay();
+            $prevFrom = $prevTo->copy()->subDays($days - 1);
+            $prevPeriodTotal = (clone $donationsQuery)
+                ->whereDate('donation_date', '>=', $prevFrom->toDateString())
+                ->whereDate('donation_date', '<=', $prevTo->toDateString())
+                ->sum('amount');
 
-        $growthPercent = $prevPeriodTotal > 0
-            ? round((($periodTotal - $prevPeriodTotal) / $prevPeriodTotal) * 100, 1)
-            : 0;
+            $growthPercent = $prevPeriodTotal > 0
+                ? round((($periodTotal - $prevPeriodTotal) / $prevPeriodTotal) * 100, 1)
+                : 0;
+        }
 
         // Rekap seluruh data tercatat (tidak terpengaruh periode)
         $totalRecorded = (clone $donationsQuery)->sum('amount');
@@ -269,8 +295,9 @@ class MobileAppController extends Controller
         // 10 program dengan total donasi tertinggi (sesuai cabang & periode)
         $topProgramQuery = \Illuminate\Support\Facades\DB::table('donation_items')
             ->join('donations', 'donations.id', '=', 'donation_items.donation_id')
-            ->whereDate('donations.donation_date', '>=', $from)
-            ->whereDate('donations.donation_date', '<=', $to)
+            ->when(! $periodIsAll, fn ($q) => $q
+                ->whereDate('donations.donation_date', '>=', $from)
+                ->whereDate('donations.donation_date', '<=', $to))
             ->when($isAdmin && ! empty($selectedBranches), fn ($q) => $q->whereIn('donations.branch_id', $selectedBranches));
         $this->scopeDonations($topProgramQuery, 'donations');
 
@@ -299,7 +326,25 @@ class MobileAppController extends Controller
         $totalContacts = (clone $this->scopeContacts(Contact::query()))->count();
         $donatedContacts = (clone $this->scopeContacts(Contact::query()))->where('status', 'donated')->count();
 
-        $periodLabel = $fromDate->format('d M Y') . ' - ' . $toDate->format('d M Y');
+        if ($periodIsAll) {
+            $periodLabel = 'Seluruh data';
+        } elseif ($range === '7d') {
+            $periodLabel = '7 Hari Terakhir';
+        } elseif ($range === 'month') {
+            $periodLabel = 'Bulan Ini';
+        } elseif ($range === 'year') {
+            $periodLabel = 'Tahun Ini';
+        } else {
+            $periodLabel = $fromDate->format('d M Y') . ' - ' . $toDate->format('d M Y');
+        }
+
+        if ($periodIsAll) {
+            $activeRange = 'all';
+        } elseif ($range !== null) {
+            $activeRange = $range;
+        } else {
+            $activeRange = ($from === now()->startOfMonth()->toDateString() && $to === $today) ? 'month' : null;
+        }
 
         $hour = (int) now()->format('G');
         $greeting = $hour < 11 ? 'Selamat Pagi' : ($hour < 15 ? 'Selamat Siang' : ($hour < 19 ? 'Selamat Sore' : 'Selamat Malam'));
@@ -325,7 +370,8 @@ class MobileAppController extends Controller
             'topContacts', 'topPrograms', 'totalPrograms', 'totalContacts',
             'donatedContacts', 'waNumber',
             'totalRecorded', 'totalTransactions', 'totalDonors',
-            'branches', 'selectedBranches', 'branchSummary', 'isAdmin', 'from', 'to'
+            'branches', 'selectedBranches', 'branchSummary', 'isAdmin', 'from', 'to',
+            'periodIsAll', 'range', 'activeRange'
         ));
     }
 

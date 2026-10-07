@@ -50,16 +50,42 @@
             </div>
         @endif
 
-        <div class="mo-hero-period">
-            <span class="mo-date-field">
-                <input type="date" name="from" class="mo-hero-date" value="{{ $from }}" aria-label="Dari tanggal" onchange="this.form.submit()">
-                <i class="fas fa-calendar-days" aria-hidden="true"></i>
-            </span>
-            <span class="mo-hero-period-sep">–</span>
-            <span class="mo-date-field">
-                <input type="date" name="to" class="mo-hero-date" value="{{ $to }}" aria-label="Sampai tanggal" onchange="this.form.submit()">
-                <i class="fas fa-calendar-days" aria-hidden="true"></i>
-            </span>
+        <div class="mo-hero-filter">
+            <button type="button" class="mo-hero-filter-toggle"
+                    data-filter-toggle="mo-period-panel"
+                    aria-expanded="false" aria-label="Pilih periode">
+                <i class="fas fa-calendar-days"></i>
+                <span>{{ $periodLabel }}</span>
+                <i class="fas fa-chevron-down chev"></i>
+            </button>
+            <div class="mo-period-panel" id="mo-period-panel" hidden>
+                <div class="mo-hero-period">
+                    <span class="mo-date-field">
+                        <input type="date" name="from" class="mo-hero-date" value="{{ $from }}" aria-label="Dari tanggal" onchange="this.form.submit()">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i>
+                    </span>
+                    <span class="mo-hero-period-sep">–</span>
+                    <span class="mo-date-field">
+                        <input type="date" name="to" class="mo-hero-date" value="{{ $to }}" aria-label="Sampai tanggal" onchange="this.form.submit()">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i>
+                    </span>
+                </div>
+                @php
+                    $branchQuery = !empty($selectedBranches) ? ['branches' => $selectedBranches] : [];
+                    $periodTabs = [
+                        ['key' => 'all', 'label' => 'Semua'],
+                        ['key' => '7d', 'label' => '7 Hari'],
+                        ['key' => 'month', 'label' => 'Bulan ini'],
+                        ['key' => 'year', 'label' => 'Tahun ini'],
+                    ];
+                @endphp
+                <div class="mo-period-tabs">
+                    @foreach($periodTabs as $tab)
+                        <a href="{{ route('mo.dashboard', array_merge(['range' => $tab['key']], $branchQuery)) }}"
+                           class="mo-period-tab {{ $activeRange === $tab['key'] ? 'active' : '' }}">{{ $tab['label'] }}</a>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </form>
 
@@ -76,14 +102,16 @@
         <div class="mo-hero-note">({{ $periodLabel }})</div>
         <div class="mo-hero-amount">Rp {{ number_format((int) $periodTotal, 0, ',', '.') }}</div>
         <div class="mo-hero-sub">{{ number_format($periodTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($periodDonors, 0, ',', '.') }} Donatur</div>
-        <div class="mo-hero-sub" style="margin-top:6px;">
-            @if($growthPercent >= 0)
-                <i class="fas fa-arrow-trend-up"></i> Naik {{ abs($growthPercent) }}%
-            @else
-                <i class="fas fa-arrow-trend-down"></i> Turun {{ abs($growthPercent) }}%
-            @endif
-            vs periode sebelumnya
-        </div>
+        @if(! $periodIsAll)
+            <div class="mo-hero-sub" style="margin-top:6px;">
+                @if($growthPercent >= 0)
+                    <i class="fas fa-arrow-trend-up"></i> Naik {{ abs($growthPercent) }}%
+                @else
+                    <i class="fas fa-arrow-trend-down"></i> Turun {{ abs($growthPercent) }}%
+                @endif
+                vs periode sebelumnya
+            </div>
+        @endif
         @if($totalTarget > 0)
             <div class="mo-hero-progress">
                 <div class="mo-hero-progress-fill" style="width: {{ min(100, $overallProgress) }}%"></div>

@@ -640,6 +640,59 @@ class MobileModulesTest extends TestCase
             ->assertSee('fa-calendar-days', false);
     }
 
+    public function test_dashboard_period_quick_tabs_hidden_by_default(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('id="mo-period-panel" hidden', false)
+            ->assertSee('mo-period-tabs', false)
+            ->assertSee('range=all', false)
+            ->assertSee('range=7d', false)
+            ->assertSee('range=month', false)
+            ->assertSee('range=year', false)
+            ->assertSee('>Semua<', false)
+            ->assertSee('7 Hari')
+            ->assertSee('Bulan ini')
+            ->assertSee('Tahun ini');
+    }
+
+    public function test_dashboard_range_7d_scopes_period_and_marks_tab(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branch, $agen, $program, 50000, now()->toDateString());
+        $this->makeProgramDonation($branch, $agen, $program, 30000, now()->subDays(10)->toDateString());
+
+        $this->actingAs($agen)
+            ->get(route('mo.dashboard', ['range' => '7d']))
+            ->assertOk()
+            ->assertSee('7 Hari Terakhir')
+            ->assertSee('mo-period-tab active', false)
+            ->assertSee('Rp 50.000');
+    }
+
+    public function test_dashboard_range_all_covers_every_record(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $this->makeProgramDonation($branch, $agen, $program, 40000, '2024-01-10');
+        $this->makeProgramDonation($branch, $agen, $program, 60000, now()->toDateString());
+
+        $this->actingAs($agen)
+            ->get(route('mo.dashboard', ['range' => 'all']))
+            ->assertOk()
+            ->assertSee('Seluruh data')
+            ->assertSee('Rp 100.000')
+            ->assertDontSee('vs periode sebelumnya');
+    }
+
     public function test_today_card_shows_branch_summary(): void
     {
         $branchA = $this->makeBranch('A');
