@@ -605,6 +605,18 @@ class MobileModulesTest extends TestCase
             ->assertSee('mo-hero-period', false);
     }
 
+    public function test_dashboard_filters_are_wrapped_in_sticky_bar(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('id="mo-dash-form" class="mo-dash-filters"', false)
+            ->assertSee('data-filter-toggle="mo-branch-panel"', false)
+            ->assertSee('mo-hero-period', false);
+    }
+
     public function test_dashboard_period_scopes_period_total_but_not_recorded_total(): void
     {
         $branch = $this->makeBranch();

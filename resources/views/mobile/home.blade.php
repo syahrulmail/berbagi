@@ -17,47 +17,48 @@
 </div>
 
 <div class="mo-content" style="padding-top:0;">
-    {{-- Hero ringkasan --}}
-    <div class="mo-hero">
-        <form method="GET" action="{{ route('mo.dashboard') }}" id="mo-dash-form">
-            @if($isAdmin)
-                <div class="mo-hero-filter">
-                    <button type="button" class="mo-hero-filter-toggle {{ !empty($selectedBranches) ? 'open' : '' }}"
-                            data-filter-toggle="mo-branch-panel"
-                            aria-expanded="{{ !empty($selectedBranches) ? 'true' : 'false' }}" aria-label="Pilih cabang">
-                        <i class="fas fa-code-branch"></i>
-                        <span>{{ $branchSummary }}</span>
-                        <i class="fas fa-chevron-down chev"></i>
-                    </button>
-                    <div class="mo-hero-filter-panel" id="mo-branch-panel" @if(empty($selectedBranches)) hidden @endif>
-                        <label class="mo-hero-check">
-                            <input type="checkbox" id="mo-branch-all" {{ empty($selectedBranches) ? 'checked' : '' }}>
-                            <span>Semua Cabang</span>
-                        </label>
-                        @foreach($branches as $branch)
-                            <label class="mo-hero-check">
-                                <input type="checkbox" name="branches[]" value="{{ $branch->id }}"
-                                    {{ in_array($branch->id, $selectedBranches, true) ? 'checked' : '' }}>
-                                <span>{{ $branch->name }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-            @else
-                <div class="mo-hero-filter-static">
+    {{-- Filter sticky: cabang + periode --}}
+    <form method="GET" action="{{ route('mo.dashboard') }}" id="mo-dash-form" class="mo-dash-filters">
+        @if($isAdmin)
+            <div class="mo-hero-filter">
+                <button type="button" class="mo-hero-filter-toggle {{ !empty($selectedBranches) ? 'open' : '' }}"
+                        data-filter-toggle="mo-branch-panel"
+                        aria-expanded="{{ !empty($selectedBranches) ? 'true' : 'false' }}" aria-label="Pilih cabang">
                     <i class="fas fa-code-branch"></i>
                     <span>{{ $branchSummary }}</span>
-                    <i class="fas fa-lock lock"></i>
+                    <i class="fas fa-chevron-down chev"></i>
+                </button>
+                <div class="mo-hero-filter-panel" id="mo-branch-panel" @if(empty($selectedBranches)) hidden @endif>
+                    <label class="mo-hero-check">
+                        <input type="checkbox" id="mo-branch-all" {{ empty($selectedBranches) ? 'checked' : '' }}>
+                        <span>Semua Cabang</span>
+                    </label>
+                    @foreach($branches as $branch)
+                        <label class="mo-hero-check">
+                            <input type="checkbox" name="branches[]" value="{{ $branch->id }}"
+                                {{ in_array($branch->id, $selectedBranches, true) ? 'checked' : '' }}>
+                            <span>{{ $branch->name }}</span>
+                        </label>
+                    @endforeach
                 </div>
-            @endif
-
-            <div class="mo-hero-period">
-                <input type="date" name="from" class="mo-hero-date" value="{{ $from }}" aria-label="Dari tanggal" onchange="this.form.submit()">
-                <span class="mo-hero-period-sep">–</span>
-                <input type="date" name="to" class="mo-hero-date" value="{{ $to }}" aria-label="Sampai tanggal" onchange="this.form.submit()">
             </div>
-        </form>
+        @else
+            <div class="mo-hero-filter-static">
+                <i class="fas fa-code-branch"></i>
+                <span>{{ $branchSummary }}</span>
+                <i class="fas fa-lock lock"></i>
+            </div>
+        @endif
 
+        <div class="mo-hero-period">
+            <input type="date" name="from" class="mo-hero-date" value="{{ $from }}" aria-label="Dari tanggal" onchange="this.form.submit()">
+            <span class="mo-hero-period-sep">–</span>
+            <input type="date" name="to" class="mo-hero-date" value="{{ $to }}" aria-label="Sampai tanggal" onchange="this.form.submit()">
+        </div>
+    </form>
+
+    {{-- Hero ringkasan --}}
+    <div class="mo-hero">
         <div class="mo-hero-label">Total Donasi Tercatat</div>
         <div class="mo-hero-amount mo-hero-amount--sm">Rp {{ number_format((int) $totalRecorded, 0, ',', '.') }}</div>
         <div class="mo-hero-sub">{{ number_format($totalTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($totalDonors, 0, ',', '.') }} Donatur (seluruh data tercatat)</div>

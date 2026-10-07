@@ -420,6 +420,21 @@
     }
     .mo-hero-period-sep { color: #fff; opacity: 0.85; font-size: 12px; }
 
+    /* ============ DASHBOARD STICKY FILTERS ============ */
+    .mo-dash-filters {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        margin: 0 -16px 14px;
+        padding: 10px 16px 12px;
+        background: linear-gradient(135deg, #086e66 0%, #08a899 100%);
+        border-radius: 0 0 18px 18px;
+        box-shadow: 0 10px 24px rgba(8, 110, 102, 0.28);
+    }
+    .mo-dash-filters .mo-hero-filter { margin-bottom: 8px; }
+    .mo-dash-filters .mo-hero-filter-static { margin-bottom: 8px; }
+    .mo-dash-filters .mo-hero-period { margin-bottom: 0; }
+
     /* ============ TODAY CARD ============ */
     .mo-today-card {
         margin-bottom: 16px;
