@@ -497,6 +497,46 @@ class MobileAppController extends Controller
     }
 
     /**
+     * Detail pengguna (JSON, untuk bottom sheet mobile).
+     */
+    public function userDetail($id)
+    {
+        $actor = auth()->user();
+        $user = User::with('branch')->find($id);
+
+        if (! $user) {
+            return response()->json(['error' => 'Pengguna tidak ditemukan.'], 404);
+        }
+
+        if (! $user->isManageableBy($actor)) {
+            return response()->json(['error' => 'Anda tidak memiliki izin untuk melihat pengguna ini.'], 403);
+        }
+
+        $profile = (new ProfileService())->data($user);
+        $photo = $profile['photo'] ?? '';
+
+        $donations = Donation::where('agen_id', $user->id);
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $user->role,
+            'role_label' => $user->roleLabel(),
+            'branch' => $user->branch->name ?? '-',
+            'is_active' => (bool) $user->is_active,
+            'photo_url' => $photo !== '' ? asset_photo_url($photo) : '',
+            'initial' => strtoupper(substr($user->name, 0, 1)),
+            'donation_count' => $donations->count(),
+            'donation_total_formatted' => 'Rp ' . number_format((float) $donations->sum('amount'), 0, ',', '.'),
+            'can_edit' => true,
+            'edit_url' => route('mo.user.edit', $user->id),
+        ]);
+    }
+
+    /**
      * Detail kontak (JSON, untuk bottom sheet mobile).
      */
     public function contactDetail($id)

@@ -145,6 +145,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/api/donasi/{donation}/detail', [MobileAppController::class, 'donationDetail'])->name('api.donation-detail');
         Route::get('/api/kontak/{contact}/detail', [MobileAppController::class, 'contactDetail'])->name('api.contact-detail');
+        Route::get('/api/pengguna/{user}/detail', [MobileAppController::class, 'userDetail'])->name('api.user-detail');
         Route::get('/api/kontak-cari', [MobileAppController::class, 'contactSearch'])->name('api.contact-search');
         Route::get('/api', fn () => url('/mo/api'))->name('api');
 

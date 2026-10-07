@@ -143,6 +143,54 @@
             ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:10px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Kontak</a>' : '');
     }
 
+    function loadUserDetail(id, cb) {
+        var url = root.api + '/pengguna/' + id + '/detail';
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || data.error) throw new Error((data && data.error) || 'Gagal memuat');
+                cb(data);
+            })
+            .catch(function () {
+                var body = document.getElementById('mo-user-sheet-body');
+                if (body) body.innerHTML = '<div class="mo-empty"><i class="fas fa-circle-exclamation"></i><p>Gagal memuat data.</p></div>';
+            });
+    }
+
+    function renderUserDetail(data) {
+        var body = document.getElementById('mo-user-sheet-body');
+        if (!body) return;
+
+        var roleCls = { admin: 'red', supervisor: 'blue', agen: 'green', donatur: 'gray' }[data.role] || 'gray';
+
+        var avatar = '<div class="mo-avatar" style="width:64px;height:64px;font-size:24px;overflow:hidden;">';
+        if (data.photo_url) {
+            avatar += '<img src="' + esc(data.photo_url) + '" alt="' + esc(data.name || '') + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+        } else {
+            avatar += esc(data.initial || '?');
+        }
+        avatar += '</div>';
+
+        body.innerHTML =
+            '<div style="display:flex;align-items:center;gap:13px;margin-bottom:16px;">' +
+                avatar +
+                '<div style="flex:1;min-width:0;">' +
+                    '<div style="font-size:16px;font-weight:700;color:var(--mo-text);">' + esc(data.name || '-') + '</div>' +
+                    '<div class="mo-row-sub" style="margin-top:3px;">' + esc(data.username || '-') + '</div>' +
+                '</div>' +
+                '<span class="mo-badge ' + roleCls + '">' + esc(data.role_label || data.role || '') + '</span>' +
+            '</div>' +
+            '<div class="mo-detail-grid">' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">Email</div><div class="mo-detail-value">' + esc(data.email || '-') + '</div></div>' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">No. Handphone</div><div class="mo-detail-value">' + esc(data.phone || '-') + '</div></div>' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">Cabang</div><div class="mo-detail-value">' + esc(data.branch || '-') + '</div></div>' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">Status</div><div class="mo-detail-value">' + (data.is_active ? 'Aktif' : 'Nonaktif') + '</div></div>' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">Jumlah Donasi</div><div class="mo-detail-value">' + esc(data.donation_count != null ? data.donation_count : 0) + '</div></div>' +
+                '<div class="mo-detail-item"><div class="mo-detail-label">Total Donasi</div><div class="mo-detail-value amount">' + esc(data.donation_total_formatted || 'Rp 0') + '</div></div>' +
+            '</div>' +
+            ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:14px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Pengguna</a>' : '');
+    }
+
     function esc(s) {
         var div = document.createElement('div');
         div.textContent = s == null ? '' : String(s);
@@ -264,6 +312,23 @@
                     '</div>';
                 openSheet('mo-contact-sheet');
                 loadContactDetail(id, renderContactDetail);
+            }
+        });
+
+        // User detail rows
+        document.addEventListener('click', function (e) {
+            var row = e.target.closest('[data-user-detail]');
+            if (row) {
+                var id = row.getAttribute('data-user-detail');
+                var body = document.getElementById('mo-user-sheet-body');
+                if (body) body.innerHTML =
+                    '<div style="padding:6px 2px 18px;">' +
+                        '<div class="mo-skeleton" style="height:18px;width:70%;margin-bottom:10px;"></div>' +
+                        '<div class="mo-skeleton" style="height:12px;width:100%;margin-bottom:8px;"></div>' +
+                        '<div class="mo-skeleton" style="height:12px;width:80%;"></div>' +
+                    '</div>';
+                openSheet('mo-user-sheet');
+                loadUserDetail(id, renderUserDetail);
             }
         });
 

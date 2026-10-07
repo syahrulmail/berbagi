@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Branch;
+use App\Models\Donation;
+use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -400,5 +402,80 @@ class UserManagementTest extends TestCase
                 'Kartu Foto Profil harus berada sebelum Identitas.'
             );
         }
+    }
+
+    protected function makeProgram(): Program
+    {
+        return Program::create([
+            'name' => 'Program ' . uniqid(),
+            'slug' => 'program-' . uniqid(),
+            'program_category' => 'WAP',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_user_detail_json_includes_donation_stats(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        foreach ([150000, 50000] as $amount) {
+            Donation::create([
+                'branch_id' => $branch->id,
+                'agen_id' => $agent->id,
+                'program_id' => $program->id,
+                'amount' => $amount,
+                'donation_date' => now()->toDateString(),
+                'payment_method' => 'transfer',
+                'created_by' => $supervisor->id,
+            ]);
+        }
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.api.user-detail', $agent))
+            ->assertOk()
+            ->assertJson([
+                'id' => $agent->id,
+                'name' => $agent->name,
+                'donation_count' => 2,
+                'donation_total_formatted' => 'Rp 200.000',
+                'can_edit' => true,
+            ])
+            ->assertJsonPath('edit_url', route('mo.user.edit', $agent));
+    }
+
+    public function test_supervisor_cannot_view_other_branch_user_detail(): void
+    {
+        $supervisor = $this->makeUser('supervisor', $this->makeBranch());
+        $otherAgent = $this->makeUser('agen', $this->makeBranch());
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.api.user-detail', $otherAgent))
+            ->assertForbidden();
+    }
+
+    public function test_agent_cannot_view_user_detail(): void
+    {
+        $agent = $this->makeUser('agen', $this->makeBranch());
+
+        $this->actingAs($agent)
+            ->get(route('mo.api.user-detail', $agent))
+            ->assertForbidden();
+    }
+
+    public function test_users_list_opens_detail_sheet(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        $this->actingAs($supervisor)
+            ->get(route('mo.users'))
+            ->assertOk()
+            ->assertSee('data-user-detail="' . $agent->id . '"', false)
+            ->assertSee('mo-user-sheet', false)
+            ->assertDontSee(route('mo.user.edit', $agent));
     }
 }

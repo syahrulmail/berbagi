@@ -22,27 +22,25 @@
     @endphp
     <div class="mo-list">
         @forelse($users as $u)
-            <a href="{{ route('mo.user.edit', $u['id']) }}" style="text-decoration:none;color:inherit;display:block;">
-                <div class="mo-row" style="cursor:pointer;">
-                    <div class="mo-row-icon {{ $u['role'] === 'admin' ? 'red' : ($u['role'] === 'supervisor' ? 'blue' : '') }}" style="overflow:hidden;">
-                        @if($u['photo_url'])
-                            <img src="{{ $u['photo_url'] }}" alt="{{ $u['name'] }}" style="width:100%;height:100%;object-fit:cover;">
-                        @else
-                            {{ $u['initial'] }}
-                        @endif
-                    </div>
-                    <div class="mo-row-body">
-                        <div class="mo-row-title">{{ $u['name'] }}</div>
-                        <div class="mo-row-sub"><i class="fas {{ $roleIcon[$u['role']] ?? 'fa-user' }}"></i> {{ $u['branch'] }}</div>
-                    </div>
-                    <div class="mo-row-end">
-                        <span class="mo-badge {{ $roleCls[$u['role']] ?? 'gray' }}">{{ $u['role_label'] }}</span>
-                        @if(!$u['is_active'])
-                            <div class="mo-badge gray" style="margin-top:4px;">Nonaktif</div>
-                        @endif
-                    </div>
+            <div class="mo-row" data-user-detail="{{ $u['id'] }}">
+                <div class="mo-row-icon {{ $u['role'] === 'admin' ? 'red' : ($u['role'] === 'supervisor' ? 'blue' : '') }}" style="overflow:hidden;">
+                    @if($u['photo_url'])
+                        <img src="{{ $u['photo_url'] }}" alt="{{ $u['name'] }}" style="width:100%;height:100%;object-fit:cover;">
+                    @else
+                        {{ $u['initial'] }}
+                    @endif
                 </div>
-            </a>
+                <div class="mo-row-body">
+                    <div class="mo-row-title">{{ $u['name'] }}</div>
+                    <div class="mo-row-sub"><i class="fas {{ $roleIcon[$u['role']] ?? 'fa-user' }}"></i> {{ $u['branch'] }}</div>
+                </div>
+                <div class="mo-row-end">
+                    <span class="mo-badge {{ $roleCls[$u['role']] ?? 'gray' }}">{{ $u['role_label'] }}</span>
+                    @if(!$u['is_active'])
+                        <div class="mo-badge gray" style="margin-top:4px;">Nonaktif</div>
+                    @endif
+                </div>
+            </div>
         @empty
             <div class="mo-empty">
                 <i class="fas fa-users"></i>
@@ -55,4 +53,8 @@
 <a href="{{ route('mo.user.create') }}" class="mo-fab" aria-label="Tambah Pengguna">
     <i class="fas fa-plus"></i>
 </a>
+@endsection
+
+@section('sheets')
+@include('mobile.partials.user-sheet')
 @endsection
