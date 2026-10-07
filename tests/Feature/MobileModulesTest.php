@@ -107,7 +107,7 @@ class MobileModulesTest extends TestCase
         }
     }
 
-    public function test_more_menu_hides_primary_links_and_puts_profile_first(): void
+    public function test_more_menu_hides_primary_links_and_links_profile_card(): void
     {
         $agen = $this->makeUser('agen', $this->makeBranch());
 
@@ -117,9 +117,25 @@ class MobileModulesTest extends TestCase
         $response->assertDontSee('Program Donasi');
         $response->assertDontSee('Manajemen Kontak');
         $response->assertDontSee('Catat Donasi');
+        $response->assertDontSee('Lihat Situs Publik');
         $response->assertDontSee(route('profile.edit'));
         $response->assertSee('href="' . route('mo.profile') . '"', false);
-        $response->assertSeeInOrder(['Profil Saya', 'WhatsApp']);
+
+        $publicUrl = route('public.agent', ['slug' => $agen->slug]);
+        $response->assertSee('Lihat Halaman Profil Publik');
+        $response->assertSee('href="' . $publicUrl . '"', false);
+        $response->assertSeeInOrder(['Lihat Halaman Profil Publik', 'WhatsApp']);
+    }
+
+    public function test_more_public_profile_menu_falls_back_to_site_for_admin(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $response = $this->actingAs($admin)->get(route('mo.more'));
+
+        $response->assertOk();
+        $response->assertSee('Lihat Halaman Profil Publik');
+        $response->assertDontSee(route('public.agent', ['slug' => $admin->slug]));
     }
 
     public function test_mobile_profile_page_can_be_opened_and_updated(): void

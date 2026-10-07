@@ -14,7 +14,7 @@
 
 <div class="mo-content" style="padding-top:0;">
     {{-- Profil --}}
-    <div class="mo-profile-card">
+    <a href="{{ route('mo.profile') }}" class="mo-profile-card" style="text-decoration:none;color:#fff;" aria-label="Buka halaman profil">
         <div class="mo-avatar">
             @if(!empty($profile['photo']) && $profile['photo'])
                 <img src="{{ asset_photo_url($profile['photo']) }}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
@@ -32,14 +32,19 @@
             </div>
         </div>
         <i class="fas fa-chevron-right" style="opacity:.6;"></i>
-    </div>
+    </a>
 
-    {{-- Profil Saya (paling atas) --}}
+    {{-- Halaman profil publik (paling atas) --}}
+    @php
+        $publicProfileUrl = ($user->isAgen() || $user->isSupervisor()) && $user->slug
+            ? route('public.agent', ['slug' => $user->slug])
+            : route('home');
+    @endphp
     <div class="mo-menu">
-        <a href="{{ route('mo.profile') }}" class="mo-menu-item">
-            <i class="fas fa-user-pen mi"></i>
-            <div class="txt">Profil Saya</div>
-            <i class="fas fa-chevron-right chev"></i>
+        <a href="{{ $publicProfileUrl }}" target="_blank" rel="noopener" class="mo-menu-item">
+            <i class="fas fa-globe mi blue"></i>
+            <div class="txt">Lihat Halaman Profil Publik</div>
+            <i class="fas fa-external-link chev"></i>
         </a>
     </div>
 
@@ -101,11 +106,6 @@
 
     <div class="mo-section-title">Akun</div>
     <div class="mo-menu">
-        <a href="{{ route('home') }}" target="_blank" rel="noopener" class="mo-menu-item">
-            <i class="fas fa-globe mi blue"></i>
-            <div class="txt">Lihat Situs Publik</div>
-            <i class="fas fa-external-link chev"></i>
-        </a>
         <form method="POST" action="{{ route('logout', ['next' => 'mo']) }}" style="margin:0;">
             @csrf
             <button type="submit" class="mo-menu-item" style="width:100%;border:none;background:none;font-family:inherit;text-align:left;">
