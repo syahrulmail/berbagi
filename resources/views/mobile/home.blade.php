@@ -51,23 +51,31 @@
         @endif
 
         <div class="mo-hero-period">
-            <input type="date" name="from" class="mo-hero-date" value="{{ $from }}" aria-label="Dari tanggal" onchange="this.form.submit()">
+            <span class="mo-date-field">
+                <input type="date" name="from" class="mo-hero-date" value="{{ $from }}" aria-label="Dari tanggal" onchange="this.form.submit()">
+                <i class="fas fa-calendar-days" aria-hidden="true"></i>
+            </span>
             <span class="mo-hero-period-sep">–</span>
-            <input type="date" name="to" class="mo-hero-date" value="{{ $to }}" aria-label="Sampai tanggal" onchange="this.form.submit()">
+            <span class="mo-date-field">
+                <input type="date" name="to" class="mo-hero-date" value="{{ $to }}" aria-label="Sampai tanggal" onchange="this.form.submit()">
+                <i class="fas fa-calendar-days" aria-hidden="true"></i>
+            </span>
         </div>
     </form>
 
     {{-- Hero ringkasan --}}
     <div class="mo-hero">
         <div class="mo-hero-label">Total Donasi Tercatat</div>
+        <div class="mo-hero-note">(Seluruh data tercatat)</div>
         <div class="mo-hero-amount mo-hero-amount--sm">Rp {{ number_format((int) $totalRecorded, 0, ',', '.') }}</div>
-        <div class="mo-hero-sub">{{ number_format($totalTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($totalDonors, 0, ',', '.') }} Donatur (seluruh data tercatat)</div>
+        <div class="mo-hero-sub">{{ number_format($totalTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($totalDonors, 0, ',', '.') }} Donatur</div>
 
         <div class="mo-hero-divider"></div>
 
         <div class="mo-hero-label">Total Donasi Periode</div>
+        <div class="mo-hero-note">({{ $periodLabel }})</div>
         <div class="mo-hero-amount">Rp {{ number_format((int) $periodTotal, 0, ',', '.') }}</div>
-        <div class="mo-hero-sub">{{ number_format($periodTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($periodDonors, 0, ',', '.') }} Donatur ({{ $periodLabel }})</div>
+        <div class="mo-hero-sub">{{ number_format($periodTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($periodDonors, 0, ',', '.') }} Donatur</div>
         <div class="mo-hero-sub" style="margin-top:6px;">
             @if($growthPercent >= 0)
                 <i class="fas fa-arrow-trend-up"></i> Naik {{ abs($growthPercent) }}%
@@ -88,7 +96,7 @@
 
     {{-- Total donasi hari ini --}}
     <div class="mo-card mo-today-card">
-        <div class="mo-today-label"><i class="fas fa-wallet"></i> Total Donasi Hari Ini</div>
+        <div class="mo-today-label"><i class="fas fa-wallet"></i> Total Donasi Hari Ini {{ $branchSummary }}</div>
         <div class="mo-today-amount">Rp {{ number_format((int) $todayTotal, 0, ',', '.') }}</div>
         <div class="mo-today-sub">{{ number_format($todayTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($donorsToday, 0, ',', '.') }} Donatur (Hari ini)</div>
     </div>

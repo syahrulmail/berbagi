@@ -465,9 +465,11 @@ class MobileModulesTest extends TestCase
         $response->assertSee('mo-hero-amount--sm', false);
         $response->assertSee('Rp 115.000');
         $response->assertSee('Rp 75.000');
-        $response->assertSee('3 Transaksi dari 3 Donatur (seluruh data tercatat)');
-        $response->assertSee('2 Transaksi dari 2 Donatur (' . now()->startOfMonth()->format('d M Y') . ' - ' . now()->format('d M Y') . ')');
-        $response->assertSee('Total Donasi Hari Ini');
+        $response->assertSee('(Seluruh data tercatat)');
+        $response->assertSee('3 Transaksi dari 3 Donatur');
+        $response->assertSee('(' . now()->startOfMonth()->format('d M Y') . ' - ' . now()->format('d M Y') . ')');
+        $response->assertSee('2 Transaksi dari 2 Donatur');
+        $response->assertSee('Total Donasi Hari Ini ' . $branch->name);
         $response->assertSee('2 Transaksi dari 2 Donatur (Hari ini)');
         $response->assertDontSee('mo-stats', false);
         $response->assertSee('Tren Periode');
@@ -583,7 +585,8 @@ class MobileModulesTest extends TestCase
             ->assertOk()
             ->assertSee('Rp 100.000')
             ->assertDontSee('Rp 150.000')
-            ->assertSee('1 Transaksi dari 1 Donatur (seluruh data tercatat)');
+            ->assertSee('1 Transaksi dari 1 Donatur')
+            ->assertSee('(Seluruh data tercatat)');
 
         $this->actingAs($admin)
             ->get(route('mo.dashboard', ['branches' => [$branchA->id, $branchB->id]]))
@@ -614,7 +617,31 @@ class MobileModulesTest extends TestCase
             ->assertOk()
             ->assertSee('id="mo-dash-form" class="mo-dash-filters"', false)
             ->assertSee('data-filter-toggle="mo-branch-panel"', false)
-            ->assertSee('mo-hero-period', false);
+            ->assertSee('mo-hero-period', false)
+            ->assertSee('mo-date-field', false)
+            ->assertSee('fa-calendar-days', false);
+    }
+
+    public function test_today_card_shows_branch_summary(): void
+    {
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard'))
+            ->assertOk()
+            ->assertSee('Total Donasi Hari Ini Semua Cabang');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['branches' => [$branchA->id]]))
+            ->assertOk()
+            ->assertSee('Total Donasi Hari Ini ' . $branchA->name);
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['branches' => [$branchA->id, $branchB->id]]))
+            ->assertOk()
+            ->assertSee('Total Donasi Hari Ini 2 Cabang');
     }
 
     public function test_dashboard_period_scopes_period_total_but_not_recorded_total(): void
@@ -636,7 +663,8 @@ class MobileModulesTest extends TestCase
             ->assertSee('Total Donasi Tercatat')
             ->assertSee('Rp 100.000')
             ->assertSee('Rp 40.000')
-            ->assertSee('1 Transaksi dari 1 Donatur (' . $label . ')');
+            ->assertSee('1 Transaksi dari 1 Donatur')
+            ->assertSee('(' . $label . ')');
     }
 
     protected function makeNamedProgram(string $name): Program
