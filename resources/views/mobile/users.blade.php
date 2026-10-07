@@ -94,11 +94,10 @@
                 <div class="mo-row-body">
                     <div class="mo-row-title">{{ $u['name'] }}</div>
                     <div class="mo-row-sub"><i class="fas {{ $roleIcon[$u['role']] ?? 'fa-user' }}"></i> {{ $u['branch'] }}</div>
-                    <div class="mo-row-donation">
+                    <div class="mo-row-donation mo-row-donation--stack">
                         @if($u['donation_meta'])
-                            <i class="fas fa-hand-holding-dollar"></i>
-                            <span class="amount">{{ $u['donation_total_formatted'] }}</span>
-                            <span class="date">dari {{ $u['donation_meta'] }}</span>
+                            <span><i class="fas fa-hand-holding-dollar"></i> <span class="amount">{{ $u['donation_total_formatted'] }}</span></span>
+                            <span class="date">{{ $u['donation_meta'] }}</span>
                         @else
                             <span class="empty">Belum ada donasi</span>
                         @endif
@@ -106,9 +105,7 @@
                 </div>
                 <div class="mo-row-end">
                     <span class="mo-badge {{ $roleCls[$u['role']] ?? 'gray' }}">{{ $u['role_label'] }}</span>
-                    @if(!$u['is_active'])
-                        <div class="mo-badge gray" style="margin-top:4px;">Nonaktif</div>
-                    @endif
+                    <div class="mo-badge {{ $u['is_active'] ? 'green' : 'gray' }}" style="margin-top:4px;">{{ $u['is_active'] ? 'Aktif' : 'Nonaktif' }}</div>
                 </div>
             </div>
         @empty

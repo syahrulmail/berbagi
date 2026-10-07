@@ -516,6 +516,12 @@
     .mo-row-donation .amount { font-weight: 700; color: var(--mo-primary); font-variant-numeric: tabular-nums; }
     .mo-row-donation .date { color: var(--mo-muted); }
     .mo-row-donation .empty { font-style: italic; }
+    .mo-row-donation--stack {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        white-space: normal;
+    }
     .mo-contact-donation {
         border: 1px solid #e2ece9;
         border-radius: 12px;

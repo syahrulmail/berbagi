@@ -490,7 +490,7 @@ class MobileAppController extends Controller
                 'donor_count' => $donors,
                 'donation_total_formatted' => 'Rp ' . number_format($total, 0, ',', '.'),
                 'donation_meta' => $transactions > 0
-                    ? ($transactions . ' transaksi · ' . $donors . ' donatur')
+                    ? ('Dari ' . $transactions . ' transaksi - ' . $donors . ' Donatur')
                     : null,
             ];
         });

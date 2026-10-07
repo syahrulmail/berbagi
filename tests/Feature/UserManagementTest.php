@@ -521,7 +521,23 @@ class UserManagementTest extends TestCase
             ->get(route('mo.users'))
             ->assertOk()
             ->assertSee('Rp 200.000')
-            ->assertSee('dari 2 transaksi · 2 donatur');
+            ->assertSee('Dari 2 transaksi - 2 Donatur');
+    }
+
+    public function test_users_list_shows_active_and_inactive_status(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $this->makeUser('agen', $branch);
+        $inactive = $this->makeUser('agen', $branch);
+        $inactive->forceFill(['is_active' => false])->save();
+
+        $this->actingAs($admin)
+            ->get(route('mo.users'))
+            ->assertOk()
+            ->assertSee('mo-row-donation--stack', false)
+            ->assertSee('>Aktif</div>', false)
+            ->assertSee('>Nonaktif</div>', false);
     }
 
     public function test_users_search_by_name_and_phone_ignores_symbols(): void
@@ -586,7 +602,7 @@ class UserManagementTest extends TestCase
             ->get(route('mo.users', ['from' => '2026-03-01', 'to' => '2026-03-31']))
             ->assertOk()
             ->assertSee('Rp 700.000')
-            ->assertSee('dari 1 transaksi · 0 donatur');
+            ->assertSee('Dari 1 transaksi - 0 Donatur');
     }
 
     public function test_users_sorted_by_largest_donation(): void
