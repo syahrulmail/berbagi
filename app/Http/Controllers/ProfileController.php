@@ -7,8 +7,11 @@ use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
-    public function __construct(protected ProfileService $profiles)
+    protected $profiles;
+
+    public function __construct(ProfileService $profiles)
     {
+        $this->profiles = $profiles;
     }
 
     public function edit()

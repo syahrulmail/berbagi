@@ -138,6 +138,15 @@ class MobileModulesTest extends TestCase
         $response->assertDontSee(route('public.agent', ['slug' => $admin->slug]));
     }
 
+    public function test_desktop_profile_page_renders_for_user(): void
+    {
+        $agen = $this->makeUser('agen', $this->makeBranch());
+
+        $this->actingAs($agen)->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('Teks Sambutan');
+    }
+
     public function test_mobile_profile_page_can_be_opened_and_updated(): void
     {
         $agen = $this->makeUser('agen', $this->makeBranch());
