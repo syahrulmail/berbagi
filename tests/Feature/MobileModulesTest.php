@@ -480,7 +480,7 @@ class MobileModulesTest extends TestCase
         }
     }
 
-    public function test_dashboard_cards_are_collapsible_and_recent_shows_ten(): void
+    public function test_dashboard_shows_top_contacts_and_collapsible_programs(): void
     {
         $branch = $this->makeBranch();
         $agen = $this->makeUser('agen', $branch);
@@ -495,10 +495,33 @@ class MobileModulesTest extends TestCase
         $response->assertOk();
         $response->assertSee('mo-card--list', false);
         $response->assertSee('data-filter-toggle="mo-trend-body"', false);
-        $response->assertSee('data-filter-toggle="mo-recent-body"', false);
-        $response->assertSee('id="mo-trend-body" class="mo-collapse-body" hidden', false);
-        $response->assertSee('id="mo-recent-body" class="mo-collapse-body mo-list" hidden', false);
-        $this->assertSame(10, substr_count($response->getContent(), 'data-donation-detail'));
+        $response->assertSee('data-filter-toggle="mo-top-contact-body"', false);
+        $response->assertSee('data-filter-toggle="mo-top-program-body"', false);
+        $response->assertSee('Tertinggi - Kontak');
+        $response->assertSee('Tertinggi - Program');
+        $response->assertSee('id="mo-top-contact-body" class="mo-collapse-body mo-list"', false);
+        $response->assertSee('id="mo-top-program-body" class="mo-collapse-body mo-list" hidden', false);
+        $this->assertSame(10, substr_count($response->getContent(), 'data-contact-detail'));
+    }
+
+    public function test_dashboard_top_lists_are_scoped_by_period(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        // Donasi Januari: kontak besar 500.000
+        $this->makeProgramDonation($branch, $agen, $program, 500000, '2026-01-15');
+        // Donasi Juli: kontak besar 700.000
+        $this->makeProgramDonation($branch, $agen, $program, 700000, '2026-07-15');
+
+        $this->actingAs($admin)
+            ->get(route('mo.dashboard', ['from' => '2026-07-01', 'to' => '2026-07-31']))
+            ->assertOk()
+            ->assertSee('Tertinggi - Program')
+            ->assertSee('Rp 700.000')
+            ->assertDontSee('Rp 500.000');
     }
 
     public function test_admin_dashboard_shows_multi_branch_checklist(): void

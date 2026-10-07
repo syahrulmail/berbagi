@@ -242,20 +242,57 @@ class MobileAppController extends Controller
         }
         $trendMax = max(1, max(array_column($trend, 'value')));
 
-        // Donasi terbaru dalam periode terpilih
-        $recentDonations = (clone $periodQuery)
-            ->with(['branch', 'agen', 'contact', 'items.program'])
-            ->orderByDesc('donation_date')
-            ->orderByDesc('id')
+        // 10 kontak dengan total donasi tertinggi (sesuai cabang & periode)
+        $topContactRows = (clone $periodQuery)
+            ->whereNotNull('contact_id')
+            ->selectRaw('contact_id, SUM(amount) as total, COUNT(*) as transactions')
+            ->groupBy('contact_id')
+            ->orderByDesc('total')
             ->limit(10)
             ->get();
 
-        $recentDonations->each(function ($d) {
-            $d->amount_formatted = 'Rp ' . number_format((float) $d->amount, 0, ',', '.');
-            $d->date_formatted = $d->donation_date ? $d->donation_date->format('d M Y') : '-';
-            $d->program_label = $d->items->isNotEmpty()
-                ? $d->items->map(fn ($i) => $i->program->name ?? '')->filter()->implode(', ')
-                : ($d->program->name ?? '-');
+        $contactsById = Contact::whereIn('id', $topContactRows->pluck('contact_id'))->get()->keyBy('id');
+
+        $topContacts = $topContactRows->map(function ($row) use ($contactsById) {
+            $contact = $contactsById->get($row->contact_id);
+
+            return (object) [
+                'contact_id' => $row->contact_id,
+                'name' => $contact->name ?? 'Donatur',
+                'phone' => $contact->phone ?? '',
+                'initial' => strtoupper(substr($contact->name ?? '?', 0, 1)),
+                'total_formatted' => 'Rp ' . number_format((float) $row->total, 0, ',', '.'),
+                'transactions' => (int) $row->transactions,
+            ];
+        });
+
+        // 10 program dengan total donasi tertinggi (sesuai cabang & periode)
+        $topProgramQuery = \Illuminate\Support\Facades\DB::table('donation_items')
+            ->join('donations', 'donations.id', '=', 'donation_items.donation_id')
+            ->whereDate('donations.donation_date', '>=', $from)
+            ->whereDate('donations.donation_date', '<=', $to)
+            ->when($isAdmin && ! empty($selectedBranches), fn ($q) => $q->whereIn('donations.branch_id', $selectedBranches));
+        $this->scopeDonations($topProgramQuery, 'donations');
+
+        $topProgramRows = $topProgramQuery
+            ->groupBy('donation_items.program_id')
+            ->selectRaw('donation_items.program_id as program_id, SUM(donation_items.amount) as total, COUNT(DISTINCT donation_items.donation_id) as transactions')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $programsById = Program::whereIn('id', $topProgramRows->pluck('program_id'))->get()->keyBy('id');
+
+        $topPrograms = $topProgramRows->map(function ($row) use ($programsById) {
+            $program = $programsById->get($row->program_id);
+
+            return (object) [
+                'program_id' => $row->program_id,
+                'name' => $program->name ?? 'Program',
+                'category_label' => $program->category_label ?? null,
+                'total_formatted' => 'Rp ' . number_format((float) $row->total, 0, ',', '.'),
+                'transactions' => (int) $row->transactions,
+            ];
         });
 
         $totalPrograms = Program::where('is_active', true)->count();
@@ -285,7 +322,7 @@ class MobileAppController extends Controller
             'user', 'greeting', 'todayTotal', 'todayTransactions', 'donorsToday',
             'periodTotal', 'periodTransactions', 'periodDonors', 'periodLabel', 'growthPercent',
             'overallProgress', 'totalTarget', 'trend', 'trendMax',
-            'recentDonations', 'totalPrograms', 'totalContacts',
+            'topContacts', 'topPrograms', 'totalPrograms', 'totalContacts',
             'donatedContacts', 'waNumber',
             'totalRecorded', 'totalTransactions', 'totalDonors',
             'branches', 'selectedBranches', 'branchSummary', 'isAdmin', 'from', 'to'

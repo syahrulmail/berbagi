@@ -120,34 +120,67 @@
         </div>
     </div>
 
-    {{-- Donasi terbaru --}}
+    {{-- Tertinggi - Kontak --}}
     <div class="mo-card mo-card--list">
         <div class="mo-card-head mo-card-head--collapse">
-            <h2 class="mo-card-title"><i class="fas fa-clock-rotate-left"></i> Donasi Terbaru</h2>
+            <h2 class="mo-card-title"><i class="fas fa-trophy"></i> Tertinggi - Kontak</h2>
             <div class="mo-card-head-actions">
-                <a href="{{ route('mo.donations') }}" class="mo-card-link">Semua</a>
-                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-recent-body" aria-expanded="false" aria-label="Tampilkan donasi terbaru">
+                <a href="{{ route('mo.contacts') }}" class="mo-card-link">Semua</a>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-top-contact-body" aria-expanded="true" aria-label="Tampilkan kontak tertinggi">
                     <i class="fas fa-chevron-down mo-collapse-chevron"></i>
                 </button>
             </div>
         </div>
-        <div id="mo-recent-body" class="mo-collapse-body mo-list" hidden>
-            @forelse($recentDonations as $d)
-                <div class="mo-row" data-donation-detail="{{ $d->id }}">
-                    <div class="mo-row-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+        <div id="mo-top-contact-body" class="mo-collapse-body mo-list">
+            @forelse($topContacts as $c)
+                <div class="mo-row" data-contact-detail="{{ $c->contact_id }}">
+                    <div class="mo-row-icon gold">{{ $c->initial }}</div>
                     <div class="mo-row-body">
-                        <div class="mo-row-title">{{ $d->contact->name ?? ($d->donor_info ?: 'Donatur') }}</div>
-                        <div class="mo-row-sub">{{ $d->program_label }}</div>
+                        <div class="mo-row-title">{{ $c->name }}</div>
+                        <div class="mo-row-sub">{{ $c->phone }}</div>
                     </div>
                     <div class="mo-row-end">
-                        <div class="amount">{{ $d->amount_formatted }}</div>
-                        <div class="date">{{ $d->date_formatted }}</div>
+                        <div class="amount">{{ $c->total_formatted }}</div>
+                        <div class="date">{{ number_format($c->transactions, 0, ',', '.') }}x donasi</div>
                     </div>
                 </div>
             @empty
                 <div class="mo-empty">
-                    <i class="fas fa-hand-holding-dollar"></i>
-                    <p>Belum ada donasi tercatat.</p>
+                    <i class="fas fa-users"></i>
+                    <p>Belum ada donasi pada periode ini.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- Tertinggi - Program --}}
+    <div class="mo-card mo-card--list">
+        <div class="mo-card-head mo-card-head--collapse">
+            <h2 class="mo-card-title"><i class="fas fa-trophy"></i> Tertinggi - Program</h2>
+            <div class="mo-card-head-actions">
+                <a href="{{ route('mo.programs') }}" class="mo-card-link">Semua</a>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-top-program-body" aria-expanded="false" aria-label="Tampilkan program tertinggi">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mo-top-program-body" class="mo-collapse-body mo-list" hidden>
+            @forelse($topPrograms as $p)
+                <div class="mo-row">
+                    <div class="mo-row-icon"><i class="fas fa-bullseye"></i></div>
+                    <div class="mo-row-body">
+                        <div class="mo-row-title">{{ $p->name }}</div>
+                        <div class="mo-row-sub">{{ $p->category_label ?: '-' }}</div>
+                    </div>
+                    <div class="mo-row-end">
+                        <div class="amount">{{ $p->total_formatted }}</div>
+                        <div class="date">{{ number_format($p->transactions, 0, ',', '.') }}x donasi</div>
+                    </div>
+                </div>
+            @empty
+                <div class="mo-empty">
+                    <i class="fas fa-bullseye"></i>
+                    <p>Belum ada donasi pada periode ini.</p>
                 </div>
             @endforelse
         </div>
@@ -160,7 +193,7 @@
 @endsection
 
 @section('sheets')
-@include('mobile.partials.donation-sheet')
+@include('mobile.partials.contact-sheet')
 @endsection
 
 @if($isAdmin)
