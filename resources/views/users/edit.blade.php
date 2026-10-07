@@ -55,10 +55,14 @@
             <div class="form-group">
                 <label for="role">Role *</label>
                 <select id="role" name="role" required>
-                    <option value="agen" {{ old('role', $user->role) == 'agen' ? 'selected' : '' }}>Agen / Freelancer</option>
-                    <option value="supervisor" {{ old('role', $user->role) == 'supervisor' ? 'selected' : '' }}>Supervisor / TL</option>
-                    <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin Super</option>
-                    <option value="donatur" {{ old('role', $user->role) == 'donatur' ? 'selected' : '' }}>Donatur (Publik)</option>
+                    @if(auth()->user()->isAdmin())
+                        <option value="agen" {{ old('role', $user->role) == 'agen' ? 'selected' : '' }}>Agen / Freelancer</option>
+                        <option value="supervisor" {{ old('role', $user->role) == 'supervisor' ? 'selected' : '' }}>Supervisor / TL</option>
+                        <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin Super</option>
+                        <option value="donatur" {{ old('role', $user->role) == 'donatur' ? 'selected' : '' }}>Donatur (Publik)</option>
+                    @else
+                        <option value="agen" selected>Agen</option>
+                    @endif
                 </select>
             </div>
             <div class="form-group">

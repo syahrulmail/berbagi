@@ -82,9 +82,12 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin')->group(function () {
         Route::resource('branches', BranchController::class)->except('show');
-        Route::resource('users', UserController::class)->except('show');
         Route::resource('campaign-tags', CampaignTagController::class)->except('show');
         Route::resource('achievements', AchievementController::class)->except('show');
+    });
+
+    Route::middleware('role:admin,supervisor')->group(function () {
+        Route::resource('users', UserController::class)->except('show');
     });
 
     Route::middleware('role:admin')->group(function () {
@@ -138,7 +141,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/profil', [MobileAppController::class, 'profile'])->name('profile');
         Route::put('/profil', [MobileAppController::class, 'profileUpdate'])->name('profile.update');
         Route::get('/cabang', [MobileAppController::class, 'branches'])->name('branches')->middleware('role:admin');
-        Route::get('/pengguna', [MobileAppController::class, 'users'])->name('users')->middleware('role:admin');
+        Route::get('/pengguna', [MobileAppController::class, 'users'])->name('users')->middleware('role:admin,supervisor');
 
         Route::get('/api/donasi/{donation}/detail', [MobileAppController::class, 'donationDetail'])->name('api.donation-detail');
         Route::get('/api/kontak/{contact}/detail', [MobileAppController::class, 'contactDetail'])->name('api.contact-detail');
@@ -173,12 +176,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/cabang/{branch}', [MobileCrudController::class, 'branchUpdate'])->name('branch.update')->middleware('role:admin');
         Route::delete('/cabang/{branch}', [MobileCrudController::class, 'branchDestroy'])->name('branch.destroy')->middleware('role:admin');
 
-        // Pengguna CRUD (admin only)
-        Route::get('/pengguna/tambah', [MobileCrudController::class, 'userCreate'])->name('user.create')->middleware('role:admin');
-        Route::post('/pengguna/tambah', [MobileCrudController::class, 'userStore'])->name('user.store')->middleware('role:admin');
-        Route::get('/pengguna/{user}/edit', [MobileCrudController::class, 'userEdit'])->name('user.edit')->middleware('role:admin');
-        Route::put('/pengguna/{user}', [MobileCrudController::class, 'userUpdate'])->name('user.update')->middleware('role:admin');
-        Route::delete('/pengguna/{user}', [MobileCrudController::class, 'userDestroy'])->name('user.destroy')->middleware('role:admin');
+        // Pengguna CRUD (admin & supervisor)
+        Route::get('/pengguna/tambah', [MobileCrudController::class, 'userCreate'])->name('user.create')->middleware('role:admin,supervisor');
+        Route::post('/pengguna/tambah', [MobileCrudController::class, 'userStore'])->name('user.store')->middleware('role:admin,supervisor');
+        Route::get('/pengguna/{user}/edit', [MobileCrudController::class, 'userEdit'])->name('user.edit')->middleware('role:admin,supervisor');
+        Route::put('/pengguna/{user}', [MobileCrudController::class, 'userUpdate'])->name('user.update')->middleware('role:admin,supervisor');
+        Route::delete('/pengguna/{user}', [MobileCrudController::class, 'userDestroy'])->name('user.destroy')->middleware('role:admin,supervisor');
 
         // WhatsApp (semua role)
         Route::get('/whatsapp', [MobileModuleController::class, 'whatsappIndex'])->name('whatsapp');

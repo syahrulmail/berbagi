@@ -577,13 +577,15 @@ class MobileCrudController extends MobileAppController
 
     public function userCreate()
     {
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->formBranches(auth()->user());
 
         return view('mobile.forms.user-form', compact('branches'))->with('editUser', null);
     }
 
     public function userStore(Request $request)
     {
+        $actor = auth()->user();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:50', 'unique:users,username'],
@@ -593,6 +595,11 @@ class MobileCrudController extends MobileAppController
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['nullable', 'string', 'max:30'],
         ]);
+
+        if (! $actor->isAdmin()) {
+            $data['role'] = User::ROLE_AGEN;
+            $data['branch_id'] = $actor->branch_id;
+        }
 
         $data['password'] = Hash::make($data['password']);
         $data['is_active'] = $request->boolean('is_active');
@@ -609,7 +616,8 @@ class MobileCrudController extends MobileAppController
     public function userEdit($id)
     {
         $editUser = User::findOrFail($id);
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $this->authorizeUserManage($editUser);
+        $branches = $this->formBranches(auth()->user());
 
         return view('mobile.forms.user-form', compact('editUser', 'branches'));
     }
@@ -617,6 +625,8 @@ class MobileCrudController extends MobileAppController
     public function userUpdate(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        $actor = auth()->user();
+        $this->authorizeUserManage($user);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -627,6 +637,11 @@ class MobileCrudController extends MobileAppController
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['nullable', 'string', 'max:30'],
         ]);
+
+        if (! $actor->isAdmin()) {
+            $data['role'] = User::ROLE_AGEN;
+            $data['branch_id'] = $actor->branch_id;
+        }
 
         if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -648,6 +663,11 @@ class MobileCrudController extends MobileAppController
     public function userDestroy($id)
     {
         $user = User::findOrFail($id);
+        $this->authorizeUserManage($user);
+
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'Tidak dapat menghapus akun sendiri.');
+        }
 
         if ($user->isAdmin() && User::where('role', 'admin')->count() <= 1) {
             return back()->with('error', 'Tidak dapat menghapus admin terakhir.');
@@ -657,6 +677,16 @@ class MobileCrudController extends MobileAppController
         $user->delete();
 
         return redirect()->route('mo.users')->with('success', 'Pengguna berhasil dihapus.');
+    }
+
+    /**
+     * Pastikan pengelola berhak mengelola user target.
+     */
+    protected function authorizeUserManage(User $user): void
+    {
+        if (! $user->isManageableBy(auth()->user())) {
+            abort(403, 'Anda tidak berhak mengelola pengguna ini.');
+        }
     }
 
     protected function syncSupervisorBranch(User $user, array $data)

@@ -62,29 +62,33 @@
         </a>
     </div>
 
-    @if($user->isAdmin())
+    @if($user->isAdmin() || $user->isSupervisor())
         <div class="mo-section-title">Manajemen</div>
         <div class="mo-menu">
-            <a href="{{ route('mo.branches') }}" class="mo-menu-item">
-                <i class="fas fa-building mi"></i>
-                <div class="txt">Cabang</div>
-                <i class="fas fa-chevron-right chev"></i>
-            </a>
+            @if($user->isAdmin())
+                <a href="{{ route('mo.branches') }}" class="mo-menu-item">
+                    <i class="fas fa-building mi"></i>
+                    <div class="txt">Cabang</div>
+                    <i class="fas fa-chevron-right chev"></i>
+                </a>
+            @endif
             <a href="{{ route('mo.users') }}" class="mo-menu-item">
                 <i class="fas fa-users mi blue"></i>
                 <div class="txt">Pengguna</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
-            <a href="{{ route('mo.campaign-tags') }}" class="mo-menu-item">
-                <i class="fas fa-tags mi gold"></i>
-                <div class="txt">Label Kampanye</div>
-                <i class="fas fa-chevron-right chev"></i>
-            </a>
-            <a href="{{ route('mo.achievements') }}" class="mo-menu-item">
-                <i class="fas fa-trophy mi gold"></i>
-                <div class="txt">Pencapaian</div>
-                <i class="fas fa-chevron-right chev"></i>
-            </a>
+            @if($user->isAdmin())
+                <a href="{{ route('mo.campaign-tags') }}" class="mo-menu-item">
+                    <i class="fas fa-tags mi gold"></i>
+                    <div class="txt">Label Kampanye</div>
+                    <i class="fas fa-chevron-right chev"></i>
+                </a>
+                <a href="{{ route('mo.achievements') }}" class="mo-menu-item">
+                    <i class="fas fa-trophy mi gold"></i>
+                    <div class="txt">Pencapaian</div>
+                    <i class="fas fa-chevron-right chev"></i>
+                </a>
+            @endif
         </div>
     @endif
 

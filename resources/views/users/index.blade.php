@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1><i class="fas fa-users"></i> Manajemen Pengguna</h1>
-        <p class="subtitle">Kelola Admin, Supervisor, dan Agen.</p>
+        <p class="subtitle">{{ auth()->user()->isAdmin() ? 'Kelola Admin, Supervisor, dan Agen.' : 'Kelola agen di cabang Anda.' }}</p>
     </div>
     <a href="{{ route('users.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Pengguna</a>
 </div>
@@ -20,6 +20,7 @@
             <div class="metric-sub">{{ $stats['active'] }} aktif</div>
         </div>
     </div>
+    @if(auth()->user()->isAdmin())
     <div class="metric-card">
         <div class="metric-icon red"><i class="fas fa-user-shield"></i></div>
         <div class="metric-info">
@@ -34,6 +35,7 @@
             <div class="metric-value">{{ $stats['supervisor'] }}</div>
         </div>
     </div>
+    @endif
     <div class="metric-card">
         <div class="metric-icon green"><i class="fas fa-user-check"></i></div>
         <div class="metric-info">
@@ -51,6 +53,7 @@
                 <input type="search" name="search" placeholder="Cari nama / email / username..." value="{{ request('search') }}">
             </div>
         </div>
+        @if(auth()->user()->isAdmin())
         <div class="form-group">
             <select name="role">
                 <option value="">Semua Role</option>
@@ -60,6 +63,7 @@
                 <option value="donatur" {{ request('role') == 'donatur' ? 'selected' : '' }}>Donatur</option>
             </select>
         </div>
+        @endif
         <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
         @if(request('search') || request('role'))
             <a href="{{ route('users.index') }}" class="btn btn-outline"><i class="fas fa-rotate-left"></i> Reset</a>

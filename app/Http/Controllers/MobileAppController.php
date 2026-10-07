@@ -425,11 +425,12 @@ class MobileAppController extends Controller
     }
 
     /**
-     * Pengguna (admin).
+     * Pengguna (admin: semua; supervisor: agen cabangnya).
      */
     public function users()
     {
         $users = User::with('branch')
+            ->visibleTo(auth()->user())
             ->orderBy('role')
             ->orderBy('name')
             ->get()

@@ -94,6 +94,50 @@ class User extends Authenticatable
         return $this->role === self::ROLE_DONATUR;
     }
 
+    /**
+     * Batasi query pengguna sesuai wewenang pengelola:
+     * admin melihat semua, supervisor hanya agen di cabangnya.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  User  $viewer
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeVisibleTo($query, User $viewer)
+    {
+        if ($viewer->isSupervisor()) {
+            $query->where('role', self::ROLE_AGEN)
+                ->where('branch_id', $viewer->branch_id);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Apakah pengguna ini boleh dikelola (diubah/dihapus) oleh $viewer.
+     */
+    public function isManageableBy(User $viewer): bool
+    {
+        if ($viewer->isAdmin()) {
+            return true;
+        }
+
+        return $viewer->isSupervisor()
+            && $this->role === self::ROLE_AGEN
+            && (int) $this->branch_id === (int) $viewer->branch_id;
+    }
+
+    /**
+     * Daftar role yang boleh ditetapkan oleh $actor.
+     */
+    public static function assignableRoles(User $actor): array
+    {
+        if ($actor->isAdmin()) {
+            return [self::ROLE_ADMIN, self::ROLE_SUPERVISOR, self::ROLE_AGEN, self::ROLE_DONATUR];
+        }
+
+        return [self::ROLE_AGEN];
+    }
+
     public static function uniqueSlug(string $username, $ignoreId = null): string
     {
         $base = \Illuminate\Support\Str::slug($username);

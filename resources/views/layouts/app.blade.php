@@ -47,24 +47,28 @@
                 <i class="fas fa-phone-volume"></i><span class="nav-text">Follow-up WA</span>
             </a>
 
-            @if(auth()->user()->isAdmin())
+            @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
                 <div class="nav-section">Manajemen</div>
 
-                <a href="{{ route('branches.index') }}" class="nav-item {{ request()->routeIs('branches.*') ? 'active' : '' }}">
-                    <i class="fas fa-building"></i><span class="nav-text">Cabang</span>
-                </a>
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('branches.index') }}" class="nav-item {{ request()->routeIs('branches.*') ? 'active' : '' }}">
+                        <i class="fas fa-building"></i><span class="nav-text">Cabang</span>
+                    </a>
+                @endif
                 <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
                     <i class="fas fa-users"></i><span class="nav-text">Pengguna</span>
                 </a>
-                <a href="{{ route('campaign-tags.index') }}" class="nav-item {{ request()->routeIs('campaign-tags.*') ? 'active' : '' }}">
-                    <i class="fas fa-tags"></i><span class="nav-text">Label Kampanye</span>
-                </a>
-                <a href="{{ route('banners.index') }}" class="nav-item {{ request()->routeIs('banners.*') ? 'active' : '' }}">
-                    <i class="fas fa-images"></i><span class="nav-text">Banner &amp; Label</span>
-                </a>
-                <a href="{{ route('achievements.index') }}" class="nav-item {{ request()->routeIs('achievements.*') ? 'active' : '' }}">
-                    <i class="fas fa-medal"></i><span class="nav-text">Pencapaian</span>
-                </a>
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('campaign-tags.index') }}" class="nav-item {{ request()->routeIs('campaign-tags.*') ? 'active' : '' }}">
+                        <i class="fas fa-tags"></i><span class="nav-text">Label Kampanye</span>
+                    </a>
+                    <a href="{{ route('banners.index') }}" class="nav-item {{ request()->routeIs('banners.*') ? 'active' : '' }}">
+                        <i class="fas fa-images"></i><span class="nav-text">Banner &amp; Label</span>
+                    </a>
+                    <a href="{{ route('achievements.index') }}" class="nav-item {{ request()->routeIs('achievements.*') ? 'active' : '' }}">
+                        <i class="fas fa-medal"></i><span class="nav-text">Pencapaian</span>
+                    </a>
+                @endif
             @endif
 
             @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())

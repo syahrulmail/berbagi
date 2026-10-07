@@ -66,10 +66,14 @@
             <div class="mo-field">
                 <label for="role">Peran <span class="req">*</span></label>
                 <select id="role" name="role" class="mo-select">
-                    <option value="admin" {{ old('role', $editUser->role ?? '') == 'admin' ? 'selected' : '' }}>Admin Super</option>
-                    <option value="supervisor" {{ old('role', $editUser->role ?? '') == 'supervisor' ? 'selected' : '' }}>Supervisor</option>
-                    <option value="agen" {{ old('role', $editUser->role ?? '') == 'agen' ? 'selected' : '' }}>Agen</option>
-                    <option value="donatur" {{ old('role', $editUser->role ?? '') == 'donatur' ? 'selected' : '' }}>Donatur</option>
+                    @if(auth()->user()->isAdmin())
+                        <option value="admin" {{ old('role', $editUser->role ?? '') == 'admin' ? 'selected' : '' }}>Admin Super</option>
+                        <option value="supervisor" {{ old('role', $editUser->role ?? '') == 'supervisor' ? 'selected' : '' }}>Supervisor</option>
+                        <option value="agen" {{ old('role', $editUser->role ?? '') == 'agen' ? 'selected' : '' }}>Agen</option>
+                        <option value="donatur" {{ old('role', $editUser->role ?? '') == 'donatur' ? 'selected' : '' }}>Donatur</option>
+                    @else
+                        <option value="agen" selected>Agen</option>
+                    @endif
                 </select>
             </div>
 

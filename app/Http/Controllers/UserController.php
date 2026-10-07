@@ -14,8 +14,11 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $actor = auth()->user();
+
         $users = User::with('branch')
-            ->when($request->role, function ($query, $role) {
+            ->visibleTo($actor)
+            ->when($actor->isAdmin() && $request->role, function ($query, $role) {
                 return $query->where('role', $role);
             })
             ->when($request->search, function ($query, $search) {
@@ -30,26 +33,53 @@ class UserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $stats = [
-            'total'      => User::count(),
-            'admin'      => User::where('role', 'admin')->count(),
-            'supervisor' => User::where('role', 'supervisor')->count(),
-            'agen'       => User::where('role', 'agen')->count(),
-            'active'     => User::where('is_active', true)->count(),
-        ];
+        $stats = $this->userStats($actor);
 
         return view('users.index', compact('users', 'stats'));
     }
 
+    /**
+     * Statistik pengguna, dibatasi sesuai wewenang pengelola.
+     */
+    protected function userStats(User $actor): array
+    {
+        $base = User::visibleTo($actor);
+
+        return [
+            'total'      => (clone $base)->count(),
+            'admin'      => $actor->isAdmin() ? User::where('role', User::ROLE_ADMIN)->count() : 0,
+            'supervisor' => $actor->isAdmin() ? User::where('role', User::ROLE_SUPERVISOR)->count() : 0,
+            'agen'       => (clone $base)->where('role', User::ROLE_AGEN)->count(),
+            'active'     => (clone $base)->where('is_active', true)->count(),
+        ];
+    }
+
+    /**
+     * Cabang yang boleh dipilih pengelola (supervisor hanya cabangnya).
+     */
+    protected function selectableBranches(User $actor)
+    {
+        $query = Branch::where('is_active', true)->orderBy('name');
+
+        if ($actor->isSupervisor()) {
+            $query->where('id', $actor->branch_id);
+        }
+
+        return $query->get();
+    }
+
     public function create()
     {
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $actor = auth()->user();
+        $branches = $this->selectableBranches($actor);
 
         return view('users.create', compact('branches'));
     }
 
     public function store(Request $request)
     {
+        $actor = auth()->user();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:50', 'unique:users,username'],
@@ -59,6 +89,11 @@ class UserController extends Controller
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['nullable', 'string', 'max:30'],
         ]);
+
+        if (! $actor->isAdmin()) {
+            $data['role'] = User::ROLE_AGEN;
+            $data['branch_id'] = $actor->branch_id;
+        }
 
         $data['password'] = Hash::make($data['password']);
         $data['is_active'] = $request->boolean('is_active');
@@ -75,15 +110,30 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $actor = auth()->user();
+        $this->authorizeUserManage($user);
+        $branches = $this->selectableBranches($actor);
 
         $profile = $this->decodeProfile(Setting::get('agent_profile_' . $user->slug, '{}'));
 
         return view('users.edit', compact('user', 'branches', 'profile'));
     }
 
+    /**
+     * Pastikan pengelola berhak mengelola user target.
+     */
+    protected function authorizeUserManage(User $user): void
+    {
+        if (! $user->isManageableBy(auth()->user())) {
+            abort(403, 'Anda tidak berhak mengelola pengguna ini.');
+        }
+    }
+
     public function update(Request $request, User $user)
     {
+        $actor = auth()->user();
+        $this->authorizeUserManage($user);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $user->id],
@@ -97,6 +147,11 @@ class UserController extends Controller
             'photo_remove' => ['nullable', 'string', 'in:0,1'],
             'intro' => ['nullable', 'string', 'max:500'],
         ]);
+
+        if (! $actor->isAdmin()) {
+            $data['role'] = User::ROLE_AGEN;
+            $data['branch_id'] = $actor->branch_id;
+        }
 
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -200,6 +255,13 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $actor = auth()->user();
+        $this->authorizeUserManage($user);
+
+        if ($actor->id === $user->id) {
+            return back()->with('error', 'Tidak dapat menghapus akun sendiri.');
+        }
+
         if ($user->isAdmin() && User::where('role', 'admin')->count() <= 1) {
             return back()->with('error', 'Tidak dapat menghapus admin terakhir.');
         }
