@@ -34,21 +34,11 @@
         <i class="fas fa-chevron-right" style="opacity:.6;"></i>
     </div>
 
-    {{-- Menu utama --}}
+    {{-- Profil Saya (paling atas) --}}
     <div class="mo-menu">
-        <a href="{{ route('mo.programs') }}" class="mo-menu-item">
-            <i class="fas fa-file-invoice-dollar mi"></i>
-            <div class="txt">Program Donasi</div>
-            <i class="fas fa-chevron-right chev"></i>
-        </a>
-        <a href="{{ route('mo.contacts') }}" class="mo-menu-item">
-            <i class="fas fa-address-book mi blue"></i>
-            <div class="txt">Manajemen Kontak</div>
-            <i class="fas fa-chevron-right chev"></i>
-        </a>
-        <a href="{{ route('mo.donation.create') }}" class="mo-menu-item">
-            <i class="fas fa-hand-holding-dollar mi gold"></i>
-            <div class="txt">Catat Donasi</div>
+        <a href="{{ route('mo.profile') }}" class="mo-menu-item">
+            <i class="fas fa-user-pen mi"></i>
+            <div class="txt">Profil Saya</div>
             <i class="fas fa-chevron-right chev"></i>
         </a>
     </div>
@@ -111,11 +101,6 @@
 
     <div class="mo-section-title">Akun</div>
     <div class="mo-menu">
-        <a href="{{ route('profile.edit') }}" class="mo-menu-item">
-            <i class="fas fa-user-pen mi"></i>
-            <div class="txt">Profil Saya</div>
-            <i class="fas fa-chevron-right chev"></i>
-        </a>
         <a href="{{ route('home') }}" target="_blank" rel="noopener" class="mo-menu-item">
             <i class="fas fa-globe mi blue"></i>
             <div class="txt">Lihat Situs Publik</div>

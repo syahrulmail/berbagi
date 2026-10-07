@@ -10,6 +10,7 @@ use App\Models\Contact;
 use App\Models\Donation;
 use App\Models\DonationItem;
 use App\Models\Program;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\WaFollowup;
 use App\Models\WhatsappMessage;
@@ -104,6 +105,39 @@ class MobileModulesTest extends TestCase
         foreach (['mo.campaign-tags', 'mo.banners', 'mo.achievements', 'mo.activity-logs'] as $name) {
             $this->actingAs($agen)->get(route($name))->assertForbidden();
         }
+    }
+
+    public function test_more_menu_hides_primary_links_and_puts_profile_first(): void
+    {
+        $agen = $this->makeUser('agen', $this->makeBranch());
+
+        $response = $this->actingAs($agen)->get(route('mo.more'));
+
+        $response->assertOk();
+        $response->assertDontSee('Program Donasi');
+        $response->assertDontSee('Manajemen Kontak');
+        $response->assertDontSee('Catat Donasi');
+        $response->assertDontSee(route('profile.edit'));
+        $response->assertSee('href="' . route('mo.profile') . '"', false);
+        $response->assertSeeInOrder(['Profil Saya', 'WhatsApp']);
+    }
+
+    public function test_mobile_profile_page_can_be_opened_and_updated(): void
+    {
+        $agen = $this->makeUser('agen', $this->makeBranch());
+
+        $this->actingAs($agen)->get(route('mo.profile'))
+            ->assertOk()
+            ->assertSee('Teks Sambutan')
+            ->assertSee(route('mo.profile.update'), false);
+
+        $this->actingAs($agen)->put(route('mo.profile.update'), [
+            'existing_photo' => '',
+            'photo_remove' => '0',
+            'intro' => 'Salam hangat dari saya',
+        ])->assertRedirect(route('mo.profile'));
+
+        $this->assertStringContainsString('Salam hangat dari saya', Setting::get('agent_profile_' . $agen->slug, ''));
     }
 
     public function test_whatsapp_message_can_be_created_and_deleted(): void

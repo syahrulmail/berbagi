@@ -8,6 +8,7 @@ use App\Models\Donation;
 use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -383,6 +384,27 @@ class MobileAppController extends Controller
         }
 
         return view('mobile.more', compact('user', 'profile'));
+    }
+
+    /**
+     * Profil Saya (mobile): foto & sambutan halaman publik.
+     */
+    public function profile(ProfileService $profiles)
+    {
+        $user = auth()->user();
+        $profile = $profiles->data($user);
+
+        return view('mobile.profile', compact('user', 'profile'));
+    }
+
+    /**
+     * Simpan Profil Saya dari aplikasi mobile.
+     */
+    public function profileUpdate(Request $request, ProfileService $profiles)
+    {
+        $profiles->save(auth()->user(), $request);
+
+        return redirect()->route('mo.profile')->with('success', 'Profil berhasil disimpan.');
     }
 
     /**

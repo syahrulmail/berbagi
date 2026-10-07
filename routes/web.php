@@ -135,6 +135,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/kontak', [MobileAppController::class, 'contacts'])->name('contacts');
         Route::get('/program', [MobileAppController::class, 'programs'])->name('programs');
         Route::get('/lainnya', [MobileAppController::class, 'more'])->name('more');
+        Route::get('/profil', [MobileAppController::class, 'profile'])->name('profile');
+        Route::put('/profil', [MobileAppController::class, 'profileUpdate'])->name('profile.update');
         Route::get('/cabang', [MobileAppController::class, 'branches'])->name('branches')->middleware('role:admin');
         Route::get('/pengguna', [MobileAppController::class, 'users'])->name('users')->middleware('role:admin');
 
