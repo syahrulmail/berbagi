@@ -10,7 +10,7 @@
         </a>
         <div style="flex:1;min-width:0;">
             <h1 class="mo-appbar-title"><i class="fas fa-user-circle" style="color:var(--mo-primary);font-size:20px;"></i> Profil Saya</h1>
-            <div class="mo-appbar-sub">Foto &amp; sambutan halaman publik</div>
+            <div class="mo-appbar-sub">Identitas, keamanan &amp; halaman publik</div>
         </div>
     </div>
 </div>
@@ -43,17 +43,88 @@
             @error('photo')
                 <small style="color:var(--mo-danger);display:block;margin-top:4px;">{{ $message }}</small>
             @enderror
+
+            <div class="mo-field" style="margin-top:14px;margin-bottom:0;text-align:left;">
+                <label>Link Halaman Profil Publik</label>
+                <a href="{{ route('public.agent', $user->slug) }}" target="_blank" class="mo-btn mo-btn-ghost" style="width:100%;justify-content:flex-start;overflow:hidden;">
+                    <i class="fas fa-link"></i>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">berbagi.or.id/cs/{{ $user->slug }}</span>
+                </a>
+            </div>
         </div>
 
         <div class="mo-form-card">
+            <h3 class="mo-form-card-title"><i class="fas fa-comment-dots"></i> Teks Sambutan</h3>
             <div class="mo-field" style="margin-bottom:0;">
-                <label for="intro">Teks Sambutan</label>
                 <textarea id="intro" name="intro" class="mo-textarea" rows="4" maxlength="500"
                           placeholder="Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah...">{{ old('intro', $profile['intro'] ?? '') }}</textarea>
                 <small style="color:var(--mo-muted);">Tampil di bawah nama Anda pada halaman publik. Kosongkan untuk memakai teks bawaan.</small>
                 @error('intro')
                     <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
                 @enderror
+            </div>
+        </div>
+
+        <div class="mo-form-card">
+            <h3 class="mo-form-card-title"><i class="fas fa-id-card"></i> Identitas</h3>
+            <div class="mo-field">
+                <label for="name">Nama Lengkap <span class="req">*</span></label>
+                <input type="text" id="name" name="name" class="mo-input" value="{{ old('name', $user->name) }}" required>
+                @error('name')
+                    <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
+                @enderror
+            </div>
+            <div class="mo-field">
+                <label for="username">Username <span class="req">*</span></label>
+                <input type="text" id="username" name="username" class="mo-input" value="{{ old('username', $user->username) }}" required>
+                @error('username')
+                    <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
+                @enderror
+            </div>
+            <div class="mo-field">
+                <label for="email">Email <span class="req">*</span></label>
+                <input type="email" id="email" name="email" class="mo-input" value="{{ old('email', $user->email) }}" required>
+                @error('email')
+                    <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
+                @enderror
+            </div>
+            <div class="mo-field" style="margin-bottom:0;">
+                <label for="phone">No. Handphone</label>
+                <input type="text" id="phone" name="phone" class="mo-input" value="{{ old('phone', $user->phone) }}" placeholder="08xxxxxxxxxx">
+                @error('phone')
+                    <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
+                @enderror
+            </div>
+        </div>
+
+        <div class="mo-form-card">
+            <h3 class="mo-form-card-title"><i class="fas fa-lock"></i> Keamanan</h3>
+            <div class="mo-field">
+                <label for="password">Password Baru</label>
+                <input type="password" id="password" name="password" class="mo-input" minlength="8" placeholder="Kosongkan jika tidak diubah">
+                @error('password')
+                    <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
+                @enderror
+            </div>
+            <div class="mo-field" style="margin-bottom:0;">
+                <label for="password_confirmation">Konfirmasi Password Baru</label>
+                <input type="password" id="password_confirmation" name="password_confirmation" class="mo-input" minlength="8">
+            </div>
+        </div>
+
+        <div class="mo-form-card">
+            <h3 class="mo-form-card-title"><i class="fas fa-shield-halved"></i> Peran &amp; Status</h3>
+            <div class="mo-readonly-row">
+                <span class="k">Peran</span>
+                <span class="v">{{ $user->roleLabel() }}</span>
+            </div>
+            <div class="mo-readonly-row">
+                <span class="k">Cabang</span>
+                <span class="v">{{ $user->branch->name ?? '-' }}</span>
+            </div>
+            <div class="mo-readonly-row">
+                <span class="k">Status</span>
+                <span class="v">{{ $user->is_active ? 'Aktif' : 'Nonaktif' }}</span>
             </div>
         </div>
 

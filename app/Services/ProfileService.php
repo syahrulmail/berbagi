@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class ProfileService
@@ -19,18 +20,41 @@ class ProfileService
     }
 
     /**
-     * Simpan data profil (foto & sambutan) milik user.
+     * Simpan data profil (identitas, keamanan, foto & sambutan) milik user.
      */
     public function save(User $user, Request $request): void
     {
         $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $user->id],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'existing_photo' => ['nullable', 'string', 'max:255'],
             'photo_remove' => ['nullable', 'string', 'in:0,1'],
             'intro' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $existing = (string) ($data['existing_photo'] ?? '');
+        $oldSlug = $user->slug;
+
+        // Identitas (role & cabang tidak dapat diubah dari halaman ini).
+        $user->name = $data['name'];
+        $user->username = $data['username'];
+        $user->email = $data['email'];
+        $user->phone = $data['phone'] ?? null;
+        if (! empty($data['password'])) {
+            $user->password = Hash::make($data['password']);
+        }
+
+        $newSlug = User::uniqueSlug($user->username, $user->id);
+        $slugChanged = $oldSlug !== $newSlug;
+        $user->slug = $newSlug;
+        $user->save();
+
+        // Foto & sambutan.
+        $profile = $this->decode(Setting::get('agent_profile_' . $oldSlug, '{}'));
+        $existing = (string) ($data['existing_photo'] ?? ($profile['photo'] ?? ''));
         $removeFlag = (string) ($data['photo_remove'] ?? '0');
         $photo = $existing;
 
@@ -46,7 +70,11 @@ class ProfileService
             $photo = '';
         }
 
-        Setting::set('agent_profile_' . $user->slug, json_encode([
+        if ($slugChanged) {
+            Setting::where('key', 'agent_profile_' . $oldSlug)->delete();
+        }
+
+        Setting::set('agent_profile_' . $newSlug, json_encode([
             'photo' => $photo,
             'intro' => trim((string) ($data['intro'] ?? '')),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

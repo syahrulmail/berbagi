@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\WaFollowup;
 use App\Models\WhatsappMessage;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class MobileModulesTest extends TestCase
@@ -155,15 +156,71 @@ class MobileModulesTest extends TestCase
         $this->actingAs($agen)->get(route('mo.profile'))
             ->assertOk()
             ->assertSee('Teks Sambutan')
+            ->assertSee('Identitas')
+            ->assertSee('Keamanan')
+            ->assertSee('Peran & Status')
+            ->assertSee(route('public.agent', $agen->slug), false)
             ->assertSee(route('mo.profile.update'), false);
 
         $this->actingAs($agen)->put(route('mo.profile.update'), [
+            'name' => $agen->name,
+            'username' => $agen->username,
+            'email' => $agen->email,
+            'phone' => '08123456789',
             'existing_photo' => '',
             'photo_remove' => '0',
             'intro' => 'Salam hangat dari saya',
         ])->assertRedirect(route('mo.profile'));
 
         $this->assertStringContainsString('Salam hangat dari saya', Setting::get('agent_profile_' . $agen->slug, ''));
+        $this->assertSame('08123456789', $agen->fresh()->phone);
+    }
+
+    public function test_desktop_profile_updates_identity_and_password(): void
+    {
+        $agen = $this->makeUser('agen', $this->makeBranch());
+
+        $this->actingAs($agen)->put(route('profile.update'), [
+            'name' => 'Nama Baru',
+            'username' => 'usernamebaru',
+            'email' => 'baru@example.test',
+            'phone' => '081200000000',
+            'password' => 'rahasia123',
+            'password_confirmation' => 'rahasia123',
+            'existing_photo' => '',
+            'photo_remove' => '0',
+            'intro' => '',
+        ])->assertRedirect(route('profile.edit'));
+
+        $fresh = $agen->fresh();
+        $this->assertSame('Nama Baru', $fresh->name);
+        $this->assertSame('usernamebaru', $fresh->username);
+        $this->assertSame('baru@example.test', $fresh->email);
+        $this->assertTrue(Hash::check('rahasia123', $fresh->password));
+    }
+
+    public function test_profile_username_change_migrates_public_slug(): void
+    {
+        $agen = $this->makeUser('agen', $this->makeBranch());
+        Setting::set('agent_profile_' . $agen->slug, json_encode(['photo' => 'agents/x.jpg', 'intro' => 'Hai']));
+
+        $oldSlug = $agen->slug;
+
+        $this->actingAs($agen)->put(route('profile.update'), [
+            'name' => $agen->name,
+            'username' => 'usernameslugbaru',
+            'email' => $agen->email,
+            'password' => '',
+            'password_confirmation' => '',
+            'existing_photo' => 'agents/x.jpg',
+            'photo_remove' => '0',
+            'intro' => 'Hai',
+        ])->assertRedirect(route('profile.edit'));
+
+        $fresh = $agen->fresh();
+        $this->assertNotSame($oldSlug, $fresh->slug);
+        $this->assertNull(Setting::where('key', 'agent_profile_' . $oldSlug)->first());
+        $this->assertStringContainsString('Hai', Setting::get('agent_profile_' . $fresh->slug, '{}'));
     }
 
     public function test_whatsapp_message_can_be_created_and_deleted(): void
