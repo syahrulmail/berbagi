@@ -8,6 +8,7 @@ use App\Models\Donation;
 use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\IntegrationCheckService;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -644,7 +645,7 @@ class MobileAppController extends Controller
     /**
      * Pengguna (admin: semua; supervisor: agen cabangnya).
      */
-    public function users(Request $request)
+    public function users(Request $request, IntegrationCheckService $integration)
     {
         $actor = auth()->user();
         $profiles = Setting::where('key', 'like', 'agent_profile_%')->pluck('value', 'key');
@@ -709,12 +710,28 @@ class MobileAppController extends Controller
                 'donation_meta' => $transactions > 0
                     ? ('Dari ' . $transactions . ' transaksi - ' . $donors . ' Donatur')
                     : null,
+                'api_ss_key' => is_array($profile) ? trim((string) ($profile['api_ss'] ?? '')) : '',
+                'api_cc_key' => is_array($profile) ? trim((string) ($profile['api_cc'] ?? '')) : '',
             ];
         });
 
         if ($sortDonation) {
             $users = $users->sortByDesc('donation_total')->values();
         }
+
+        $statusInput = [];
+        foreach ($users as $u) {
+            $statusInput[$u['id']] = ['ss' => $u['api_ss_key'], 'cc' => $u['api_cc_key']];
+        }
+
+        $statuses = $integration->forUsers($statusInput);
+
+        $users = $users->map(function ($u) use ($statuses) {
+            $u['api_ss'] = $statuses[$u['id']]['ss'] ?? IntegrationCheckService::STATUS_EMPTY;
+            $u['api_cc'] = $statuses[$u['id']]['cc'] ?? IntegrationCheckService::STATUS_EMPTY;
+
+            return $u;
+        });
 
         $branches = $actor->isAdmin()
             ? Branch::where('is_active', true)->orderBy('name')->get()

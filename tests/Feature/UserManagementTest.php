@@ -683,6 +683,40 @@ class UserManagementTest extends TestCase
         );
     }
 
+    public function test_mobile_users_show_api_wa_indicator_below_status(): void
+    {
+        Cache::flush();
+
+        Http::fake([
+            'https://api.starsender.online/api/check-number' => Http::response(['success' => true], 200),
+            'https://app.cloudchat.id/*' => Http::response(['success' => true], 200),
+        ]);
+
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        Setting::set('agent_profile_' . $agent->slug, json_encode([
+            'photo' => '',
+            'intro' => '',
+            'api_ss' => 'SS-MO-OK-' . uniqid(),
+            'api_cc' => 'CC-MO-OK-' . uniqid(),
+        ]));
+
+        $html = $this->actingAs($supervisor)
+            ->get(route('mo.users'))
+            ->assertOk()
+            ->assertSee('API SS: Terkoneksi')
+            ->assertSee('API CC: Terkoneksi')
+            ->getContent();
+
+        $this->assertLessThan(
+            mb_strpos($html, 'title="API SS:'),
+            mb_strpos($html, '>Aktif<'),
+            'Indikator API WA harus berada setelah label status Aktif.'
+        );
+    }
+
     public function test_user_detail_json_includes_public_profile_url(): void
     {
         $branch = $this->makeBranch();

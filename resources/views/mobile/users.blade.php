@@ -106,6 +106,22 @@
                 <div class="mo-row-end">
                     <span class="mo-badge {{ $roleCls[$u['role']] ?? 'gray' }}">{{ $u['role_label'] }}</span>
                     <div class="mo-badge {{ $u['is_active'] ? 'green' : 'gray' }}" style="margin-top:4px;">{{ $u['is_active'] ? 'Aktif' : 'Nonaktif' }}</div>
+                    @php
+                        $ssStatus = $u['api_ss'] ?? 'empty';
+                        $ccStatus = $u['api_cc'] ?? 'empty';
+                        $dotColor = ['ok' => '#22c55e', 'fail' => '#ef4444', 'empty' => '#cbd5e1'];
+                        $dotGlow = [
+                            'ok' => '0 0 0 2px rgba(34,197,94,.25), 0 0 6px rgba(34,197,94,.9)',
+                            'fail' => '0 0 0 2px rgba(239,68,68,.25), 0 0 6px rgba(239,68,68,.9)',
+                            'empty' => 'none',
+                        ];
+                        $dotLabel = ['ok' => 'Terkoneksi', 'fail' => 'Tidak terkoneksi', 'empty' => 'Belum diisi'];
+                    @endphp
+                    <div style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;"
+                         title="API SS: {{ $dotLabel[$ssStatus] ?? '' }} / API CC: {{ $dotLabel[$ccStatus] ?? '' }}">
+                        <span style="width:11px;height:11px;border-radius:50%;display:inline-block;background:{{ $dotColor[$ssStatus] ?? '#cbd5e1' }};box-shadow:{{ $dotGlow[$ssStatus] ?? 'none' }};"></span>
+                        <span style="width:11px;height:11px;border-radius:50%;display:inline-block;background:{{ $dotColor[$ccStatus] ?? '#cbd5e1' }};box-shadow:{{ $dotGlow[$ccStatus] ?? 'none' }};"></span>
+                    </div>
                 </div>
             </div>
         @empty
