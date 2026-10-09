@@ -592,8 +592,8 @@ class UserManagementTest extends TestCase
             ->get(route('mo.users'))
             ->assertOk()
             ->assertSee('mo-row-donation--stack', false)
-            ->assertSee('>Aktif</div>', false)
-            ->assertSee('>Nonaktif</div>', false);
+            ->assertSee('>Aktif<', false)
+            ->assertSee('>Nonaktif<', false);
     }
 
     public function test_users_search_by_name_and_phone_ignores_symbols(): void
