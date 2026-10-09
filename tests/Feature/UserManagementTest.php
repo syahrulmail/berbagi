@@ -653,4 +653,92 @@ class UserManagementTest extends TestCase
                 ->assertDontSee('Simpan Perubahan');
         }
     }
+
+    public function test_desktop_user_store_saves_integration_keys(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $payload = $this->payload([
+            'api_ss' => 'SS-STORE-1',
+            'api_cc' => 'CC-STORE-1',
+        ]);
+
+        $this->actingAs($admin)->post(route('users.store'), $payload)
+            ->assertRedirect(route('users.index'));
+
+        $created = User::where('username', $payload['username'])->firstOrFail();
+        $profile = json_decode(Setting::get('agent_profile_' . $created->slug, '{}'), true);
+        $this->assertSame('SS-STORE-1', $profile['api_ss']);
+        $this->assertSame('CC-STORE-1', $profile['api_cc']);
+    }
+
+    public function test_desktop_user_update_saves_integration_keys(): void
+    {
+        $admin = $this->makeUser('admin');
+        $agent = $this->makeUser('agen', $this->makeBranch());
+
+        $this->actingAs($admin)->put(route('users.update', $agent), $this->payload([
+            'username' => $agent->username,
+            'email' => $agent->email,
+            'api_ss' => 'SS-UPD-1',
+            'api_cc' => 'CC-UPD-1',
+        ]))->assertRedirect(route('users.index'));
+
+        $profile = json_decode(Setting::get('agent_profile_' . $agent->fresh()->slug, '{}'), true);
+        $this->assertSame('SS-UPD-1', $profile['api_ss']);
+        $this->assertSame('CC-UPD-1', $profile['api_cc']);
+    }
+
+    public function test_user_forms_show_integration_fields_above_active(): void
+    {
+        $admin = $this->makeUser('admin');
+        $agent = $this->makeUser('agen', $this->makeBranch());
+
+        $urls = [
+            route('users.create'),
+            route('users.edit', $agent),
+            route('mo.user.create'),
+            route('mo.user.edit', $agent),
+        ];
+
+        foreach ($urls as $url) {
+            $html = $this->actingAs($admin)->get($url)->assertOk()->getContent();
+            $this->assertStringContainsString('API SS', $html);
+            $this->assertStringContainsString('API CC', $html);
+            $this->assertLessThan(
+                mb_strpos($html, 'name="is_active"'),
+                mb_strpos($html, 'name="api_ss"'),
+                'Field API SS harus berada di atas checklist Aktif pada ' . $url
+            );
+        }
+    }
+
+    public function test_mobile_user_store_and_update_saves_integration_keys(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $payload = $this->payload([
+            'api_ss' => 'SS-MO-1',
+            'api_cc' => 'CC-MO-1',
+        ]);
+
+        $this->actingAs($admin)->post(route('mo.user.store'), $payload)
+            ->assertRedirect(route('mo.users'));
+
+        $created = User::where('username', $payload['username'])->firstOrFail();
+        $profile = json_decode(Setting::get('agent_profile_' . $created->slug, '{}'), true);
+        $this->assertSame('SS-MO-1', $profile['api_ss']);
+        $this->assertSame('CC-MO-1', $profile['api_cc']);
+
+        $this->actingAs($admin)->put(route('mo.user.update', $created->id), $this->payload([
+            'username' => $created->username,
+            'email' => $created->email,
+            'api_ss' => 'SS-MO-2',
+            'api_cc' => 'CC-MO-2',
+        ]))->assertRedirect(route('mo.users'));
+
+        $profile = json_decode(Setting::get('agent_profile_' . $created->fresh()->slug, '{}'), true);
+        $this->assertSame('SS-MO-2', $profile['api_ss']);
+        $this->assertSame('CC-MO-2', $profile['api_cc']);
+    }
 }

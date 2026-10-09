@@ -20,6 +20,27 @@ class ProfileService
     }
 
     /**
+     * Simpan kunci integrasi (API SS & API CC) milik user,
+     * mempertahankan foto & sambutan yang sudah ada.
+     */
+    public function saveIntegration(User $user, Request $request): void
+    {
+        $data = $request->validate([
+            'api_ss' => ['nullable', 'string', 'max:255'],
+            'api_cc' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $profile = $this->decode(Setting::get('agent_profile_' . $user->slug, '{}'));
+
+        Setting::set('agent_profile_' . $user->slug, json_encode([
+            'photo' => $profile['photo'],
+            'intro' => $profile['intro'],
+            'api_ss' => trim((string) ($data['api_ss'] ?? '')),
+            'api_cc' => trim((string) ($data['api_cc'] ?? '')),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
+    /**
      * Simpan data profil (identitas, keamanan, foto & sambutan) milik user.
      */
     public function save(User $user, Request $request): void

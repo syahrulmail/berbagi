@@ -88,12 +88,16 @@ class UserController extends Controller
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'api_ss' => ['nullable', 'string', 'max:255'],
+            'api_cc' => ['nullable', 'string', 'max:255'],
         ]);
 
         if (! $actor->isAdmin()) {
             $data['role'] = User::ROLE_AGEN;
             $data['branch_id'] = $actor->branch_id;
         }
+
+        unset($data['api_ss'], $data['api_cc']);
 
         $data['password'] = Hash::make($data['password']);
         $data['is_active'] = $request->boolean('is_active');
@@ -102,6 +106,13 @@ class UserController extends Controller
         $user = User::create($data);
 
         $this->syncSupervisorBranch($user, $data);
+
+        Setting::set('agent_profile_' . $user->slug, json_encode([
+            'photo' => '',
+            'intro' => '',
+            'api_ss' => trim((string) $request->input('api_ss', '')),
+            'api_cc' => trim((string) $request->input('api_cc', '')),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         ActivityLog::record('user.create', 'Membuat user ' . $user->name);
 
@@ -146,6 +157,8 @@ class UserController extends Controller
             'existing_photo' => ['nullable', 'string', 'max:255'],
             'photo_remove' => ['nullable', 'string', 'in:0,1'],
             'intro' => ['nullable', 'string', 'max:500'],
+            'api_ss' => ['nullable', 'string', 'max:255'],
+            'api_cc' => ['nullable', 'string', 'max:255'],
         ]);
 
         if (! $actor->isAdmin()) {
@@ -163,6 +176,8 @@ class UserController extends Controller
 
         $oldSlug = $user->slug;
         $data['slug'] = User::uniqueSlug($data['username'], $user->id);
+
+        unset($data['api_ss'], $data['api_cc']);
 
         $user->update($data);
 
@@ -220,6 +235,13 @@ class UserController extends Controller
 
         $intro = trim((string) ($request->input('intro') ?? ($profile['intro'] ?? '')));
 
+        $apiSs = $request->has('api_ss')
+            ? trim((string) $request->input('api_ss'))
+            : (string) ($profile['api_ss'] ?? '');
+        $apiCc = $request->has('api_cc')
+            ? trim((string) $request->input('api_cc'))
+            : (string) ($profile['api_cc'] ?? '');
+
         if ($oldKey !== $newKey) {
             Setting::where('key', $oldKey)->delete();
         }
@@ -227,6 +249,8 @@ class UserController extends Controller
         Setting::set($newKey, json_encode([
             'photo' => $photo,
             'intro' => $intro,
+            'api_ss' => $apiSs,
+            'api_cc' => $apiCc,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
@@ -235,12 +259,14 @@ class UserController extends Controller
         $decoded = json_decode($json, true);
 
         if (! is_array($decoded)) {
-            return ['photo' => '', 'intro' => ''];
+            return ['photo' => '', 'intro' => '', 'api_ss' => '', 'api_cc' => ''];
         }
 
         return [
             'photo' => (string) ($decoded['photo'] ?? ''),
             'intro' => (string) ($decoded['intro'] ?? ''),
+            'api_ss' => (string) ($decoded['api_ss'] ?? ''),
+            'api_cc' => (string) ($decoded['api_cc'] ?? ''),
         ];
     }
 

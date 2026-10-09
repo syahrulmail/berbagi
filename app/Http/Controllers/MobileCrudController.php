@@ -583,7 +583,7 @@ class MobileCrudController extends MobileAppController
         return view('mobile.forms.user-form', [
             'branches' => $branches,
             'editUser' => null,
-            'profile' => ['photo' => '', 'intro' => ''],
+            'profile' => ['photo' => '', 'intro' => '', 'api_ss' => '', 'api_cc' => ''],
         ]);
     }
 
@@ -599,12 +599,16 @@ class MobileCrudController extends MobileAppController
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['required', 'string', 'max:30'],
+            'api_ss' => ['nullable', 'string', 'max:255'],
+            'api_cc' => ['nullable', 'string', 'max:255'],
         ]);
 
         if (! $actor->isAdmin()) {
             $data['role'] = User::ROLE_AGEN;
             $data['branch_id'] = $actor->branch_id;
         }
+
+        unset($data['api_ss'], $data['api_cc']);
 
         $data['password'] = Hash::make($data['password']);
         $data['is_active'] = $request->boolean('is_active');
@@ -613,6 +617,7 @@ class MobileCrudController extends MobileAppController
         $user = User::create($data);
         $this->syncSupervisorBranch($user, $data);
         $this->saveUserPhoto($request, $user);
+        (new ProfileService())->saveIntegration($user, $request);
 
         ActivityLog::record('user.create', 'Membuat user ' . $user->name);
 
@@ -643,6 +648,8 @@ class MobileCrudController extends MobileAppController
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['required', 'string', 'max:30'],
+            'api_ss' => ['nullable', 'string', 'max:255'],
+            'api_cc' => ['nullable', 'string', 'max:255'],
         ]);
 
         if (! $actor->isAdmin()) {
@@ -660,9 +667,12 @@ class MobileCrudController extends MobileAppController
         $oldSlug = $user->slug;
         $data['slug'] = User::uniqueSlug($data['username'], $user->id);
 
+        unset($data['api_ss'], $data['api_cc']);
+
         $user->update($data);
         $this->syncSupervisorBranch($user, $data);
         $this->saveUserPhoto($request, $user, $oldSlug);
+        (new ProfileService())->saveIntegration($user, $request);
 
         ActivityLog::record('user.update', 'Memperbarui user ' . $user->name);
 

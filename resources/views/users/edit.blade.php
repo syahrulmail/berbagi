@@ -103,6 +103,17 @@
             @enderror
         </div>
         @endif
+        <h3 class="card-title" style="margin-top:6px;"><i class="fas fa-plug" style="color: var(--primary);"></i> Integrasi</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="api_ss">API SS</label>
+                <input type="text" id="api_ss" name="api_ss" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="api_cc">API CC</label>
+                <input type="text" id="api_cc" name="api_cc" value="{{ old('api_cc', $profile['api_cc'] ?? '') }}" autocomplete="off">
+            </div>
+        </div>
         <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }}> Aktif
