@@ -158,6 +158,8 @@ class MobileModulesTest extends TestCase
             ->assertSee('Teks Sambutan')
             ->assertSee('Identitas')
             ->assertSee('Keamanan')
+            ->assertSee('Integrasi')
+            ->assertSee('API SS')
             ->assertSee('Peran & Status')
             ->assertSee(route('public.agent', $agen->slug), false)
             ->assertSee(route('mo.profile.update'), false);
@@ -170,10 +172,13 @@ class MobileModulesTest extends TestCase
             'existing_photo' => '',
             'photo_remove' => '0',
             'intro' => 'Salam hangat dari saya',
+            'api_ss' => 'SS-TEST-KEY-123',
         ])->assertRedirect(route('mo.profile'));
 
         $this->assertStringContainsString('Salam hangat dari saya', Setting::get('agent_profile_' . $agen->slug, ''));
         $this->assertSame('08123456789', $agen->fresh()->phone);
+        $profile = json_decode(Setting::get('agent_profile_' . $agen->slug, '{}'), true);
+        $this->assertSame('SS-TEST-KEY-123', $profile['api_ss']);
     }
 
     public function test_desktop_profile_updates_identity_and_password(): void

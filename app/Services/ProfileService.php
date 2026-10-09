@@ -34,6 +34,7 @@ class ProfileService
             'existing_photo' => ['nullable', 'string', 'max:255'],
             'photo_remove' => ['nullable', 'string', 'in:0,1'],
             'intro' => ['nullable', 'string', 'max:500'],
+            'api_ss' => ['nullable', 'string', 'max:255'],
         ]);
 
         $oldSlug = $user->slug;
@@ -77,6 +78,7 @@ class ProfileService
         Setting::set('agent_profile_' . $newSlug, json_encode([
             'photo' => $photo,
             'intro' => trim((string) ($data['intro'] ?? '')),
+            'api_ss' => trim((string) ($data['api_ss'] ?? '')),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         ActivityLog::record('profile.update', 'Memperbarui profil ' . $user->name);
@@ -130,6 +132,7 @@ class ProfileService
         Setting::set($newKey, json_encode([
             'photo' => $photo,
             'intro' => $profile['intro'],
+            'api_ss' => $profile['api_ss'],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
@@ -138,12 +141,13 @@ class ProfileService
         $decoded = json_decode($json, true);
 
         if (! is_array($decoded)) {
-            return ['photo' => '', 'intro' => ''];
+            return ['photo' => '', 'intro' => '', 'api_ss' => ''];
         }
 
         return [
             'photo' => (string) ($decoded['photo'] ?? ''),
             'intro' => (string) ($decoded['intro'] ?? ''),
+            'api_ss' => (string) ($decoded['api_ss'] ?? ''),
         ];
     }
 }
