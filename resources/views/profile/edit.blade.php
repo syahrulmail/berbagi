@@ -105,8 +105,7 @@
         <h2 class="card-title"><i class="fas fa-plug" style="color: var(--primary);"></i> Integrasi</h2>
         <div class="form-group" style="margin-bottom: 0;">
             <label for="api_ss">API SS</label>
-            <input type="text" id="api_ss" name="api_ss" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off" placeholder="Masukkan API Key Starsender">
-            <small style="color: var(--gray-500);">API Key Starsender untuk pengiriman pesan WhatsApp. Dapatkan di dashboard <code>app.starsender.online</code>.</small>
+            <input type="text" id="api_ss" name="api_ss" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
             @error('api_ss')
                 <small style="color: var(--danger);">{{ $message }}</small>
             @enderror

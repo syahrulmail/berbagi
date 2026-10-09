@@ -116,8 +116,7 @@
             <h3 class="mo-form-card-title"><i class="fas fa-plug"></i> Integrasi</h3>
             <div class="mo-field" style="margin-bottom:0;">
                 <label for="api_ss">API SS</label>
-                <input type="text" id="api_ss" name="api_ss" class="mo-input" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off" placeholder="Masukkan API Key Starsender">
-                <small style="color:var(--mo-muted);">API Key Starsender untuk pengiriman pesan WhatsApp.</small>
+                <input type="text" id="api_ss" name="api_ss" class="mo-input" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
                 @error('api_ss')
                     <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
                 @enderror
