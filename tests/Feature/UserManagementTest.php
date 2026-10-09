@@ -717,6 +717,42 @@ class UserManagementTest extends TestCase
         );
     }
 
+    public function test_mobile_more_profile_card_shows_api_wa_indicator_below_role(): void
+    {
+        Cache::flush();
+
+        Http::fake([
+            'https://api.starsender.online/api/check-number' => Http::response(['success' => true], 200),
+            'https://app.cloudchat.id/*' => Http::response(['success' => true], 200),
+        ]);
+
+        $branch = $this->makeBranch();
+        $agent = $this->makeUser('agen', $branch);
+
+        Setting::set('agent_profile_' . $agent->slug, json_encode([
+            'photo' => '',
+            'intro' => '',
+            'api_ss' => 'SS-MORE-OK-' . uniqid(),
+            'api_cc' => 'CC-MORE-OK-' . uniqid(),
+        ]));
+
+        $html = $this->actingAs($agent)
+            ->get(route('mo.more'))
+            ->assertOk()
+            ->assertSee('API SS: Terkoneksi')
+            ->assertSee('API CC: Terkoneksi')
+            ->getContent();
+
+        $rolePos = mb_strpos($html, $branch->name);
+
+        $this->assertNotFalse($rolePos, 'Baris Peran - Cabang tidak ditemukan pada kartu profil.');
+        $this->assertLessThan(
+            mb_strpos($html, 'title="API SS:'),
+            $rolePos,
+            'Indikator API WA harus berada di bawah baris Peran - Cabang.'
+        );
+    }
+
     public function test_user_detail_json_includes_public_profile_url(): void
     {
         $branch = $this->makeBranch();

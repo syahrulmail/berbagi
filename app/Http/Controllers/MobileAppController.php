@@ -591,7 +591,7 @@ class MobileAppController extends Controller
     /**
      * Menu Lainnya: profil, menu manajemen (sesuai role).
      */
-    public function more()
+    public function more(IntegrationCheckService $integration)
     {
         $user = auth()->user();
 
@@ -601,7 +601,19 @@ class MobileAppController extends Controller
             $profile = [];
         }
 
-        return view('mobile.more', compact('user', 'profile'));
+        // Status indikator API WA (SS/CC) milik pengguna saat ini.
+        $statuses = $integration->forUsers([
+            $user->id => [
+                'ss' => trim((string) ($profile['api_ss'] ?? '')),
+                'cc' => trim((string) ($profile['api_cc'] ?? '')),
+            ],
+        ]);
+        $apiStatus = $statuses[$user->id] ?? [
+            'ss' => IntegrationCheckService::STATUS_EMPTY,
+            'cc' => IntegrationCheckService::STATUS_EMPTY,
+        ];
+
+        return view('mobile.more', compact('user', 'profile', 'apiStatus'));
     }
 
     /**
