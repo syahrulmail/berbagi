@@ -103,10 +103,17 @@
 
     <div class="card" style="max-width: 720px;">
         <h2 class="card-title"><i class="fas fa-plug" style="color: var(--primary);"></i> Integrasi</h2>
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group">
             <label for="api_ss">API SS</label>
             <input type="text" id="api_ss" name="api_ss" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
             @error('api_ss')
+                <small style="color: var(--danger);">{{ $message }}</small>
+            @enderror
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="api_cc">API CC</label>
+            <input type="text" id="api_cc" name="api_cc" value="{{ old('api_cc', $profile['api_cc'] ?? '') }}" autocomplete="off">
+            @error('api_cc')
                 <small style="color: var(--danger);">{{ $message }}</small>
             @enderror
         </div>
