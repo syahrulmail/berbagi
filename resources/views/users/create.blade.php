@@ -2,6 +2,8 @@
 
 @section('title', 'Tambah Pengguna')
 
+@include('partials.photo-upload-styles')
+
 @section('content')
 <div class="page-header">
     <div>
@@ -12,7 +14,7 @@
 </div>
 
 <div class="card" style="max-width: 640px;">
-    <form method="POST" action="{{ route('users.store') }}">
+    <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data">
         @csrf
         <div class="form-group">
             <label for="name">Nama Lengkap *</label>
@@ -68,6 +70,17 @@
             <label for="phone">No. WhatsApp</label>
             <input type="text" id="phone" name="phone" value="{{ old('phone') }}" placeholder="628xxxxxxx">
         </div>
+        <div class="form-group">
+            <label>Foto Profil</label>
+            @php
+                $photoUrl = '';
+                $existingPhoto = '';
+            @endphp
+            @include('partials.photo-upload')
+            @error('photo')
+                <small style="color: var(--danger);">{{ $message }}</small>
+            @enderror
+        </div>
         <h3 class="card-title" style="margin-top:6px;"><i class="fas fa-plug" style="color: var(--primary);"></i> Integrasi</h3>
         <div class="form-row">
             <div class="form-group">
@@ -90,4 +103,6 @@
         </div>
     </form>
 </div>
+
+@include('partials.photo-upload-script')
 @endsection

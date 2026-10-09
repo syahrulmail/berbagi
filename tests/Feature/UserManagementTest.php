@@ -672,6 +672,39 @@ class UserManagementTest extends TestCase
         $this->assertSame('CC-STORE-1', $profile['api_cc']);
     }
 
+    public function test_desktop_create_form_has_photo_upload_below_phone(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $html = $this->actingAs($admin)->get(route('users.create'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Foto Profil', $html);
+        $this->assertStringContainsString('name="photo"', $html);
+        $this->assertLessThan(
+            mb_strpos($html, 'name="photo"'),
+            mb_strpos($html, 'name="phone"'),
+            'Foto Profil harus berada di bawah No. WhatsApp.'
+        );
+    }
+
+    public function test_desktop_user_store_saves_photo(): void
+    {
+        Storage::fake('public');
+        $admin = $this->makeUser('admin');
+
+        $payload = $this->payload([
+            'photo' => UploadedFile::fake()->image('avatar.jpg'),
+        ]);
+
+        $this->actingAs($admin)->post(route('users.store'), $payload)
+            ->assertRedirect(route('users.index'));
+
+        $created = User::where('username', $payload['username'])->firstOrFail();
+        $profile = json_decode(Setting::get('agent_profile_' . $created->slug, '{}'), true);
+        $this->assertNotEmpty($profile['photo']);
+        Storage::disk('public')->assertExists($profile['photo']);
+    }
+
     public function test_desktop_user_update_saves_integration_keys(): void
     {
         $admin = $this->makeUser('admin');

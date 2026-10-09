@@ -3,11 +3,11 @@
     $existingPhoto = $existingPhoto ?? '';
 @endphp
 <div class="profile-photo-wrap">
-    <img id="profilePhotoPreview" src="{{ $photoUrl }}" alt="Foto profil {{ $user->name }}"
+    <img id="profilePhotoPreview" src="{{ $photoUrl }}" alt="Foto profil {{ $user->name ?? '' }}"
          class="profile-photo-preview" style="{{ $photoUrl === '' ? 'display:none;' : '' }}">
     <div id="profilePhotoPlaceholder" class="profile-photo-placeholder"
          style="{{ $photoUrl !== '' ? 'display:none;' : '' }}">
-        {{ strtoupper(mb_substr($user->name, 0, 1)) }}
+        {{ strtoupper(mb_substr($user->name ?? old('name') ?? '?', 0, 1)) }}
     </div>
 </div>
 <input type="file" id="profilePhoto" name="photo" accept="image/jpeg,image/png,image/webp" class="t-file">

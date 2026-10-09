@@ -88,6 +88,7 @@ class UserController extends Controller
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'api_ss' => ['nullable', 'string', 'max:255'],
             'api_cc' => ['nullable', 'string', 'max:255'],
         ]);
@@ -107,8 +108,14 @@ class UserController extends Controller
 
         $this->syncSupervisorBranch($user, $data);
 
+        $photo = '';
+        $file = $request->file('photo');
+        if ($file !== null && $file->isValid()) {
+            $photo = $file->store('agents', 'public') ?: '';
+        }
+
         Setting::set('agent_profile_' . $user->slug, json_encode([
-            'photo' => '',
+            'photo' => $photo,
             'intro' => '',
             'api_ss' => trim((string) $request->input('api_ss', '')),
             'api_cc' => trim((string) $request->input('api_cc', '')),
