@@ -115,11 +115,15 @@ class IntegrationCheckService
 
     protected function starsenderUrl(): string
     {
-        return rtrim((string) config('services.starsender.base_url'), '/') . '/api/devices';
+        $base = config('services.starsender.base_url', 'https://api.starsender.online');
+
+        return rtrim((string) ($base ?: 'https://api.starsender.online'), '/') . '/api/devices';
     }
 
     protected function cloudchatUrl(): string
     {
-        return rtrim((string) config('services.cloudchat.base_url'), '/') . '/check-number';
+        $base = config('services.cloudchat.base_url', 'https://app.cloudchat.id/api/public/v1');
+
+        return rtrim((string) ($base ?: 'https://app.cloudchat.id/api/public/v1'), '/') . '/check-number';
     }
 }
