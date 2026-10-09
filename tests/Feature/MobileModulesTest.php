@@ -126,7 +126,7 @@ class MobileModulesTest extends TestCase
         $publicUrl = route('public.agent', ['slug' => $agen->slug]);
         $response->assertSee('Lihat Halaman Profil Publik');
         $response->assertSee('href="' . $publicUrl . '"', false);
-        $response->assertSeeInOrder(['Lihat Halaman Profil Publik', 'WhatsApp']);
+        $response->assertSeeInOrder(['Lihat Halaman Profil Publik', 'Follow-up WA', 'Traffic']);
     }
 
     public function test_more_public_profile_menu_falls_back_to_site_for_admin(): void

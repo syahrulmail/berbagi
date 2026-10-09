@@ -68,12 +68,12 @@
     <div class="mo-menu">
         <a href="{{ route('mo.whatsapp') }}" class="mo-menu-item">
             <i class="fab fa-whatsapp mi" style="background:#e5f8ec;color:#25d366;"></i>
-            <div class="txt">WhatsApp</div>
+            <div class="txt">Follow-up WA</div>
             <i class="fas fa-chevron-right chev"></i>
         </a>
         <a href="{{ route('mo.followups') }}" class="mo-menu-item">
             <i class="fas fa-comments mi blue"></i>
-            <div class="txt">Follow-up WA</div>
+            <div class="txt">Traffic</div>
             <i class="fas fa-chevron-right chev"></i>
         </a>
     </div>

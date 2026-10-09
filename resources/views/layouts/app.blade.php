@@ -40,11 +40,11 @@
             </a>
 
             <a href="{{ route('whatsapp.index') }}" class="nav-item {{ request()->routeIs('whatsapp.*') ? 'active' : '' }}">
-                <i class="fab fa-whatsapp"></i><span class="nav-text">WhatsApp</span>
+                <i class="fab fa-whatsapp"></i><span class="nav-text">Follow-up WA</span>
             </a>
 
             <a href="{{ route('followups.index') }}" class="nav-item {{ request()->routeIs('followups.*') ? 'active' : '' }}">
-                <i class="fas fa-phone-volume"></i><span class="nav-text">Follow-up WA</span>
+                <i class="fas fa-phone-volume"></i><span class="nav-text">Traffic</span>
             </a>
 
             @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
