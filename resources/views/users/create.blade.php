@@ -81,6 +81,15 @@
                 <small style="color: var(--danger);">{{ $message }}</small>
             @enderror
         </div>
+        <div class="form-group">
+            <label for="intro">Teks Sambutan</label>
+            <textarea id="intro" name="intro" rows="3" maxlength="500"
+                      placeholder="Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.">{{ old('intro') }}</textarea>
+            <small style="color: var(--gray-500);">Sambutan yang tampil di bawah nama pada halaman publik. Kosongkan untuk memakai teks bawaan.</small>
+            @error('intro')
+                <small style="color: var(--danger);">{{ $message }}</small>
+            @enderror
+        </div>
         <h3 class="card-title" style="margin-top:6px;"><i class="fas fa-plug" style="color: var(--primary);"></i> Integrasi</h3>
         <div class="form-row">
             <div class="form-group">

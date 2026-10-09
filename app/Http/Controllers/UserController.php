@@ -89,6 +89,7 @@ class UserController extends Controller
             'branch_id' => ['nullable', 'exists:branches,id'],
             'phone' => ['nullable', 'string', 'max:30'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'intro' => ['nullable', 'string', 'max:500'],
             'api_ss' => ['nullable', 'string', 'max:255'],
             'api_cc' => ['nullable', 'string', 'max:255'],
         ]);
@@ -98,7 +99,7 @@ class UserController extends Controller
             $data['branch_id'] = $actor->branch_id;
         }
 
-        unset($data['api_ss'], $data['api_cc']);
+        unset($data['api_ss'], $data['api_cc'], $data['intro'], $data['photo']);
 
         $data['password'] = Hash::make($data['password']);
         $data['is_active'] = $request->boolean('is_active');
@@ -116,7 +117,7 @@ class UserController extends Controller
 
         Setting::set('agent_profile_' . $user->slug, json_encode([
             'photo' => $photo,
-            'intro' => '',
+            'intro' => trim((string) $request->input('intro', '')),
             'api_ss' => trim((string) $request->input('api_ss', '')),
             'api_cc' => trim((string) $request->input('api_cc', '')),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

@@ -680,10 +680,17 @@ class UserManagementTest extends TestCase
 
         $this->assertStringContainsString('Foto Profil', $html);
         $this->assertStringContainsString('name="photo"', $html);
+        $this->assertStringContainsString('Teks Sambutan', $html);
+        $this->assertStringContainsString('name="intro"', $html);
         $this->assertLessThan(
             mb_strpos($html, 'name="photo"'),
             mb_strpos($html, 'name="phone"'),
             'Foto Profil harus berada di bawah No. WhatsApp.'
+        );
+        $this->assertLessThan(
+            mb_strpos($html, 'name="intro"'),
+            mb_strpos($html, 'name="photo"'),
+            'Teks Sambutan harus berada di bawah Foto Profil.'
         );
     }
 
@@ -694,6 +701,7 @@ class UserManagementTest extends TestCase
 
         $payload = $this->payload([
             'photo' => UploadedFile::fake()->image('avatar.jpg'),
+            'intro' => 'Sambutan pengguna baru',
         ]);
 
         $this->actingAs($admin)->post(route('users.store'), $payload)
@@ -703,6 +711,7 @@ class UserManagementTest extends TestCase
         $profile = json_decode(Setting::get('agent_profile_' . $created->slug, '{}'), true);
         $this->assertNotEmpty($profile['photo']);
         Storage::disk('public')->assertExists($profile['photo']);
+        $this->assertSame('Sambutan pengguna baru', $profile['intro']);
     }
 
     public function test_desktop_user_update_saves_integration_keys(): void
