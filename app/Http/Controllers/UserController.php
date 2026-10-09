@@ -6,13 +6,14 @@ use App\Models\ActivityLog;
 use App\Models\Branch;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\IntegrationCheckService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, IntegrationCheckService $integration)
     {
         $actor = auth()->user();
 
@@ -35,7 +36,48 @@ class UserController extends Controller
 
         $stats = $this->userStats($actor);
 
+        $this->attachIntegrationStatus($users, $integration);
+
         return view('users.index', compact('users', 'stats'));
+    }
+
+    /**
+     * Lampirkan status koneksi API WA (SS/CC) pada setiap user di halaman ini.
+     * Ambil seluruh setting profil sekaligus agar tidak terjadi N+1.
+     */
+    protected function attachIntegrationStatus($users, IntegrationCheckService $integration): void
+    {
+        $collection = $users->getCollection();
+
+        if ($collection->isEmpty()) {
+            return;
+        }
+
+        $settings = [];
+        foreach ($collection as $user) {
+            $settings['agent_profile_' . $user->slug] = null;
+        }
+
+        $stored = Setting::whereIn('key', array_keys($settings))->pluck('value', 'key')->all();
+
+        $profiles = [];
+        foreach ($collection as $user) {
+            $profile = $this->decodeProfile($stored['agent_profile_' . $user->slug] ?? '{}');
+
+            $profiles[$user->id] = [
+                'ss' => $profile['api_ss'],
+                'cc' => $profile['api_cc'],
+            ];
+        }
+
+        $statuses = $integration->forUsers($profiles);
+
+        foreach ($collection as $user) {
+            $user->api_status = $statuses[$user->id] ?? [
+                'ss' => IntegrationCheckService::STATUS_EMPTY,
+                'cc' => IntegrationCheckService::STATUS_EMPTY,
+            ];
+        }
     }
 
     /**

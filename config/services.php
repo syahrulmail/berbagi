@@ -35,4 +35,12 @@ return [
         'token' => env('WHATSAPP_API_TOKEN'),
     ],
 
+    'starsender' => [
+        'base_url' => env('STARSENDER_BASE_URL', 'https://api.starsender.online'),
+    ],
+
+    'cloudchat' => [
+        'base_url' => env('CLOUDCHAT_BASE_URL', 'https://app.cloudchat.id/api/public/v1'),
+    ],
+
 ];

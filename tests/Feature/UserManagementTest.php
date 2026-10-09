@@ -10,6 +10,8 @@ use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -95,6 +97,60 @@ class UserManagementTest extends TestCase
             ->assertOk()
             ->assertSee($supervisor->name)
             ->assertSee($agent->name);
+    }
+
+    public function test_users_index_displays_api_wa_status_column(): void
+    {
+        Cache::flush();
+
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response(['success' => true], 200),
+            'https://app.cloudchat.id/*' => Http::response(['success' => true], 200),
+        ]);
+
+        $admin = $this->makeUser('admin');
+        $connected = $this->makeUser('agen', $this->makeBranch());
+
+        Setting::set('agent_profile_' . $connected->slug, json_encode([
+            'photo' => '',
+            'intro' => '',
+            'api_ss' => 'SS-OK-' . uniqid(),
+            'api_cc' => 'CC-OK-' . uniqid(),
+        ]));
+
+        $this->actingAs($admin)
+            ->get(route('users.index'))
+            ->assertOk()
+            ->assertSee('API WA')
+            ->assertSee('API SS: Terkoneksi')
+            ->assertSee('API CC: Terkoneksi')
+            ->assertSee('API SS: Belum diisi');
+    }
+
+    public function test_users_index_marks_unconnected_api_keys_as_failed(): void
+    {
+        Cache::flush();
+
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response(['success' => false], 200),
+            'https://app.cloudchat.id/*' => Http::response(['message' => 'Unauthorized'], 401),
+        ]);
+
+        $admin = $this->makeUser('admin');
+        $broken = $this->makeUser('agen', $this->makeBranch());
+
+        Setting::set('agent_profile_' . $broken->slug, json_encode([
+            'photo' => '',
+            'intro' => '',
+            'api_ss' => 'SS-BAD-' . uniqid(),
+            'api_cc' => 'CC-BAD-' . uniqid(),
+        ]));
+
+        $this->actingAs($admin)
+            ->get(route('users.index'))
+            ->assertOk()
+            ->assertSee('API SS: Tidak terkoneksi')
+            ->assertSee('API CC: Tidak terkoneksi');
     }
 
     public function test_supervisor_store_forces_role_and_branch(): void

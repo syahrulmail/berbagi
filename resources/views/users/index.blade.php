@@ -81,6 +81,7 @@
                     <th>Cabang</th>
                     <th>Link Agen</th>
                     <th>Status</th>
+                    <th class="text-center">API WA</th>
                     <th class="text-right">Aksi</th>
                 </tr>
             </thead>
@@ -124,6 +125,26 @@
                                 {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
                             </span>
                         </td>
+                        <td style="text-align:center;">
+                            @php
+                                $apiStatus = $user->api_status ?? ['ss' => 'empty', 'cc' => 'empty'];
+                                $dotColor = ['ok' => '#22c55e', 'fail' => '#ef4444', 'empty' => '#cbd5e1'];
+                                $dotGlow = [
+                                    'ok' => '0 0 0 2px rgba(34,197,94,.25), 0 0 6px rgba(34,197,94,.9)',
+                                    'fail' => '0 0 0 2px rgba(239,68,68,.25), 0 0 6px rgba(239,68,68,.9)',
+                                    'empty' => 'none',
+                                ];
+                                $dotLabel = ['ok' => 'Terkoneksi', 'fail' => 'Tidak terkoneksi', 'empty' => 'Belum diisi'];
+                                $ss = $apiStatus['ss'] ?? 'empty';
+                                $cc = $apiStatus['cc'] ?? 'empty';
+                            @endphp
+                            <span style="display:inline-flex;align-items:center;gap:7px;">
+                                <span title="API SS: {{ $dotLabel[$ss] ?? 'Belum diisi' }}"
+                                      style="width:12px;height:12px;border-radius:50%;display:inline-block;background:{{ $dotColor[$ss] ?? '#cbd5e1' }};box-shadow:{{ $dotGlow[$ss] ?? 'none' }};"></span>
+                                <span title="API CC: {{ $dotLabel[$cc] ?? 'Belum diisi' }}"
+                                      style="width:12px;height:12px;border-radius:50%;display:inline-block;background:{{ $dotColor[$cc] ?? '#cbd5e1' }};box-shadow:{{ $dotGlow[$cc] ?? 'none' }};"></span>
+                            </span>
+                        </td>
                         <td>
                             <div class="actions">
                                 <a href="{{ route('users.edit', $user) }}" class="btn btn-sm btn-icon" title="Edit">
@@ -144,7 +165,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="empty-state">
+                        <td colspan="9" class="empty-state">
                             <i class="fas fa-users-slash"></i>
                             <p>Tidak ada pengguna ditemukan.</p>
                         </td>
