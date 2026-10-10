@@ -60,6 +60,7 @@
     <button type="button" class="fuwa-tab active" data-tab="otomatis"><i class="fas fa-robot"></i> Otomatis</button>
     <button type="button" class="fuwa-tab" data-tab="manual"><i class="fas fa-hand-pointer"></i> Manual</button>
     <button type="button" class="fuwa-tab" data-tab="warming"><i class="fas fa-fire"></i> Warming</button>
+    <button type="button" class="fuwa-tab" data-tab="log"><i class="fas fa-envelope-open-text"></i> Log Pesan</button>
 </div>
 
 {{-- ===================== TAB OTOMATIS ===================== --}}
@@ -283,11 +284,12 @@
                 @csrf
                 <div class="fuwa-grid">
                     <div class="form-group">
-                        <label>Jumlah Pasangan</label>
-                        <div style="display:flex;gap:10px;align-items:center;">
-                            <input type="number" name="amount_pair" min="1" value="{{ $warmingConfig['amount_pair'] }}">
-                            <input type="number" name="amount" form="fuwa-warming-run" min="1" max="50" value="5" style="max-width:110px;">
-                        </div>
+                        <label>Pasangan</label>
+                        <input type="number" name="amount_pair" min="1" value="{{ $warmingConfig['amount_pair'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Interval</label>
+                        <input type="number" name="amount" form="fuwa-warming-run" min="1" max="50" value="5">
                     </div>
                     <div class="form-group">
                         <label>Jeda Min (detik)</label>
@@ -351,9 +353,12 @@
             <i class="fas fa-link"></i> URL Webhook: <code>{{ $webhookUrl }}</code>
         </div>
     </div>
+</div>
 
+{{-- ===================== TAB LOG PESAN ===================== --}}
+<div class="fuwa-panel" id="fuwa-panel-log">
     <div class="card">
-        <h2 style="margin:0 0 12px;font-size:16px;"><i class="fas fa-clock-rotate-left" style="color:var(--primary);"></i> Log Terakhir</h2>
+        <h2 style="margin:0 0 12px;font-size:16px;"><i class="fas fa-clock-rotate-left" style="color:var(--primary);"></i> Log Pesan</h2>
         <div class="table-responsive">
             <table class="table">
                 <thead><tr><th>Kontak</th><th>No. Tujuan</th><th>Pesan</th><th>Status</th><th>Waktu</th><th class="text-right">Aksi</th></tr></thead>

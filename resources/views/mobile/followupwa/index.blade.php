@@ -224,11 +224,14 @@
             <div class="mo-form-card-title"><i class="fas fa-fire"></i> Warming Nomor</div>
             <form method="POST" action="{{ route('mo.whatsapp.warming') }}">
                 @csrf
-                <div class="mo-field">
-                    <label>Jumlah Pasangan</label>
-                    <div style="display:flex;gap:10px;">
+                <div style="display:flex;gap:10px;">
+                    <div class="mo-field" style="flex:1;">
+                        <label>Pasangan</label>
                         <input type="number" name="amount_pair" class="mo-input" min="1" value="{{ $warmingConfig['amount_pair'] }}">
-                        <input type="number" name="amount" form="mo-warming-run" class="mo-input" min="1" max="50" value="5" style="max-width:110px;">
+                    </div>
+                    <div class="mo-field" style="flex:1;">
+                        <label>Interval</label>
+                        <input type="number" name="amount" form="mo-warming-run" class="mo-input" min="1" max="50" value="5">
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;">
