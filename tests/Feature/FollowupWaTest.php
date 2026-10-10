@@ -220,6 +220,36 @@ class FollowupWaTest extends TestCase
             ->count());
     }
 
+    public function test_cron_status_indicator_tracks_last_run(): void
+    {
+        $service = app(FollowupWaService::class);
+
+        $this->assertSame('empty', $service->cronStatus()['status']);
+        $this->assertNull($service->warmingLastCron());
+
+        $service->touchWarmingCron(Carbon::now());
+
+        $status = $service->cronStatus();
+        $this->assertSame('ok', $status['status']);
+        $this->assertNotNull($status['last']);
+
+        Setting::set('warming_last_cron', '');
+        $this->assertSame('empty', $service->cronStatus()['status']);
+
+        $service->runScheduledWarming();
+
+        $this->assertNotNull($service->warmingLastCron());
+    }
+
+    public function test_warming_panel_shows_cron_indicator(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)->get(route('whatsapp.index'))
+            ->assertOk()
+            ->assertSee('Cron terakhir');
+    }
+
     public function test_webhook_rejects_invalid_token(): void
     {
         $user = $this->makeUser('admin');

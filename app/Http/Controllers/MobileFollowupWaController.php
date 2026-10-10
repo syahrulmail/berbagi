@@ -38,6 +38,7 @@ class MobileFollowupWaController extends MobileModuleController
         $warmingConfig = $this->service->warmingConfig();
         $warmingRecipients = $this->service->warmingRecipients($user);
         $cronUrl = $this->service->cronUrl();
+        $cronStatus = $this->service->cronStatus();
 
         return view('mobile.followupwa.index', compact(
             'user',
@@ -48,7 +49,8 @@ class MobileFollowupWaController extends MobileModuleController
             'branches',
             'warmingConfig',
             'warmingRecipients',
-            'cronUrl'
+            'cronUrl',
+            'cronStatus'
         ));
     }
 

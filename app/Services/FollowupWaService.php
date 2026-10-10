@@ -793,6 +793,8 @@ class FollowupWaService
      */
     public function runScheduledWarming(?Carbon $now = null): array
     {
+        $this->touchWarmingCron($now);
+
         $config = $this->warmingConfig();
 
         if (empty($config['active'])) {
@@ -988,6 +990,70 @@ class FollowupWaService
     public function cronUrl(): string
     {
         return url('/wa/cron/' . $this->cronToken());
+    }
+
+    /**
+     * Catat waktu terakhir warming dijalankan oleh cron/scheduler.
+     * Dipanggil dari awal runScheduledWarming(), sehingga berlaku untuk
+     * cron CLI (schedule:run) maupun endpoint URL cron.
+     */
+    public function touchWarmingCron(?Carbon $at = null): void
+    {
+        Setting::set('warming_last_cron', ($at ?: Carbon::now())->toDateTimeString(), 'warming');
+    }
+
+    /**
+     * Waktu terakhir cron menjalankan warming (null bila belum pernah).
+     */
+    public function warmingLastCron(): ?Carbon
+    {
+        $value = (string) Setting::get('warming_last_cron', '');
+
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Status kesehatan cron warming untuk indikator di panel.
+     * status: ok (<= 5 menit), fail (> 5 menit), empty (belum ada data).
+     *
+     * @return array{status:string,last:?Carbon,minutes:?int,label:string}
+     */
+    public function cronStatus(): array
+    {
+        $last = $this->warmingLastCron();
+
+        if (! $last) {
+            return ['status' => 'empty', 'last' => null, 'minutes' => null, 'label' => 'Belum ada data'];
+        }
+
+        $minutes = (int) floor($last->diffInMinutes(Carbon::now()));
+
+        if ($minutes <= 5) {
+            return [
+                'status' => 'ok',
+                'last' => $last,
+                'minutes' => $minutes,
+                'label' => $minutes <= 0 ? 'Baru saja' : ($minutes . ' menit lalu'),
+            ];
+        }
+
+        if ($minutes < 60) {
+            $label = $minutes . ' menit lalu';
+        } elseif ($minutes < 1440) {
+            $label = (int) floor($minutes / 60) . ' jam lalu';
+        } else {
+            $label = (int) floor($minutes / 1440) . ' hari lalu';
+        }
+
+        return ['status' => 'fail', 'last' => $last, 'minutes' => $minutes, 'label' => $label];
     }
 
     /**

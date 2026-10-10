@@ -303,6 +303,11 @@
 
         <div class="mo-form-card">
             <div class="mo-form-card-title"><i class="fas fa-clock"></i> URL Cron Warming</div>
+            @php $cronDot = ['ok' => '#22c55e', 'fail' => '#ef4444', 'empty' => '#cbd5e1'][$cronStatus['status']] ?? '#cbd5e1'; @endphp
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;color:var(--mo-text);">
+                <span style="width:9px;height:9px;border-radius:50%;background:{{ $cronDot }};display:inline-block;flex-shrink:0;"></span>
+                <span>Cron terakhir: <strong>{{ $cronStatus['label'] }}</strong>@if($cronStatus['last']) · {{ $cronStatus['last']->format('d M Y H:i') }}@endif</span>
+            </div>
             <div style="font-size:12px;color:var(--mo-muted);line-height:1.6;word-break:break-all;">
                 Panggil otomatis tiap menit (cPanel &gt; Cron Jobs):<br>
                 <code>{{ $cronUrl }}</code>
