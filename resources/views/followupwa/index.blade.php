@@ -367,11 +367,6 @@
             <span style="width:9px;height:9px;border-radius:50%;background:{{ $cronDot }};display:inline-block;flex-shrink:0;"></span>
             <span>Cron terakhir: <strong>{{ $cronStatus['label'] }}</strong>@if($cronStatus['last']) · {{ $cronStatus['last']->format('d M Y H:i') }}@endif</span>
         </div>
-
-        <div class="alert" style="background:#FEF3C7;border-color:#F59E0B;color:#92400E;margin-top:10px;word-break:break-all;">
-            <i class="fas fa-clock"></i> URL Cron Warming (panggil otomatis tiap menit): <code>{{ $cronUrl }}</code>
-            <div style="margin-top:4px;font-size:12px;">Pasang di cPanel &gt; Cron Jobs:<br><code>wget -qO- {{ $cronUrl }}</code></div>
-        </div>
     </div>
 </div>
 

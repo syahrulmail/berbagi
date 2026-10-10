@@ -250,6 +250,20 @@ class FollowupWaTest extends TestCase
             ->assertSee('Cron terakhir');
     }
 
+    public function test_warming_panel_hides_cron_url(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)->get(route('whatsapp.index'))
+            ->assertOk()
+            ->assertDontSee('URL Cron Warming')
+            ->assertDontSee('/wa/cron/');
+
+        $this->actingAs($admin)->get(route('mo.whatsapp'))
+            ->assertOk()
+            ->assertDontSee('/wa/cron/');
+    }
+
     public function test_webhook_rejects_invalid_token(): void
     {
         $user = $this->makeUser('admin');
