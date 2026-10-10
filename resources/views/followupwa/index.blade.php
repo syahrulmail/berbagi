@@ -284,7 +284,10 @@
                 <div class="fuwa-grid">
                     <div class="form-group">
                         <label>Jumlah Pasangan</label>
-                        <input type="number" name="amount_pair" min="1" value="{{ $warmingConfig['amount_pair'] }}">
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <input type="number" name="amount_pair" min="1" value="{{ $warmingConfig['amount_pair'] }}">
+                            <input type="number" name="amount" form="fuwa-warming-run" min="1" max="50" value="5" style="max-width:110px;">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Jeda Min (detik)</label>
@@ -314,10 +317,9 @@
                 </div>
             </form>
 
-            <form method="POST" action="{{ route('followupwa.warming.run') }}" style="margin-top:10px;">
+            <form method="POST" id="fuwa-warming-run" action="{{ route('followupwa.warming.run') }}" style="margin-top:10px;">
                 @csrf
                 <div class="form-actions" style="justify-content:flex-start;">
-                    <input type="number" name="amount" min="1" max="50" value="5" style="max-width:110px;">
                     <button type="submit" class="btn"><i class="fas fa-fire"></i> Jalankan Warming Sekarang</button>
                 </div>
             </form>

@@ -224,19 +224,22 @@
             <div class="mo-form-card-title"><i class="fas fa-fire"></i> Warming Nomor</div>
             <form method="POST" action="{{ route('mo.whatsapp.warming') }}">
                 @csrf
-                <div style="display:flex;gap:10px;">
-                    <div class="mo-field" style="flex:1;">
-                        <label>Jumlah Pasangan</label>
+                <div class="mo-field">
+                    <label>Jumlah Pasangan</label>
+                    <div style="display:flex;gap:10px;">
                         <input type="number" name="amount_pair" class="mo-input" min="1" value="{{ $warmingConfig['amount_pair'] }}">
+                        <input type="number" name="amount" form="mo-warming-run" class="mo-input" min="1" max="50" value="5" style="max-width:110px;">
                     </div>
+                </div>
+                <div style="display:flex;gap:10px;">
                     <div class="mo-field" style="flex:1;">
                         <label>Jeda Min (dtk)</label>
                         <input type="number" name="interval_min" class="mo-input" min="5" value="{{ $warmingConfig['interval_min'] }}">
                     </div>
-                </div>
-                <div class="mo-field">
-                    <label>Jeda Maks (dtk)</label>
-                    <input type="number" name="interval_max" class="mo-input" min="5" value="{{ $warmingConfig['interval_max'] }}">
+                    <div class="mo-field" style="flex:1;">
+                        <label>Jeda Maks (dtk)</label>
+                        <input type="number" name="interval_max" class="mo-input" min="5" value="{{ $warmingConfig['interval_max'] }}">
+                    </div>
                 </div>
                 <div style="display:flex;gap:10px;">
                     <div class="mo-field" style="flex:1;">
@@ -259,9 +262,8 @@
                 </label>
                 <button type="submit" class="mo-btn mo-btn-primary" style="width:100%;margin-top:10px;"><i class="fas fa-save"></i> Simpan Konfigurasi</button>
             </form>
-            <form method="POST" action="{{ route('mo.whatsapp.warming.run') }}" style="margin-top:8px;">
+            <form method="POST" id="mo-warming-run" action="{{ route('mo.whatsapp.warming.run') }}" style="margin-top:8px;">
                 @csrf
-                <input type="number" name="amount" class="mo-input" min="1" max="50" value="5" style="margin-bottom:8px;">
                 <button type="submit" class="mo-btn mo-btn-ghost" style="width:100%;"><i class="fas fa-fire"></i> Jalankan Warming Sekarang</button>
             </form>
         </div>
