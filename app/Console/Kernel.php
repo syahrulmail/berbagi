@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Artisan;
 
 class Kernel extends ConsoleKernel
 {
@@ -15,15 +16,17 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Kirim pesan WhatsApp pending setiap 5 menit
-        $schedule->command('whatsapp:send')
-            ->everyFiveMinutes()
-            ->withoutOverlapping();
+        // Kirim pesan WhatsApp pending setiap 5 menit.
+        // Dijalankan in-process (Artisan::call) karena proc_open/exec disabled di produksi,
+        // sehingga $schedule->command() tidak dapat menjalankan sub-proses.
+        $schedule->call(function () {
+            Artisan::call('whatsapp:send');
+        })->name('wa-send')->everyFiveMinutes()->withoutOverlapping();
 
         // Warming otomatis sesuai konfigurasi (jam, hari, jeda)
-        $schedule->command('warming:run')
-            ->everyMinute()
-            ->withoutOverlapping();
+        $schedule->call(function () {
+            Artisan::call('warming:run');
+        })->name('wa-warming')->everyMinute()->withoutOverlapping();
 
         // Contoh otomasi lain: cek status kontak berulang kali dihubungi
         // $schedule->command('contacts:status-check')->daily();
