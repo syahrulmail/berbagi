@@ -28,6 +28,25 @@ class WaWebhookController extends Controller
         return response()->json(['ok' => true, 'provider' => $provider]);
     }
 
+    /**
+     * Endpoint cron: dipanggil tiap menit untuk menjalankan warming otomatis.
+     * Setara dengan `php artisan warming:run`.
+     */
+    public function cron(string $token)
+    {
+        if (! hash_equals($this->service->cronToken(), $token)) {
+            Log::warning('Cron warming ditolak: token tidak valid.');
+
+            return response('forbidden', 403)->header('Content-Type', 'text/plain');
+        }
+
+        \Illuminate\Support\Facades\Artisan::call('warming:run');
+        $output = trim(\Illuminate\Support\Facades\Artisan::output());
+
+        return response($output !== '' ? $output : 'ok', 200)
+            ->header('Content-Type', 'text/plain; charset=utf-8');
+    }
+
     public function receive(Request $request, string $provider)
     {
         $userId = (int) $request->query('u');

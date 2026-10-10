@@ -63,6 +63,10 @@ Route::post('/wa/webhook/{provider}', [WaWebhookController::class, 'receive'])
 Route::get('/wa/webhook/{provider}', [WaWebhookController::class, 'verify'])
     ->name('wa.webhook.verify');
 
+Route::get('/wa/cron/{token}', [WaWebhookController::class, 'cron'])
+    ->name('wa.cron')
+    ->middleware('throttle:30,1');
+
 /*
 |--------------------------------------------------------------------------
 | Guest Routes

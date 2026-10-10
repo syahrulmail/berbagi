@@ -59,6 +59,7 @@ class FollowupWaController extends Controller
             ->get();
 
         $webhookUrl = $this->service->webhookUrl($user);
+        $cronUrl = $this->service->cronUrl();
 
         return view('followupwa.index', compact(
             'user',
@@ -70,7 +71,8 @@ class FollowupWaController extends Controller
             'warmingConfig',
             'warmingRecipients',
             'logs',
-            'webhookUrl'
+            'webhookUrl',
+            'cronUrl'
         ));
     }
 

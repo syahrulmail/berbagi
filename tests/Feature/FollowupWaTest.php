@@ -357,4 +357,19 @@ class FollowupWaTest extends TestCase
             ->where('direction', WarmingLog::DIRECTION_OUT)
             ->count());
     }
+
+    public function test_cron_endpoint_runs_with_valid_token(): void
+    {
+        $service = app(FollowupWaService::class);
+        $service->saveWarmingConfig(['active' => false]);
+
+        $response = $this->get(route('wa.cron', ['token' => $service->cronToken()]));
+
+        $response->assertOk();
+    }
+
+    public function test_cron_endpoint_rejects_invalid_token(): void
+    {
+        $this->get(route('wa.cron', ['token' => 'wrong-token']))->assertStatus(403);
+    }
 }

@@ -966,6 +966,29 @@ class FollowupWaService
     }
 
     /**
+     * Token global untuk endpoint cron warming (dibuat sekali, disimpan di settings).
+     */
+    public function cronToken(): string
+    {
+        $token = (string) Setting::get('wa_cron_token', '');
+
+        if ($token === '') {
+            $token = bin2hex(random_bytes(16));
+            Setting::set('wa_cron_token', $token, 'warming');
+        }
+
+        return $token;
+    }
+
+    /**
+     * URL yang dipanggil tiap menit oleh cron untuk menjalankan warming otomatis.
+     */
+    public function cronUrl(): string
+    {
+        return url('/wa/cron/' . $this->cronToken());
+    }
+
+    /**
      * @param  mixed  $value
      * @return array<int,int>
      */

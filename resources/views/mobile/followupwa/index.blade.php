@@ -300,6 +300,14 @@
                 @endforelse
             </div>
         </div>
+
+        <div class="mo-form-card">
+            <div class="mo-form-card-title"><i class="fas fa-clock"></i> URL Cron Warming</div>
+            <div style="font-size:12px;color:var(--mo-muted);line-height:1.6;word-break:break-all;">
+                Panggil otomatis tiap menit (cPanel &gt; Cron Jobs):<br>
+                <code>{{ $cronUrl }}</code>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
