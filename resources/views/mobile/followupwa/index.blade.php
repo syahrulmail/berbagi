@@ -51,7 +51,7 @@
     <div id="mo-fuwa-otomatis">
         <div class="mo-form-card">
             <div class="mo-form-card-title"><i class="fas fa-robot"></i> Broadcast Otomatis</div>
-            <form method="POST" action="{{ route('mo.whatsapp.broadcast') }}">
+            <form method="POST" action="{{ route('mo.whatsapp.broadcast') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="mo-field">
                     <label>Nama Broadcast</label>
@@ -60,11 +60,11 @@
                 <div class="mo-field">
                     <label>Mekanisme</label>
                     <select name="mechanism" class="mo-select" id="mo-mechanism">
-                        <option value="auto">Otomatis (10 lalu 5 tiap balasan)</option>
+                        <option value="auto">Otomatis (lanjut 5 tiap balasan)</option>
                         <option value="limit">Terbatas (jumlah)</option>
                     </select>
                 </div>
-                <div class="mo-field" id="mo-limit-group" hidden>
+                <div class="mo-field" id="mo-limit-group">
                     <label>Jumlah Kontak</label>
                     <input type="number" name="limit_count" class="mo-input" min="1" value="20">
                 </div>
@@ -77,20 +77,20 @@
                 </div>
                 <div class="mo-field" id="mo-scheduled-group" hidden>
                     <label>Waktu Mulai</label>
-                    <input type="datetime-local" name="scheduled_at" class="mo-input">
+                    <input type="datetime-local" name="scheduled_at" class="mo-input" value="{{ now()->format('Y-m-d\TH:i') }}">
                 </div>
                 <div class="mo-field">
                     <label>Batas Waktu Stop</label>
-                    <input type="datetime-local" name="stop_at" class="mo-input">
+                    <input type="datetime-local" name="stop_at" class="mo-input" value="{{ now()->format('Y-m-d') }}T17:00">
                 </div>
                 <div style="display:flex;gap:10px;">
                     <div class="mo-field" style="flex:1;">
                         <label>Jeda Min (dtk)</label>
-                        <input type="number" name="interval_min" class="mo-input" min="5" value="20">
+                        <input type="number" name="interval_min" class="mo-input" min="5" value="100">
                     </div>
                     <div class="mo-field" style="flex:1;">
                         <label>Jeda Maks (dtk)</label>
-                        <input type="number" name="interval_max" class="mo-input" min="5" value="60">
+                        <input type="number" name="interval_max" class="mo-input" min="5" value="300">
                     </div>
                 </div>
                 <div class="mo-field">
@@ -113,32 +113,26 @@
                 </div>
                 <div class="mo-field">
                     <label>Status Kontak</label>
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                    <select name="statuses[]" class="mo-select">
+                        <option value="">Semua (kecuali Stop)</option>
                         @foreach($contactStatuses as $value => $label)
-                            <label style="font-size:12.5px;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" name="statuses[]" value="{{ $value }}" @if($value !== 'churned') checked @endif> {{ $label }}</label>
+                            <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
-                    </div>
+                    </select>
                 </div>
                 <div class="mo-field">
                     <label>Riwayat Follow-up</label>
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                    <select name="followups[]" class="mo-select">
+                        <option value="">Semua</option>
                         @foreach($followupBuckets as $value => $label)
-                            <label style="font-size:12.5px;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" name="followups[]" value="{{ $value }}" checked> {{ $label }}</label>
+                            <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
-                    </div>
-                </div>
-                <div class="mo-field">
-                    <label>Media URL (opsional)</label>
-                    <input type="text" name="media_path" class="mo-input" placeholder="https://...">
-                </div>
-                <div class="mo-field">
-                    <label>Jenis Media</label>
-                    <select name="media_type" class="mo-select">
-                        <option value="">Tidak ada</option>
-                        <option value="image">Gambar</option>
-                        <option value="video">Video</option>
-                        <option value="document">Dokumen</option>
                     </select>
+                </div>
+                <div class="mo-field">
+                    <label>Media (opsional)</label>
+                    <input type="file" name="media_file" class="mo-input" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+                    <div class="mo-form-help">Jenis media dikenali otomatis. Biarkan kosong untuk pesan teks.</div>
                 </div>
                 <div class="mo-field">
                     <label>Template Pesan <span class="req">*</span></label>
@@ -312,12 +306,6 @@
         });
     });
 
-    var mechanism = document.getElementById('mo-mechanism');
-    if (mechanism) {
-        mechanism.addEventListener('change', function () {
-            document.getElementById('mo-limit-group').hidden = mechanism.value !== 'limit';
-        });
-    }
     var scheduleType = document.getElementById('mo-schedule-type');
     if (scheduleType) {
         scheduleType.addEventListener('change', function () {
@@ -326,7 +314,15 @@
     }
 
     function collectList(selector) {
-        return Array.prototype.slice.call(document.querySelectorAll(selector + ':checked')).map(function (el) { return el.value; });
+        var out = [];
+        Array.prototype.slice.call(document.querySelectorAll(selector)).forEach(function (el) {
+            if (el.tagName === 'SELECT') {
+                if (el.value !== '') out.push(el.value);
+            } else if (el.checked) {
+                out.push(el.value);
+            }
+        });
+        return out;
     }
 
     function esc(value) {
@@ -350,28 +346,6 @@
                 html += '<div style="display:flex;gap:8px;margin-top:8px;">';
                 html += '<a href="' + esc(c.wa_link) + '" target="_blank" rel="noopener" class="mo-btn mo-btn-primary" style="flex:1;padding:9px;font-size:13px;"><i class="fab fa-whatsapp"></i> Buka</a>';
                 html += '<button type="button" class="mo-btn mo-btn-ghost mo-mark" data-id="' + esc(c.id) + '" data-msg="' + encodeURIComponent(c.message || '') + '" style="flex:1;padding:9px;font-size:13px;"><i class="fas fa-check"></i> Terkirim</button>';
-                html += '</div>';
-            }
-            html += '</div>';
-        });
-        container.innerHTML = html;
-    }
-
-    function render(container, data, manual) {
-        if (!data.contacts || data.contacts.length === 0) {
-            container.innerHTML = '<div class="mo-empty"><i class="fas fa-circle-info"></i><p>Tidak ada kontak yang cocok.</p></div>';
-            return;
-        }
-        var html = '<div class="mo-form-help" style="margin-bottom:8px;"><strong>' + data.count + '</strong> kontak ditemukan.</div>';
-        data.contacts.forEach(function (c) {
-            html += '<div class="mo-form-card" style="padding:12px;margin-bottom:8px;">';
-            html += '<div style="font-weight:600;font-size:13px;">' + c.name + ' <span class="mo-badge blue">' + c.followup_count + 'x</span> <span class="mo-badge gray">' + c.status_label + '</span></div>';
-            html += '<div style="font-size:12px;color:var(--mo-muted);">' + c.phone + '</div>';
-            if (c.message) html += '<div style="font-size:12px;color:var(--mo-text);margin-top:4px;white-space:pre-wrap;">' + c.message + '</div>';
-            if (manual) {
-                html += '<div style="display:flex;gap:8px;margin-top:8px;">';
-                html += '<a href="' + c.wa_link + '" target="_blank" rel="noopener" class="mo-btn mo-btn-primary" style="flex:1;padding:9px;font-size:13px;"><i class="fab fa-whatsapp"></i> Buka</a>';
-                html += '<button type="button" class="mo-btn mo-btn-ghost mo-mark" data-id="' + c.id + '" data-msg="' + encodeURIComponent(c.message) + '" style="flex:1;padding:9px;font-size:13px;"><i class="fas fa-check"></i> Terkirim</button>';
                 html += '</div>';
             }
             html += '</div>';
@@ -417,6 +391,7 @@
             agen_id: form.querySelector('[name=agen_id]').value,
             statuses: collectList('#mo-fuwa-otomatis [name="statuses[]"]'),
             followups: collectList('#mo-fuwa-otomatis [name="followups[]"]'),
+            limit: form.querySelector('[name=limit_count]').value,
             message: document.getElementById('mo-broadcast-message').value
         }, document.getElementById('mo-otomatis-preview'), false);
     });

@@ -247,9 +247,13 @@ class FollowupWaService
             return ['ok' => false, 'broadcast' => null, 'error' => 'Tidak ada kontak yang cocok dengan filter.'];
         }
 
-        $batchSize = $mechanism === Broadcast::MECHANISM_LIMIT
-            ? max(1, (int) ($data['limit_count'] ?? $total))
-            : min($total, 10);
+        $requested = (int) ($data['limit_count'] ?? 0);
+
+        if ($mechanism === Broadcast::MECHANISM_LIMIT) {
+            $batchSize = $requested > 0 ? min($requested, $total) : $total;
+        } else {
+            $batchSize = $requested > 0 ? min($requested, $total) : min($total, 10);
+        }
 
         $intervalMin = max(5, (int) ($data['interval_min'] ?? 20));
         $intervalMax = max($intervalMin, (int) ($data['interval_max'] ?? 60));
@@ -352,8 +356,9 @@ class FollowupWaService
                 continue;
             }
 
+            $mediaPath = trim((string) $broadcast->media_path);
             $options = [
-                'media_url' => $broadcast->media_path,
+                'media_url' => $mediaPath !== '' ? asset_photo_url($mediaPath) : null,
                 'media_type' => $broadcast->media_type,
             ];
 
@@ -749,6 +754,55 @@ class FollowupWaService
      | ===================================================== */
 
     /**
+     * Simpan file media broadcast ke disk publik.
+     *
+     * @return array{media_path:string,media_type:string}
+     */
+    public function storeUploadedMedia(\Illuminate\Http\UploadedFile $file): array
+    {
+        return [
+            'media_path' => $file->store('wa-media', 'public'),
+            'media_type' => $this->detectMediaType($file->getMimeType(), $file->getClientOriginalExtension()),
+        ];
+    }
+
+    /**
+     * Kenali jenis media secara otomatis dari mime/ekstensi.
+     */
+    public function detectMediaType(?string $mime, ?string $extension = null): string
+    {
+        $mime = strtolower((string) $mime);
+
+        if (strpos($mime, 'image/') === 0) {
+            return 'image';
+        }
+
+        if (strpos($mime, 'video/') === 0) {
+            return 'video';
+        }
+
+        if (strpos($mime, 'audio/') === 0) {
+            return 'audio';
+        }
+
+        $ext = strtolower((string) $extension);
+
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'], true)) {
+            return 'image';
+        }
+
+        if (in_array($ext, ['mp4', 'mov', 'avi', 'mkv', 'webm'], true)) {
+            return 'video';
+        }
+
+        if (in_array($ext, ['mp3', 'wav', 'ogg', 'm4a', 'aac'], true)) {
+            return 'audio';
+        }
+
+        return 'document';
+    }
+
+    /**
      * Token webhook milik pengguna (dibuat sekali, disimpan di settings).
      */
     public function webhookToken(User $user): string
@@ -779,7 +833,15 @@ class FollowupWaService
             return [];
         }
 
-        return array_map('intval', array_values($value));
+        $result = [];
+        foreach ($value as $item) {
+            if ($item === null || $item === '') {
+                continue;
+            }
+            $result[] = (int) $item;
+        }
+
+        return array_values(array_unique($result));
     }
 
     /**

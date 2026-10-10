@@ -151,6 +151,58 @@ class FollowupWaTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $response->json('count'));
     }
 
+    public function test_preview_contacts_respects_limit(): void
+    {
+        $admin = $this->makeUser('admin');
+        for ($i = 0; $i < 5; $i++) {
+            $this->makeContact('Limit ' . $i, '62850000000' . $i);
+        }
+
+        $response = $this->actingAs($admin)->postJson(route('followupwa.contacts'), [
+            'message' => 'Hai [nama]',
+            'limit' => 3,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(3, $response->json('count'));
+    }
+
+    public function test_auto_broadcast_first_batch_uses_limit_count(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin);
+
+        for ($i = 0; $i < 8; $i++) {
+            $this->makeContact('Auto ' . $i, '62870000000' . $i);
+        }
+
+        $this->actingAs($admin)->post(route('followupwa.broadcast.store'), [
+            'message' => 'Halo [nama]',
+            'mechanism' => 'auto',
+            'limit_count' => 3,
+            'schedule_type' => 'now',
+            'interval_min' => 5,
+            'interval_max' => 5,
+        ])->assertRedirect(route('whatsapp.index'));
+
+        $broadcast = Broadcast::where('user_id', $admin->id)->first();
+        $this->assertNotNull($broadcast);
+        $this->assertGreaterThanOrEqual(8, $broadcast->total);
+        $this->assertSame(3, $broadcast->targets()->count());
+        $this->assertSame(3, $broadcast->sent);
+    }
+
+    public function test_detect_media_type_from_mime_and_extension(): void
+    {
+        $service = app(FollowupWaService::class);
+
+        $this->assertSame('image', $service->detectMediaType('image/jpeg'));
+        $this->assertSame('video', $service->detectMediaType('video/mp4'));
+        $this->assertSame('audio', $service->detectMediaType('audio/mpeg'));
+        $this->assertSame('document', $service->detectMediaType('application/pdf'));
+        $this->assertSame('image', $service->detectMediaType('application/octet-stream', 'png'));
+    }
+
     public function test_warming_run_logs_outgoing_message(): void
     {
         $admin = $this->makeUser('admin');

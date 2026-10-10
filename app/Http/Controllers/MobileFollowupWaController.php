@@ -55,12 +55,15 @@ class MobileFollowupWaController extends MobileModuleController
         $user = $request->user();
         $message = (string) $request->input('message', '');
 
+        $limit = (int) $request->input('limit', 50);
+        $limit = max(1, min(200, $limit));
+
         $contacts = $this->service->previewContacts($user, [
             'branch_id' => $request->input('branch_id'),
             'agen_id' => $request->input('agen_id'),
             'statuses' => $request->input('statuses', []),
             'followups' => $request->input('followups', []),
-        ], 50);
+        ], $limit);
 
         $items = $contacts->map(function (Contact $contact) use ($user, $message) {
             $rendered = $message !== '' ? $this->service->renderTemplate($message, $contact, $user) : '';
@@ -85,7 +88,8 @@ class MobileFollowupWaController extends MobileModuleController
             'name' => ['nullable', 'string', 'max:255'],
             'message' => ['required', 'string'],
             'media_path' => ['nullable', 'string', 'max:500'],
-            'media_type' => ['nullable', 'in:image,video,document'],
+            'media_type' => ['nullable', 'in:image,video,audio,document'],
+            'media_file' => ['nullable', 'file', 'max:25600', 'mimes:jpg,jpeg,png,gif,webp,bmp,mp4,mov,avi,mkv,webm,mp3,wav,ogg,m4a,aac,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'statuses' => ['nullable', 'array'],
@@ -100,6 +104,12 @@ class MobileFollowupWaController extends MobileModuleController
             'interval_min' => ['nullable', 'integer', 'min:5'],
             'interval_max' => ['nullable', 'integer', 'min:5'],
         ]);
+
+        if ($request->hasFile('media_file')) {
+            $media = $this->service->storeUploadedMedia($request->file('media_file'));
+            $data['media_path'] = $media['media_path'];
+            $data['media_type'] = $media['media_type'];
+        }
 
         $result = $this->service->createBroadcast($request->user(), $data);
 

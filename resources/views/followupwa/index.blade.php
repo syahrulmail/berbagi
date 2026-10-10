@@ -71,7 +71,7 @@
         </div>
 
         <div id="otomatis-config" hidden>
-            <form method="POST" action="{{ route('followupwa.broadcast.store') }}" id="fuwa-broadcast-form">
+            <form method="POST" action="{{ route('followupwa.broadcast.store') }}" id="fuwa-broadcast-form" enctype="multipart/form-data">
                 @csrf
                 <div class="fuwa-grid">
                     <div class="form-group">
@@ -81,11 +81,11 @@
                     <div class="form-group">
                         <label>Mekanisme</label>
                         <select name="mechanism" id="fuwa-mechanism">
-                            <option value="auto">Otomatis (10 kontak, lanjut 5 tiap balasan)</option>
+                            <option value="auto">Otomatis (lanjut 5 tiap balasan)</option>
                             <option value="limit">Terbatas (sesuai jumlah)</option>
                         </select>
                     </div>
-                    <div class="form-group" id="fuwa-limit-group" hidden>
+                    <div class="form-group" id="fuwa-limit-group">
                         <label>Jumlah Kontak</label>
                         <input type="number" name="limit_count" min="1" value="20">
                     </div>
@@ -98,19 +98,19 @@
                     </div>
                     <div class="form-group" id="fuwa-scheduled-group" hidden>
                         <label>Waktu Mulai</label>
-                        <input type="datetime-local" name="scheduled_at">
+                        <input type="datetime-local" name="scheduled_at" value="{{ now()->format('Y-m-d\TH:i') }}">
                     </div>
                     <div class="form-group">
                         <label>Batas Waktu Stop (opsional)</label>
-                        <input type="datetime-local" name="stop_at">
+                        <input type="datetime-local" name="stop_at" value="{{ now()->format('Y-m-d') }}T17:00">
                     </div>
                     <div class="form-group">
                         <label>Jeda Min (detik)</label>
-                        <input type="number" name="interval_min" min="5" value="20">
+                        <input type="number" name="interval_min" min="5" value="100">
                     </div>
                     <div class="form-group">
                         <label>Jeda Maks (detik)</label>
-                        <input type="number" name="interval_max" min="5" value="60">
+                        <input type="number" name="interval_max" min="5" value="300">
                     </div>
                 </div>
 
@@ -135,37 +135,31 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Status Kontak</label>
-                    <div class="fuwa-check-row">
-                        @foreach($contactStatuses as $value => $label)
-                            <label class="fuwa-check"><input type="checkbox" name="statuses[]" value="{{ $value }}" @if($value !== 'churned') checked @endif> {{ $label }}</label>
-                        @endforeach
+                <div class="fuwa-grid">
+                    <div class="form-group">
+                        <label>Status Kontak</label>
+                        <select name="statuses[]">
+                            <option value="">Semua (kecuali Stop)</option>
+                            @foreach($contactStatuses as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Riwayat Follow-up</label>
+                        <select name="followups[]">
+                            <option value="">Semua</option>
+                            @foreach($followupBuckets as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Riwayat Follow-up</label>
-                    <div class="fuwa-check-row">
-                        @foreach($followupBuckets as $value => $label)
-                            <label class="fuwa-check"><input type="checkbox" name="followups[]" value="{{ $value }}" checked> {{ $label }}</label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Media URL (opsional)</label>
-                    <input type="text" name="media_path" placeholder="https://.../gambar.jpg">
-                    <div class="fuwa-hint">Untuk media. Jenis media dipilih di samping. Biarkan kosong untuk pesan teks.</div>
-                </div>
-                <div class="form-group">
-                    <label>Jenis Media</label>
-                    <select name="media_type">
-                        <option value="">Tidak ada</option>
-                        <option value="image">Gambar</option>
-                        <option value="video">Video</option>
-                        <option value="document">Dokumen</option>
-                    </select>
+                    <label>Media (opsional)</label>
+                    <input type="file" name="media_file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+                    <div class="fuwa-hint">Jenis media dikenali otomatis (gambar, video, audio, dokumen). Biarkan kosong untuk pesan teks.</div>
                 </div>
 
                 <div class="form-group">
@@ -414,14 +408,7 @@
         });
     });
 
-    // Mechanism / schedule toggles
-    var mechanism = document.getElementById('fuwa-mechanism');
-    var limitGroup = document.getElementById('fuwa-limit-group');
-    if (mechanism && limitGroup) {
-        mechanism.addEventListener('change', function () {
-            limitGroup.hidden = mechanism.value !== 'limit';
-        });
-    }
+    // Schedule toggles
     var scheduleType = document.getElementById('fuwa-schedule-type');
     var scheduledGroup = document.getElementById('fuwa-scheduled-group');
     if (scheduleType && scheduledGroup) {
@@ -431,7 +418,15 @@
     }
 
     function collectList(selector) {
-        return Array.prototype.slice.call(document.querySelectorAll(selector + ':checked')).map(function (el) { return el.value; });
+        var out = [];
+        Array.prototype.slice.call(document.querySelectorAll(selector)).forEach(function (el) {
+            if (el.tagName === 'SELECT') {
+                if (el.value !== '') out.push(el.value);
+            } else if (el.checked) {
+                out.push(el.value);
+            }
+        });
+        return out;
     }
 
     function esc(value) {
@@ -519,6 +514,7 @@
                 agen_id: document.querySelector('#fuwa-broadcast-form [name=agen_id]').value,
                 statuses: collectList('#fuwa-broadcast-form [name="statuses[]"]'),
                 followups: collectList('#fuwa-broadcast-form [name="followups[]"]'),
+                limit: document.querySelector('#fuwa-broadcast-form [name=limit_count]').value,
                 message: document.getElementById('fuwa-broadcast-message').value
             }, document.getElementById('otomatis-preview'), false);
         });
