@@ -159,8 +159,7 @@
                 <div class="form-group" data-media-wrap>
                     <label>Media (opsional)</label>
                     <input type="file" name="media_file" data-media-input accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
-                    <div data-media-info hidden style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-                        <i class="fas fa-paperclip" style="color:var(--primary);"></i>
+                    <div data-media-info style="display:none;align-items:center;gap:8px;margin-top:6px;">
                         <span data-media-name style="font-size:12.5px;color:var(--gray-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;"></span>
                         <button type="button" data-media-clear title="Hapus media" style="border:none;background:#fee2e2;color:#b91c1c;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;">&times;</button>
                     </div>
@@ -432,17 +431,17 @@
         input.addEventListener('change', function () {
             if (input.files && input.files.length) {
                 label.textContent = input.files[0].name;
-                info.hidden = false;
+                info.style.display = 'flex';
             } else {
                 label.textContent = '';
-                info.hidden = true;
+                info.style.display = 'none';
             }
         });
         if (clear) {
             clear.addEventListener('click', function () {
                 input.value = '';
                 label.textContent = '';
-                info.hidden = true;
+                info.style.display = 'none';
             });
         }
     });
