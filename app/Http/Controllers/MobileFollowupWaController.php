@@ -153,6 +153,7 @@ class MobileFollowupWaController extends MobileModuleController
         $data = $request->validate([
             'active' => ['nullable'],
             'amount_pair' => ['nullable', 'integer', 'min:1'],
+            'amount' => ['nullable', 'integer', 'min:1', 'max:50'],
             'interval_min' => ['nullable', 'integer', 'min:5'],
             'interval_max' => ['nullable', 'integer', 'min:5'],
             'start_time' => ['nullable', 'string', 'max:5'],
@@ -173,7 +174,8 @@ class MobileFollowupWaController extends MobileModuleController
             'amount' => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);
 
-        $result = $this->service->runWarming($request->user(), (int) ($data['amount'] ?? 5));
+        $amount = (int) ($data['amount'] ?? $this->service->warmingConfig()['amount'] ?? 5);
+        $result = $this->service->runWarming($request->user(), $amount);
 
         if (! $result['ok']) {
             return redirect()->route('mo.whatsapp')->with('error', $result['error']);

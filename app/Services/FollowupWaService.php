@@ -586,6 +586,7 @@ class FollowupWaService
         $config = array_merge([
             'active' => false,
             'amount_pair' => 5,
+            'amount' => 5,
             'interval_min' => 30,
             'interval_max' => 90,
             'start_time' => '08:00',
@@ -634,6 +635,7 @@ class FollowupWaService
         $config = [
             'active' => ! empty($data['active']),
             'amount_pair' => max(1, (int) ($data['amount_pair'] ?? 5)),
+            'amount' => max(1, min(50, (int) ($data['amount'] ?? 5))),
             'interval_min' => $intervalMin,
             'interval_max' => max($intervalMin, (int) ($data['interval_max'] ?? 90)),
             'start_time' => $data['start_time'] ?? '08:00',

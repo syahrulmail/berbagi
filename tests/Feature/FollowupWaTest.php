@@ -273,6 +273,40 @@ class FollowupWaTest extends TestCase
         $this->assertSame(3, $config['amount_pair']);
     }
 
+    public function test_warming_interval_amount_is_persisted_and_used_for_run(): void
+    {
+        $service = app(FollowupWaService::class);
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin);
+
+        $this->actingAs($admin)->post(route('followupwa.warming'), [
+            'active' => false,
+            'amount_pair' => 3,
+            'amount' => 7,
+            'interval_min' => 10,
+            'interval_max' => 20,
+            'start_time' => '08:00',
+            'stop_time' => '20:00',
+            'days' => [1, 2, 3, 4, 5],
+            'messages' => 'Halo [nama]',
+        ])->assertRedirect(route('whatsapp.index'));
+
+        $this->assertSame(7, $service->warmingConfig()['amount']);
+
+        $this->actingAs($admin)->get(route('whatsapp.index'))->assertSee('value="7"', false);
+
+        for ($i = 0; $i < 8; $i++) {
+            $this->makeUser('agen', null, '6285' . str_pad((string) $i, 8, '0', STR_PAD_LEFT));
+        }
+
+        $this->actingAs($admin)->post(route('followupwa.warming.run'))
+            ->assertRedirect(route('whatsapp.index'));
+
+        $this->assertSame(7, WarmingLog::where('from_user_id', $admin->id)
+            ->where('direction', WarmingLog::DIRECTION_OUT)
+            ->count());
+    }
+
     public function test_warming_config_empty_days_defaults_to_all(): void
     {
         $service = app(FollowupWaService::class);

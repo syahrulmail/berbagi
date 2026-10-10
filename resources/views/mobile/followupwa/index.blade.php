@@ -231,7 +231,7 @@
                     </div>
                     <div class="mo-field" style="flex:1;">
                         <label>Interval</label>
-                        <input type="number" name="amount" form="mo-warming-run" class="mo-input" min="1" max="50" value="5">
+                        <input type="number" name="amount" class="mo-input" min="1" max="50" value="{{ $warmingConfig['amount'] }}">
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;">

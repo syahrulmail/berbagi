@@ -289,7 +289,7 @@
                     </div>
                     <div class="form-group">
                         <label>Interval</label>
-                        <input type="number" name="amount" form="fuwa-warming-run" min="1" max="50" value="5">
+                        <input type="number" name="amount" min="1" max="50" value="{{ $warmingConfig['amount'] }}">
                     </div>
                     <div class="form-group">
                         <label>Jeda Min (detik)</label>
