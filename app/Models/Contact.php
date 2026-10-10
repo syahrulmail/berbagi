@@ -21,6 +21,14 @@ class Contact extends Model
         'agen_id',
         'branch_id',
         'notes',
+        'followup_count',
+        'last_messaged_at',
+        'wa_valid',
+    ];
+
+    protected $casts = [
+        'last_messaged_at' => 'datetime',
+        'wa_valid' => 'boolean',
     ];
 
     public function agen()

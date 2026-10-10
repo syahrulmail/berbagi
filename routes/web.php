@@ -9,9 +9,11 @@ use App\Http\Controllers\CampaignTagController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonationController;
+use App\Http\Controllers\FollowupWaController;
 use App\Http\Controllers\MobileAppController;
 use App\Http\Controllers\MobileAuthController;
 use App\Http\Controllers\MobileCrudController;
+use App\Http\Controllers\MobileFollowupWaController;
 use App\Http\Controllers\MobileModuleController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ProfileController;
@@ -19,7 +21,7 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WaFollowupController;
-use App\Http\Controllers\WhatsAppController;
+use App\Http\Controllers\WaWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,6 +49,19 @@ Route::post('/program/{program}/suka', [PublicController::class, 'suka'])
 Route::post('/program/{program}/klik', [PublicController::class, 'klik'])
     ->name('public.program.klik')
     ->middleware('throttle:30,1');
+
+/*
+|--------------------------------------------------------------------------
+| WhatsApp Webhook (public, tanpa auth, dikecualikan dari CSRF)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/wa/webhook/{provider}', [WaWebhookController::class, 'receive'])
+    ->name('wa.webhook')
+    ->middleware('throttle:120,1');
+
+Route::get('/wa/webhook/{provider}', [WaWebhookController::class, 'verify'])
+    ->name('wa.webhook.verify');
 
 /*
 |--------------------------------------------------------------------------
@@ -115,7 +130,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('programs', ProgramController::class)->except('show');
         Route::get('programs/{program}/donors', [ProgramController::class, 'donors'])->name('programs.donors');
         Route::post('/uploads/rich-image', [ProgramController::class, 'uploadRichImage'])->name('uploads.rich-image');
-        Route::resource('whatsapp', WhatsAppController::class)->only(['index', 'create', 'store', 'destroy']);
+        Route::get('followup-wa', [FollowupWaController::class, 'index'])->name('whatsapp.index');
+        Route::post('followup-wa/broadcast', [FollowupWaController::class, 'storeBroadcast'])->name('followupwa.broadcast.store');
+        Route::post('followup-wa/broadcast/{broadcast}/stop', [FollowupWaController::class, 'stopBroadcast'])->name('followupwa.broadcast.stop');
+        Route::post('followup-wa/kontak', [FollowupWaController::class, 'previewContacts'])->name('followupwa.contacts');
+        Route::post('followup-wa/manual', [FollowupWaController::class, 'logManual'])->name('followupwa.manual');
+        Route::post('followup-wa/warming', [FollowupWaController::class, 'saveWarming'])->name('followupwa.warming');
+        Route::post('followup-wa/warming/jalankan', [FollowupWaController::class, 'runWarming'])->name('followupwa.warming.run');
+        Route::delete('followup-wa/log/{whatsappMessage}', [FollowupWaController::class, 'destroyLog'])->name('followupwa.log.destroy');
         Route::resource('followups', WaFollowupController::class)->only(['index']);
         Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
@@ -185,10 +207,16 @@ Route::middleware('auth')->group(function () {
         Route::delete('/pengguna/{user}', [MobileCrudController::class, 'userDestroy'])->name('user.destroy')->middleware('role:admin,supervisor');
 
         // WhatsApp (semua role)
-        Route::get('/whatsapp', [MobileModuleController::class, 'whatsappIndex'])->name('whatsapp');
+        Route::get('/whatsapp', [MobileFollowupWaController::class, 'index'])->name('whatsapp');
         Route::get('/whatsapp/tambah', [MobileModuleController::class, 'whatsappCreate'])->name('whatsapp.create');
         Route::post('/whatsapp/tambah', [MobileModuleController::class, 'whatsappStore'])->name('whatsapp.store');
         Route::delete('/whatsapp/{whatsapp}', [MobileModuleController::class, 'whatsappDestroy'])->name('whatsapp.destroy');
+        Route::post('/whatsapp/broadcast', [MobileFollowupWaController::class, 'storeBroadcast'])->name('whatsapp.broadcast');
+        Route::post('/whatsapp/broadcast/{broadcast}/stop', [MobileFollowupWaController::class, 'stopBroadcast'])->name('whatsapp.broadcast.stop');
+        Route::post('/whatsapp/kontak', [MobileFollowupWaController::class, 'previewContacts'])->name('whatsapp.contacts');
+        Route::post('/whatsapp/manual', [MobileFollowupWaController::class, 'logManual'])->name('whatsapp.manual');
+        Route::post('/whatsapp/warming', [MobileFollowupWaController::class, 'saveWarming'])->name('whatsapp.warming');
+        Route::post('/whatsapp/warming/jalankan', [MobileFollowupWaController::class, 'runWarming'])->name('whatsapp.warming.run');
 
         // Follow-up WA
         Route::get('/followup', [MobileModuleController::class, 'followupIndex'])->name('followups');
