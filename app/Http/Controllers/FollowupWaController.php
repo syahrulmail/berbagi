@@ -189,6 +189,8 @@ class FollowupWaController extends Controller
             'interval_max' => ['nullable', 'integer', 'min:5'],
             'start_time' => ['nullable', 'string', 'max:5'],
             'stop_time' => ['nullable', 'string', 'max:5'],
+            'days' => ['nullable', 'array'],
+            'days.*' => ['integer', 'min:1', 'max:7'],
             'messages' => ['nullable', 'string'],
         ]);
 

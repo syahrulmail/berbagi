@@ -308,9 +308,18 @@
                         <input type="time" name="stop_time" value="{{ $warmingConfig['stop_time'] }}">
                     </div>
                 </div>
+                @php $weekdays = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu']; @endphp
                 <div class="form-group">
-                    <label>Template Pesan Warming</label>
-                    <textarea name="messages" rows="3">{{ $warmingConfig['messages'] }}</textarea>
+                    <label>Hari Pengiriman</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;">
+                        @foreach($weekdays as $num => $label)
+                            <label class="fuwa-check" style="margin:0;"><input type="checkbox" name="days[]" value="{{ $num }}" @if(in_array($num, $warmingConfig['days'])) checked @endif> {{ $label }}</label>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Template Pesan Warming (satu pesan per baris, dikirim acak)</label>
+                    <textarea name="messages" rows="4">{{ $warmingConfig['messages'] }}</textarea>
                 </div>
                 <label class="fuwa-check"><input type="checkbox" name="active" value="1" @if($warmingConfig['active']) checked @endif> Aktifkan warming</label>
 

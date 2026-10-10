@@ -583,15 +583,45 @@ class FollowupWaService
             $decoded = [];
         }
 
-        return array_merge([
+        $config = array_merge([
             'active' => false,
             'amount_pair' => 5,
             'interval_min' => 30,
             'interval_max' => 90,
             'start_time' => '08:00',
             'stop_time' => '21:00',
+            'days' => [1, 2, 3, 4, 5, 6, 7],
             'messages' => "Assalamualaikum kak, semoga harimu menyenangkan.",
         ], $decoded);
+
+        $config['days'] = $this->normalizeDays($config['days'] ?? null);
+
+        return $config;
+    }
+
+    /**
+     * Normalisasi daftar hari (1=Senin .. 7=Minggu). Kosong => semua hari.
+     *
+     * @param  mixed  $days
+     * @return array<int,int>
+     */
+    protected function normalizeDays($days): array
+    {
+        if (! is_array($days)) {
+            return [1, 2, 3, 4, 5, 6, 7];
+        }
+
+        $result = [];
+        foreach ($days as $day) {
+            $day = (int) $day;
+            if ($day >= 1 && $day <= 7) {
+                $result[] = $day;
+            }
+        }
+
+        $result = array_values(array_unique($result));
+
+        return $result === [] ? [1, 2, 3, 4, 5, 6, 7] : $result;
     }
 
     /**
@@ -599,17 +629,41 @@ class FollowupWaService
      */
     public function saveWarmingConfig(array $data): void
     {
+        $intervalMin = max(5, (int) ($data['interval_min'] ?? 30));
+
         $config = [
             'active' => ! empty($data['active']),
             'amount_pair' => max(1, (int) ($data['amount_pair'] ?? 5)),
-            'interval_min' => max(5, (int) ($data['interval_min'] ?? 30)),
-            'interval_max' => max(5, (int) ($data['interval_max'] ?? 90)),
+            'interval_min' => $intervalMin,
+            'interval_max' => max($intervalMin, (int) ($data['interval_max'] ?? 90)),
             'start_time' => $data['start_time'] ?? '08:00',
             'stop_time' => $data['stop_time'] ?? '21:00',
+            'days' => $this->normalizeDays($data['days'] ?? null),
             'messages' => $data['messages'] ?? '',
         ];
 
         Setting::set('warming_config', json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'warming');
+    }
+
+    /**
+     * Pilih satu baris template warming secara acak (satu baris = satu pesan).
+     */
+    public function pickWarmingMessage(string $template): string
+    {
+        $lines = [];
+
+        foreach (preg_split('/\r\n|\r|\n/', $template) ?: [] as $line) {
+            $line = trim($line);
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+        }
+
+        if ($lines === []) {
+            return trim($template);
+        }
+
+        return $lines[array_rand($lines)];
     }
 
     /**
@@ -700,7 +754,7 @@ class FollowupWaService
         $failed = 0;
 
         foreach ($recipients as $recipient) {
-            $message = $this->renderer->render($template, ['nama' => $recipient->name]);
+            $message = $this->renderer->render($this->pickWarmingMessage($template), ['nama' => $recipient->name]);
             $result = $this->sender->send($provider['provider'], $provider['key'], $recipient->phone, $message);
             $ok = ! empty($result['ok']);
 
@@ -725,9 +779,97 @@ class FollowupWaService
             }
         }
 
-        $this->saveWarmingConfig(array_merge($config, ['active' => true]));
-
         return ['ok' => true, 'sent' => $sent, 'failed' => $failed, 'error' => null];
+    }
+
+    /**
+     * Warming otomatis sesuai jadwal (dipanggil oleh scheduler tiap menit).
+     * Untuk setiap pengguna yang memenuhi syarat, kirim satu siklus warming
+     * bila jeda (interval) sejak pesan keluar terakhir sudah terlewati.
+     *
+     * @return array{ok:bool,ran:int,sent:int,failed:int,skipped:?string}
+     */
+    public function runScheduledWarming(?Carbon $now = null): array
+    {
+        $config = $this->warmingConfig();
+
+        if (empty($config['active'])) {
+            return ['ok' => true, 'ran' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 'inactive'];
+        }
+
+        $now = $now ?: Carbon::now();
+
+        if (! in_array((int) $now->dayOfWeekIso, $config['days'], true)) {
+            return ['ok' => true, 'ran' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 'day'];
+        }
+
+        if (! $this->withinWindow($now, (string) $config['start_time'], (string) $config['stop_time'])) {
+            return ['ok' => true, 'ran' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 'window'];
+        }
+
+        $amount = max(1, (int) $config['amount_pair']);
+        $intervalMin = max(5, (int) $config['interval_min']);
+        $intervalMax = max($intervalMin, (int) $config['interval_max']);
+
+        $users = User::query()
+            ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_SUPERVISOR, User::ROLE_AGEN])
+            ->whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->get();
+
+        $ran = 0;
+        $sent = 0;
+        $failed = 0;
+
+        foreach ($users as $user) {
+            $profile = $this->profiles->data($user);
+
+            if ($profile['api_ss'] === '' && $profile['api_cc'] === '') {
+                continue;
+            }
+
+            $last = WarmingLog::where('from_user_id', $user->id)
+                ->where('direction', WarmingLog::DIRECTION_OUT)
+                ->max('created_at');
+
+            $gap = random_int($intervalMin, $intervalMax);
+
+            if ($last && Carbon::parse($last)->addSeconds($gap)->greaterThan($now)) {
+                continue;
+            }
+
+            $result = $this->runWarming($user, $amount);
+
+            if (! empty($result['ok'])) {
+                $ran++;
+                $sent += (int) $result['sent'];
+                $failed += (int) $result['failed'];
+            }
+        }
+
+        return ['ok' => true, 'ran' => $ran, 'sent' => $sent, 'failed' => $failed, 'skipped' => null];
+    }
+
+    /**
+     * Cek apakah waktu sekarang berada dalam rentang jam mulai-selesai.
+     * Mendukung rentang yang melewati tengah malam.
+     */
+    protected function withinWindow(Carbon $now, string $start, string $stop): bool
+    {
+        $current = $now->format('H:i');
+
+        $start = strlen($start) >= 5 ? substr($start, 0, 5) : $start;
+        $stop = strlen($stop) >= 5 ? substr($stop, 0, 5) : $stop;
+
+        if ($start === '' || $stop === '') {
+            return true;
+        }
+
+        if ($start <= $stop) {
+            return $current >= $start && $current <= $stop;
+        }
+
+        return $current >= $start || $current <= $stop;
     }
 
     /**

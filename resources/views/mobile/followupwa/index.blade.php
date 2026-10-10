@@ -254,9 +254,18 @@
                         <input type="time" name="stop_time" class="mo-input" value="{{ $warmingConfig['stop_time'] }}">
                     </div>
                 </div>
+                @php $weekdays = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu']; @endphp
                 <div class="mo-field">
-                    <label>Template Pesan</label>
-                    <textarea name="messages" class="mo-textarea" rows="3">{{ $warmingConfig['messages'] }}</textarea>
+                    <label>Hari Pengiriman</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px;">
+                        @foreach($weekdays as $num => $label)
+                            <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--mo-text);"><input type="checkbox" name="days[]" value="{{ $num }}" @if(in_array($num, $warmingConfig['days'])) checked @endif> {{ $label }}</label>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="mo-field">
+                    <label>Template Pesan (satu pesan per baris, dikirim acak)</label>
+                    <textarea name="messages" class="mo-textarea" rows="4">{{ $warmingConfig['messages'] }}</textarea>
                 </div>
                 <label class="mo-switch">
                     <span><span class="lbl">Aktifkan Warming</span></span>

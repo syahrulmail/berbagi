@@ -20,6 +20,11 @@ class Kernel extends ConsoleKernel
             ->everyFiveMinutes()
             ->withoutOverlapping();
 
+        // Warming otomatis sesuai konfigurasi (jam, hari, jeda)
+        $schedule->command('warming:run')
+            ->everyMinute()
+            ->withoutOverlapping();
+
         // Contoh otomasi lain: cek status kontak berulang kali dihubungi
         // $schedule->command('contacts:status-check')->daily();
     }

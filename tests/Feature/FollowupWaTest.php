@@ -12,6 +12,7 @@ use App\Models\WarmingLog;
 use App\Models\WhatsappMessage;
 use App\Services\FollowupWaService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -250,5 +251,110 @@ class FollowupWaTest extends TestCase
         $admin = $this->makeUser('admin');
 
         $this->actingAs($admin)->get(route('mo.whatsapp'))->assertOk()->assertSee('Otomatis');
+    }
+
+    public function test_warming_config_saves_days(): void
+    {
+        $service = app(FollowupWaService::class);
+
+        $service->saveWarmingConfig([
+            'active' => true,
+            'amount_pair' => 3,
+            'interval_min' => 10,
+            'interval_max' => 20,
+            'start_time' => '08:00',
+            'stop_time' => '20:00',
+            'days' => [1, 3, 5],
+            'messages' => "Halo [nama]\nSelamat pagi [nama]",
+        ]);
+
+        $config = $service->warmingConfig();
+        $this->assertSame([1, 3, 5], $config['days']);
+        $this->assertSame(3, $config['amount_pair']);
+    }
+
+    public function test_warming_config_empty_days_defaults_to_all(): void
+    {
+        $service = app(FollowupWaService::class);
+
+        $service->saveWarmingConfig(['days' => []]);
+
+        $this->assertSame([1, 2, 3, 4, 5, 6, 7], $service->warmingConfig()['days']);
+    }
+
+    public function test_pick_warming_message_returns_single_line(): void
+    {
+        $service = app(FollowupWaService::class);
+
+        $picked = $service->pickWarmingMessage("Baris satu\n\nBaris dua\n  \nBaris tiga");
+
+        $this->assertContains($picked, ['Baris satu', 'Baris dua', 'Baris tiga']);
+    }
+
+    public function test_scheduled_warming_skips_when_inactive(): void
+    {
+        $service = app(FollowupWaService::class);
+        $service->saveWarmingConfig(['active' => false]);
+
+        $result = $service->runScheduledWarming(Carbon::parse('2026-10-12 10:00:00'));
+
+        $this->assertSame('inactive', $result['skipped']);
+        $this->assertSame(0, $result['ran']);
+    }
+
+    public function test_scheduled_warming_skips_other_day(): void
+    {
+        $service = app(FollowupWaService::class);
+        $service->saveWarmingConfig([
+            'active' => true,
+            'days' => [2],
+            'start_time' => '00:00',
+            'stop_time' => '23:59',
+        ]);
+
+        $result = $service->runScheduledWarming(Carbon::parse('2026-10-12 10:00:00'));
+
+        $this->assertSame('day', $result['skipped']);
+    }
+
+    public function test_scheduled_warming_skips_outside_window(): void
+    {
+        $service = app(FollowupWaService::class);
+        $service->saveWarmingConfig([
+            'active' => true,
+            'days' => [1, 2, 3, 4, 5, 6, 7],
+            'start_time' => '08:00',
+            'stop_time' => '09:00',
+        ]);
+
+        $result = $service->runScheduledWarming(Carbon::parse('2026-10-12 15:00:00'));
+
+        $this->assertSame('window', $result['skipped']);
+    }
+
+    public function test_scheduled_warming_runs_for_eligible_user(): void
+    {
+        $service = app(FollowupWaService::class);
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin);
+        $this->makeUser('agen', null, '628555550001');
+
+        $service->saveWarmingConfig([
+            'active' => true,
+            'amount_pair' => 1,
+            'interval_min' => 5,
+            'interval_max' => 5,
+            'start_time' => '00:00',
+            'stop_time' => '23:59',
+            'days' => [1, 2, 3, 4, 5, 6, 7],
+            'messages' => "Halo [nama]",
+        ]);
+
+        $result = $service->runScheduledWarming(Carbon::parse('2026-10-12 10:00:00'));
+
+        $this->assertGreaterThanOrEqual(1, $result['ran']);
+        $this->assertGreaterThanOrEqual(1, WarmingLog::where('from_user_id', $admin->id)
+            ->where('direction', WarmingLog::DIRECTION_OUT)
+            ->count());
     }
 }
