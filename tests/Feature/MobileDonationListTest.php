@@ -193,7 +193,37 @@ class MobileDonationListTest extends TestCase
         $response->assertOk();
         $response->assertSee('id="filter_branch"', false);
         $response->assertSee('id="filter_agen"', false);
-        $response->assertSee('Nama Agen');
+        $response->assertSee('>Agen<', false);
+    }
+
+    public function test_mobile_filters_order_branch_and_agent_above_dates(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($admin)->get(route('mo.donations'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder(['>Cabang<', '>Agen<', 'Dari tanggal'], false);
+    }
+
+    public function test_mobile_supervisor_branch_preselected_and_only_own_agents(): void
+    {
+        $ownBranch = $this->makeBranch();
+        $otherBranch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $ownBranch);
+        $ownAgent = $this->makeUser('agen', $ownBranch);
+        $otherAgent = $this->makeUser('agen', $otherBranch);
+
+        $response = $this->actingAs($supervisor)->get(route('mo.donations'));
+
+        $response->assertOk();
+        $response->assertSee('id="filter_branch"', false);
+        $response->assertSee('value="' . $ownBranch->id . '" selected', false);
+        $response->assertSee($ownAgent->name);
+        $response->assertDontSee($otherAgent->name);
+        $response->assertDontSee('Semua Cabang');
     }
 
     public function test_mobile_agent_does_not_see_agent_filter(): void
@@ -205,7 +235,6 @@ class MobileDonationListTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('id="filter_agen"', false);
-        $response->assertDontSee('Nama Agen');
     }
 
     public function test_mobile_list_loads_more_in_steps_of_ten(): void

@@ -38,6 +38,40 @@
                 <input type="hidden" name="period" value="{{ request('period') }}">
                 <input type="hidden" name="sort" value="{{ request('sort') }}">
 
+                @php
+                    $isSupervisor = auth()->user()->isSupervisor();
+                    $selectedBranch = request('branch_id');
+                    if ($selectedBranch === null && $isSupervisor) {
+                        $selectedBranch = auth()->user()->branch_id;
+                    }
+                @endphp
+
+                @if((auth()->user()->isAdmin() || $isSupervisor) && isset($branches) && $branches->count())
+                    <div style="margin-top:10px;">
+                        <label for="filter_branch" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Cabang</label>
+                        <select id="filter_branch" name="branch_id" class="mo-input" data-autosubmit>
+                            @if(auth()->user()->isAdmin())
+                                <option value="">Semua Cabang</option>
+                            @endif
+                            @foreach($branches as $b)
+                                <option value="{{ $b->id }}" {{ (string) $selectedBranch === (string) $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                @if(isset($agents) && $agents->count())
+                    <div style="margin-top:8px;">
+                        <label for="filter_agen" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Agen</label>
+                        <select id="filter_agen" name="agen_id" class="mo-input" data-autosubmit>
+                            <option value="">Semua Agen</option>
+                            @foreach($agents as $a)
+                                <option value="{{ $a->id }}" data-branch="{{ $a->branch_id }}" {{ (string) request('agen_id') === (string) $a->id ? 'selected' : '' }}>{{ $a->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
                 <div style="display:flex;gap:10px;margin-top:10px;">
                     <div style="flex:1;">
                         <label for="filter_from" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Dari tanggal</label>
@@ -63,30 +97,6 @@
                         <i class="fas fa-arrow-down-wide-short"></i> Donasi Terbesar
                     </button>
                 </div>
-
-                @if(auth()->user()->isAdmin() && isset($branches) && $branches->count())
-                    <div style="margin-top:8px;">
-                        <label for="filter_branch" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Cabang</label>
-                        <select id="filter_branch" name="branch_id" class="mo-input" data-autosubmit>
-                            <option value="">Semua Cabang</option>
-                            @foreach($branches as $b)
-                                <option value="{{ $b->id }}" {{ (string) request('branch_id') === (string) $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-
-                @if(isset($agents) && $agents->count())
-                    <div style="margin-top:8px;">
-                        <label for="filter_agen" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Nama Agen</label>
-                        <select id="filter_agen" name="agen_id" class="mo-input" data-autosubmit>
-                            <option value="">Semua Agen</option>
-                            @foreach($agents as $a)
-                                <option value="{{ $a->id }}" {{ (string) request('agen_id') === (string) $a->id ? 'selected' : '' }}>{{ $a->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
 
                 @if(request('search') || $hasDateFilter)
                     <div style="text-align:right;">
@@ -212,6 +222,29 @@
     (function () {
         var opener = document.getElementById('mo-open-download');
         if (opener) opener.addEventListener('click', function () { window.MoApp.sheets.open('mo-download-sheet'); });
+
+        var branchSel = document.getElementById('filter_branch');
+        var agenSel = document.getElementById('filter_agen');
+
+        function applyAgentFilter(resetValue) {
+            if (!branchSel || !agenSel) return;
+            var branch = branchSel.value;
+            for (var i = 0; i < agenSel.options.length; i++) {
+                var opt = agenSel.options[i];
+                if (!opt.value) continue;
+                var match = !branch || opt.getAttribute('data-branch') === branch;
+                opt.hidden = !match;
+                opt.disabled = !match;
+            }
+            if (resetValue) agenSel.value = '';
+            var selected = agenSel.options[agenSel.selectedIndex];
+            if (selected && selected.disabled) agenSel.value = '';
+        }
+
+        if (branchSel) {
+            branchSel.addEventListener('change', function () { applyAgentFilter(true); });
+        }
+        applyAgentFilter(false);
 
         document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
             el.addEventListener('change', function () {

@@ -58,7 +58,7 @@
         </div>
         <div class="form-group">
             <label>Cabang</label>
-            <select name="branch_id">
+            <select name="branch_id" id="filter-branch">
                 @if(auth()->user()->isAdmin())
                     <option value="">Semua Cabang</option>
                 @endif
@@ -71,11 +71,11 @@
         </div>
         @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
             <div class="form-group">
-                <label>Nama Agen</label>
-                <select name="agen_id">
+                <label>Agen</label>
+                <select name="agen_id" id="filter-agen">
                     <option value="">Semua Agen</option>
                     @foreach($agents as $agent)
-                        <option value="{{ $agent->id }}" {{ (string) request('agen_id') === (string) $agent->id ? 'selected' : '' }}>
+                        <option value="{{ $agent->id }}" data-branch="{{ $agent->branch_id }}" {{ (string) request('agen_id') === (string) $agent->id ? 'selected' : '' }}>
                             {{ $agent->name }}
                         </option>
                     @endforeach
@@ -191,4 +191,27 @@
 <script src="{{ assetv('js/donation-form.js') }}"></script>
 <script src="{{ assetv('js/donation-detail.js') }}"></script>
 <script src="{{ assetv('js/donation-download.js') }}"></script>
+<script>
+    (function () {
+        var branchSel = document.getElementById('filter-branch');
+        var agenSel = document.getElementById('filter-agen');
+        if (!branchSel || !agenSel) return;
+
+        function applyAgentFilter() {
+            var branch = branchSel.value;
+            for (var i = 0; i < agenSel.options.length; i++) {
+                var opt = agenSel.options[i];
+                if (!opt.value) continue;
+                var match = !branch || opt.getAttribute('data-branch') === branch;
+                opt.hidden = !match;
+                opt.disabled = !match;
+            }
+            var selected = agenSel.options[agenSel.selectedIndex];
+            if (selected && selected.disabled) agenSel.value = '';
+        }
+
+        branchSel.addEventListener('change', applyAgentFilter);
+        applyAgentFilter();
+    })();
+</script>
 @endpush

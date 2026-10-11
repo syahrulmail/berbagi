@@ -273,15 +273,29 @@ class DonationRoleScopingTest extends TestCase
 
         $this->actingAs($admin)->get(route('donations.index'))
             ->assertOk()
-            ->assertSee('Nama Agen');
+            ->assertSee('id="filter-agen"', false)
+            ->assertSee('>Agen<', false);
 
         $this->actingAs($supervisor)->get(route('donations.index'))
             ->assertOk()
-            ->assertSee('Nama Agen');
+            ->assertSee('id="filter-agen"', false)
+            ->assertSee('>Agen<', false);
 
         $this->actingAs($agent)->get(route('donations.index'))
             ->assertOk()
-            ->assertDontSee('Nama Agen');
+            ->assertDontSee('id="filter-agen"', false);
+    }
+
+    public function test_admin_agent_options_carry_branch_marker()
+    {
+        $branch = $this->makeBranch('Marker');
+        $admin = $this->makeUser('admin');
+        $agent = $this->makeUser('agen', $branch);
+
+        $this->actingAs($admin)->get(route('donations.index'))
+            ->assertOk()
+            ->assertSee('data-branch="' . $branch->id . '"', false)
+            ->assertSee($agent->name);
     }
 
     public function test_admin_index_filters_donations_by_agent()
