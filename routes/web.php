@@ -221,6 +221,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/whatsapp/manual', [MobileFollowupWaController::class, 'logManual'])->name('whatsapp.manual');
         Route::post('/whatsapp/warming', [MobileFollowupWaController::class, 'saveWarming'])->name('whatsapp.warming');
         Route::post('/whatsapp/warming/jalankan', [MobileFollowupWaController::class, 'runWarming'])->name('whatsapp.warming.run');
+        Route::delete('/whatsapp/log/{whatsappMessage}', [MobileFollowupWaController::class, 'destroyLog'])->name('whatsapp.log.destroy');
 
         // Follow-up WA
         Route::get('/followup', [MobileModuleController::class, 'followupIndex'])->name('followups');

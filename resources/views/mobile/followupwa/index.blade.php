@@ -15,7 +15,7 @@
         <a href="{{ route('mo.more') }}" class="mo-appbar-back" aria-label="Kembali"><i class="fas fa-arrow-left"></i></a>
         <div style="flex:1;min-width:0;">
             <h1 class="mo-appbar-title"><i class="fab fa-whatsapp" style="color:#25d366;font-size:19px;"></i> Follow-up WA</h1>
-            <div class="mo-appbar-sub">Broadcast · Manual · Warming</div>
+            <div class="mo-appbar-sub">Broadcast · Manual · Warming · Log</div>
         </div>
     </div>
 </div>
@@ -45,6 +45,7 @@
         <button type="button" class="mo-segmented-item active" data-tab="otomatis">Otomatis</button>
         <button type="button" class="mo-segmented-item" data-tab="manual">Manual</button>
         <button type="button" class="mo-segmented-item" data-tab="warming">Warming</button>
+        <button type="button" class="mo-segmented-item" data-tab="log">Log</button>
     </div>
 
     {{-- OTOMATIS --}}
@@ -324,6 +325,46 @@
             </div>
         </div>
     </div>
+
+    {{-- LOG PESAN --}}
+    <div id="mo-fuwa-log" hidden>
+        <div class="mo-form-card">
+            <div class="mo-form-card-title"><i class="fas fa-clock-rotate-left"></i> Log Pesan</div>
+            @php
+                $logStatusStyle = [
+                    'sent' => 'background:#e7f6ec;color:#15803d;',
+                    'pending' => 'background:#fef3e2;color:#b45309;',
+                    'failed' => 'background:#fdeaea;color:#b91c1c;',
+                ];
+            @endphp
+            <div class="mo-list">
+                @forelse($logs as $log)
+                    <div class="mo-row" style="align-items:flex-start;">
+                        <div class="mo-row-body">
+                            <div class="mo-row-title">{{ $log->contact->name ?? '-' }}</div>
+                            <div class="mo-row-sub">{{ $log->phone }}</div>
+                            <div style="margin-top:4px;font-size:12px;color:var(--mo-text);">{{ $log->message }}</div>
+                            <div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span class="mo-badge" style="{{ $logStatusStyle[$log->status] ?? 'background:#eef3f2;color:#64748b;' }}">{{ ucfirst($log->status) }}</span>
+                                <span style="font-size:11px;color:var(--mo-muted);">{{ $log->created_at ? $log->created_at->format('d M Y H:i') : '-' }}</span>
+                            </div>
+                        </div>
+                        <div class="mo-row-end">
+                            <form method="POST" action="{{ route('mo.whatsapp.log.destroy', $log) }}" onsubmit="return confirm('Hapus log ini?');" style="margin:0;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="mo-icon-btn" style="width:36px;height:36px;background:#fdeeec;color:var(--mo-danger);box-shadow:none;" aria-label="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @empty
+                    <div class="mo-empty"><i class="fas fa-inbox"></i><p>Belum ada log pengiriman.</p></div>
+                @endforelse
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -340,7 +381,7 @@
         tab.addEventListener('click', function () {
             document.querySelectorAll('.mo-segmented-item[data-tab]').forEach(function (t) { t.classList.remove('active'); });
             tab.classList.add('active');
-            ['otomatis', 'manual', 'warming'].forEach(function (name) {
+            ['otomatis', 'manual', 'warming', 'log'].forEach(function (name) {
                 var panel = document.getElementById('mo-fuwa-' + name);
                 if (panel) panel.hidden = (name !== tab.dataset.tab);
             });

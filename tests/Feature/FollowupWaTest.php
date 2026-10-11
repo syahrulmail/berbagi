@@ -199,6 +199,49 @@ class FollowupWaTest extends TestCase
         $response->assertSee('com.whatsapp.w4b', false);
     }
 
+    public function test_mobile_log_tab_lists_and_deletes_messages(): void
+    {
+        $admin = $this->makeUser('admin');
+        $contact = $this->makeContact('Log Kontak', '628111222333');
+        $message = WhatsappMessage::create([
+            'contact_id' => $contact->id,
+            'phone' => $contact->phone,
+            'message' => 'Pesan uji log',
+            'status' => WhatsappMessage::STATUS_SENT,
+            'sent_at' => Carbon::now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('mo.whatsapp'));
+
+        $response->assertOk();
+        $response->assertSee('Log Pesan');
+        $response->assertSee('Pesan uji log');
+        $response->assertSee('id="mo-fuwa-log"', false);
+        $response->assertSee('data-tab="log"', false);
+
+        $this->actingAs($admin)->delete(route('mo.whatsapp.log.destroy', $message))
+            ->assertRedirect(route('mo.whatsapp'));
+        $this->assertNull(WhatsappMessage::find($message->id));
+    }
+
+    public function test_mobile_log_delete_is_scoped_to_owner(): void
+    {
+        $agen = $this->makeUser('agen');
+        $other = $this->makeUser('agen');
+        $contact = $this->makeContact('Log Agen', '628333444555', ['agen_id' => $agen->id]);
+        $message = WhatsappMessage::create([
+            'contact_id' => $contact->id,
+            'phone' => $contact->phone,
+            'message' => 'Pesan agen',
+            'status' => WhatsappMessage::STATUS_SENT,
+            'sent_at' => Carbon::now(),
+        ]);
+
+        $this->actingAs($other)->delete(route('mo.whatsapp.log.destroy', $message))
+            ->assertForbidden();
+        $this->assertNotNull(WhatsappMessage::find($message->id));
+    }
+
     public function test_template_message_supports_random_variation(): void
     {
         $service = app(FollowupWaService::class);

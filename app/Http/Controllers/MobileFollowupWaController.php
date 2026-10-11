@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Broadcast;
 use App\Models\Contact;
 use App\Models\User;
+use App\Models\WhatsappMessage;
 use App\Services\FollowupWaService;
 use Illuminate\Http\Request;
 
@@ -39,6 +40,12 @@ class MobileFollowupWaController extends MobileModuleController
         $warmingRecipients = $this->service->warmingRecipients($user);
         $cronStatus = $this->service->cronStatus();
 
+        $logs = $this->logScope($user)
+            ->with('contact')
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
         return view('mobile.followupwa.index', compact(
             'user',
             'connections',
@@ -48,7 +55,8 @@ class MobileFollowupWaController extends MobileModuleController
             'branches',
             'warmingConfig',
             'warmingRecipients',
-            'cronStatus'
+            'cronStatus',
+            'logs'
         ));
     }
 
@@ -185,9 +193,43 @@ class MobileFollowupWaController extends MobileModuleController
             ->with('success', 'Warming selesai: ' . $result['sent'] . ' terkirim, ' . $result['failed'] . ' gagal.');
     }
 
+    public function destroyLog(WhatsappMessage $whatsappMessage)
+    {
+        $user = auth()->user();
+
+        if ($user->isAgen() && (! $whatsappMessage->contact || (int) $whatsappMessage->contact->agen_id !== (int) $user->id)) {
+            abort(403);
+        }
+
+        if ($user->isSupervisor() && (! $whatsappMessage->contact || (int) $whatsappMessage->contact->branch_id !== (int) $user->branch_id)) {
+            abort(403);
+        }
+
+        $whatsappMessage->delete();
+
+        return redirect()->route('mo.whatsapp')->with('success', 'Log pesan dihapus.');
+    }
+
     /* =====================================================
      | SCOPING
      | ===================================================== */
+
+    protected function logScope(User $viewer)
+    {
+        $query = WhatsappMessage::query();
+
+        if ($viewer->isAgen()) {
+            $query->whereHas('contact', function ($sub) use ($viewer) {
+                $sub->where('agen_id', $viewer->id);
+            });
+        } elseif ($viewer->isSupervisor() && $viewer->branch_id) {
+            $query->whereHas('contact', function ($sub) use ($viewer) {
+                $sub->where('branch_id', $viewer->branch_id);
+            });
+        }
+
+        return $query;
+    }
 
     protected function broadcastScope(User $viewer)
     {
