@@ -636,7 +636,7 @@ class DonationController extends Controller
         return redirect()->route('donations.index')->with('success', 'Donasi berhasil diperbarui.');
     }
 
-    public function destroy(Donation $donation)
+    public function destroy(Request $request, Donation $donation)
     {
         $this->authorizeAccess($donation);
 
@@ -646,6 +646,10 @@ class DonationController extends Controller
 
         ActivityLog::record('donation.delete', 'Menghapus donasi #' . $donation->id);
         $donation->delete();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['message' => 'Donasi berhasil dihapus.']);
+        }
 
         return redirect()->route('donations.index')->with('success', 'Donasi berhasil dihapus.');
     }

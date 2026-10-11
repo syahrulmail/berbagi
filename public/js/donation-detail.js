@@ -6,6 +6,10 @@
     var errorBox = document.getElementById('donation-detail-error');
     var editBtn = document.getElementById('donation-detail-edit-btn');
     var saveBtn = document.getElementById('donation-detail-save-btn');
+    var deleteBtn = document.getElementById('donation-detail-delete-btn');
+    var confirmModal = document.getElementById('donation-delete-confirm');
+    var confirmBtn = document.getElementById('donation-delete-confirm-btn');
+    var confirmCancelBtns = document.querySelectorAll('[data-donation-delete-cancel]');
     var closeBtns = document.querySelectorAll('[data-donation-detail-close]');
     var currentId = null;
     var editing = false;
@@ -17,6 +21,7 @@
     var urlDetail = cfg.detailUrl || '';
     var urlEditFields = cfg.editFieldsUrl || '';
     var urlUpdate = cfg.updateUrl || '';
+    var urlDelete = cfg.deleteUrl || '';
 
     function buildUrl(base, id) {
         return base.replace('__ID__', encodeURIComponent(id));
@@ -50,6 +55,7 @@
         document.body.style.overflow = '';
         errorBox.classList.remove('show');
         errorBox.textContent = '';
+        closeConfirm();
     }
 
     function renderDetail(d) {
@@ -127,6 +133,51 @@
         editing = !viewMode;
         if (editBtn) editBtn.style.display = viewMode ? '' : 'none';
         if (saveBtn) saveBtn.style.display = viewMode ? 'none' : '';
+        if (deleteBtn) deleteBtn.style.display = viewMode ? '' : 'none';
+    }
+
+    function openConfirm() {
+        if (confirmModal) {
+            confirmModal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeConfirm() {
+        if (confirmModal) confirmModal.classList.remove('open');
+    }
+
+    function doDelete() {
+        if (busy || !currentId || !urlDelete) return;
+        busy = true;
+        if (confirmBtn) confirmBtn.disabled = true;
+
+        var token = csrfToken();
+        var fd = new FormData();
+        fd.set('_method', 'DELETE');
+        if (token) fd.set('_token', token);
+
+        fetchJson(buildUrl(urlDelete, currentId), {
+            method: 'POST',
+            body: fd,
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token }
+        })
+            .then(function (r) {
+                if (!r.ok) {
+                    closeConfirm();
+                    showError((r.data && r.data.message) ? r.data.message : 'Gagal menghapus donasi.');
+                    return;
+                }
+                window.location.reload();
+            })
+            .catch(function () {
+                closeConfirm();
+                showError('Terjadi kesalahan jaringan. Coba lagi.');
+            })
+            .finally(function () {
+                busy = false;
+                if (confirmBtn) confirmBtn.disabled = false;
+            });
     }
 
     function loadDetail(id) {
@@ -235,7 +286,12 @@
     });
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && modal.classList.contains('open')) close();
+        if (e.key !== 'Escape') return;
+        if (confirmModal && confirmModal.classList.contains('open')) {
+            closeConfirm();
+            return;
+        }
+        if (modal.classList.contains('open')) close();
     });
 
     if (editBtn) {
@@ -246,5 +302,23 @@
 
     if (saveBtn) {
         saveBtn.addEventListener('click', doSave);
+    }
+
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', openConfirm);
+    }
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', doDelete);
+    }
+
+    Array.prototype.forEach.call(confirmCancelBtns, function (b) {
+        b.addEventListener('click', closeConfirm);
+    });
+
+    if (confirmModal) {
+        confirmModal.addEventListener('click', function (e) {
+            if (e.target === confirmModal) closeConfirm();
+        });
     }
 })();

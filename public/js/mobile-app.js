@@ -87,7 +87,8 @@
             '<div class="mo-detail-item full" style="margin-top:4px;background:#eefaf8;"><div class="mo-detail-label">Total Donasi</div><div class="mo-detail-value amount">' + esc(data.amount_formatted || '-') + '</div></div>' +
             ((data.note) ? '<div class="mo-detail-item full" style="margin-top:10px;"><div class="mo-detail-label">Catatan</div><div class="mo-detail-value">' + esc(data.note) + '</div></div>' : '') +
             ((data.proof_url) ? '<a href="' + esc(data.proof_url) + '" target="_blank" rel="noopener" style="display:block;margin-top:12px;text-align:center;background:#eefaf8;color:var(--mo-primary);font-weight:600;font-size:12.5px;padding:11px;border-radius:12px;text-decoration:none;"><i class="fas fa-image"></i> Lihat Bukti Pembayaran</a>' : '') +
-            ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:12px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Donasi</a>' : '');
+            ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:12px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Donasi</a>' : '') +
+            ((data.can_delete && data.delete_url) ? '<button type="button" id="mo-donation-delete-btn" data-delete-url="' + esc(data.delete_url) + '" style="display:block;width:100%;margin-top:10px;text-align:center;background:var(--mo-danger);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;border:none;cursor:pointer;"><i class="fas fa-trash-can"></i> Hapus Donasi</button>' : '');
     }
 
     function loadContactDetail(id, cb) {
@@ -296,6 +297,36 @@
                     '</div>';
                 openSheet('mo-donation-sheet');
                 loadDonationDetail(id, renderDonationDetail);
+            }
+        });
+
+        // Donation delete (admin & supervisor only) from detail sheet
+        var pendingDonationDeleteUrl = null;
+        document.addEventListener('click', function (e) {
+            var delBtn = e.target.closest ? e.target.closest('#mo-donation-delete-btn') : null;
+            if (delBtn) {
+                pendingDonationDeleteUrl = delBtn.getAttribute('data-delete-url');
+                openSheet('mo-donation-delete-confirm');
+                return;
+            }
+            var confirmBtn = e.target.closest ? e.target.closest('#mo-donation-delete-confirm-btn') : null;
+            if (confirmBtn && pendingDonationDeleteUrl) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = pendingDonationDeleteUrl;
+                form.style.display = 'none';
+                var token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = '_token';
+                token.value = root.csrf || '';
+                form.appendChild(token);
+                var method = document.createElement('input');
+                method.type = 'hidden';
+                method.name = '_method';
+                method.value = 'DELETE';
+                form.appendChild(method);
+                document.body.appendChild(form);
+                form.submit();
             }
         });
 

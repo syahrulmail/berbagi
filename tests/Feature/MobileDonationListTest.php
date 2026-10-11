@@ -258,4 +258,27 @@ class MobileDonationListTest extends TestCase
         $more->assertSee('Donatur 11');
         $more->assertDontSee('Tampilkan +10 Data');
     }
+
+    public function test_mobile_donation_detail_can_delete_only_for_admin_and_supervisor(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $admin = $this->makeUser('admin');
+        $program = $this->makeProgram();
+        $contact = $this->makeContact('Donatur Hapus', '628111999888', $agen, $branch);
+        $donation = $this->makeDonation($branch, $agen, $contact, $program, now()->format('Y-m-d'));
+
+        $this->actingAs($admin)->getJson(route('mo.api.donation-detail', $donation))
+            ->assertOk()
+            ->assertJsonPath('can_delete', true);
+
+        $this->actingAs($supervisor)->getJson(route('mo.api.donation-detail', $donation))
+            ->assertOk()
+            ->assertJsonPath('can_delete', true);
+
+        $this->actingAs($agen)->getJson(route('mo.api.donation-detail', $donation))
+            ->assertOk()
+            ->assertJsonPath('can_delete', false);
+    }
 }

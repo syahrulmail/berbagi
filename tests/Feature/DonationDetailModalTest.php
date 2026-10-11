@@ -145,4 +145,37 @@ class DonationDetailModalTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors('items');
     }
+
+    public function test_destroy_via_ajax_returns_json_and_removes_donation()
+    {
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $response = $this->actingAs($admin)->postJson(route('donations.destroy', $donation), [
+            '_method' => 'DELETE',
+        ], ['Accept' => 'application/json']);
+
+        $response->assertOk()->assertJson(['message' => 'Donasi berhasil dihapus.']);
+        $this->assertDatabaseMissing('donations', ['id' => $donation->id]);
+    }
+
+    public function test_delete_button_only_for_admin_and_supervisor()
+    {
+        $admin = $this->makeUser('admin');
+        [$branch, $agen, , , $donation] = $this->makeDonation($admin);
+        $supervisor = $this->makeUser('supervisor', $branch);
+
+        $this->actingAs($admin)->get(route('donations.index'))
+            ->assertOk()
+            ->assertSee('id="donation-detail-delete-btn"', false)
+            ->assertSee('Apakah yakin menghapus data ini?');
+
+        $this->actingAs($supervisor)->get(route('donations.index'))
+            ->assertOk()
+            ->assertSee('id="donation-detail-delete-btn"', false);
+
+        $this->actingAs($agen)->get(route('donations.index'))
+            ->assertOk()
+            ->assertDontSee('id="donation-detail-delete-btn"', false);
+    }
 }
