@@ -207,6 +207,53 @@ class FollowupWaService
         return $this->filterContacts($viewer, $filters)->limit($limit)->get();
     }
 
+    /**
+     * Uraikan daftar kontak yang ditempel (format "Nama,NomorWhatsapp" per baris).
+     * Hanya memakai entri yang diisikan; kontak yang cocok di DB dipakai untuk mencatat log.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function parsePastedContacts(string $paste, User $user, string $message = ''): array
+    {
+        $items = [];
+        $lines = preg_split('/\r\n|\r|\n/', $paste);
+
+        foreach ($lines as $line) {
+            $line = trim((string) $line);
+            if ($line === '' || strpos($line, ',') === false) {
+                continue;
+            }
+
+            list($name, $rawPhone) = array_pad(explode(',', $line, 2), 2, '');
+            $name = trim($name);
+            $phone = $this->sender->normalizePhone(trim($rawPhone));
+
+            if ($name === '' || $phone === '') {
+                continue;
+            }
+
+            $contact = new Contact();
+            $contact->name = $name;
+            $contact->phone = $phone;
+
+            $rendered = $message !== '' ? $this->renderTemplate($message, $contact, $user) : '';
+            $existing = Contact::where('phone', $phone)->first();
+
+            $items[] = [
+                'id' => $existing ? $existing->id : null,
+                'name' => $name,
+                'phone' => $phone,
+                'status' => 'paste',
+                'status_label' => 'Paste',
+                'followup_count' => $existing ? (int) $existing->followup_count : 0,
+                'message' => $rendered,
+                'wa_link' => 'https://wa.me/' . $phone . '?text=' . rawurlencode($rendered),
+            ];
+        }
+
+        return $items;
+    }
+
     /* =====================================================
      | BROADCAST OTOMATIS / TERBATAS
      | ===================================================== */

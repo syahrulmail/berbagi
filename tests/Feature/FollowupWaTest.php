@@ -201,6 +201,8 @@ class FollowupWaTest extends TestCase
         $response->assertSee('id="fuwa-manual-limit" min="1" max="200" value="20"', false);
         $response->assertSee('id="fuwa-manual-waapp"', false);
         $response->assertSee('id="manual-config" hidden', false);
+        $response->assertSee('name="fuwa-manual-mode"', false);
+        $response->assertSee('id="fuwa-manual-paste-list"', false);
         $response->assertSee('com.whatsapp.w4b', false);
     }
 
@@ -216,7 +218,57 @@ class FollowupWaTest extends TestCase
         $response->assertSee('id="mo-manual-limit" min="1" max="200" value="20"', false);
         $response->assertSee('id="mo-manual-waapp"', false);
         $response->assertSee('id="mo-manual-config" hidden', false);
+        $response->assertSee('name="mo-manual-mode"', false);
+        $response->assertSee('id="mo-manual-paste-list"', false);
         $response->assertSee('com.whatsapp.w4b', false);
+    }
+
+    public function test_manual_paste_mode_parses_only_pasted_contacts(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->makeContact('Kontak DB', '628111000111');
+
+        $response = $this->actingAs($admin)->postJson(route('followupwa.contacts'), [
+            'paste' => "Bpk Agus,628123456789\nSiti Aminah, 0812-3456-7890\n\nBaris Tanpa Koma\n",
+            'message' => 'Hai [nama]',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(2, $response->json('count'));
+        $this->assertSame('Bpk Agus', $response->json('contacts.0.name'));
+        $this->assertSame('628123456789', $response->json('contacts.0.phone'));
+        $this->assertSame('Hai Bpk Agus', $response->json('contacts.0.message'));
+        $this->assertSame('6281234567890', $response->json('contacts.1.phone'));
+    }
+
+    public function test_manual_paste_mode_with_empty_list_returns_none(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->makeContact('Kontak DB', '628111000222');
+
+        $response = $this->actingAs($admin)->postJson(route('followupwa.contacts'), [
+            'mode' => 'paste',
+            'paste' => '',
+            'message' => '',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(0, $response->json('count'));
+    }
+
+    public function test_mobile_manual_paste_mode_parses_only_pasted_contacts(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $response = $this->actingAs($admin)->postJson(route('mo.whatsapp.contacts'), [
+            'paste' => 'Budi Santoso,628999888777',
+            'message' => '',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(1, $response->json('count'));
+        $this->assertSame('Budi Santoso', $response->json('contacts.0.name'));
+        $this->assertSame('628999888777', $response->json('contacts.0.phone'));
     }
 
     public function test_manual_panel_scopes_branch_for_supervisor(): void

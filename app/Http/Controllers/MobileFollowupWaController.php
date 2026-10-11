@@ -65,6 +65,12 @@ class MobileFollowupWaController extends MobileModuleController
         $user = $request->user();
         $message = (string) $request->input('message', '');
 
+        if ($request->input('mode') === 'paste' || $request->filled('paste')) {
+            $items = $this->service->parsePastedContacts((string) $request->input('paste'), $user, $message);
+
+            return response()->json(['count' => count($items), 'contacts' => $items]);
+        }
+
         $limit = (int) $request->input('limit', 50);
         $limit = max(1, min(200, $limit));
 

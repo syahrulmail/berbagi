@@ -217,11 +217,20 @@
     <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
             <h2 style="margin:0;font-size:16px;"><i class="fas fa-hand-pointer" style="color:var(--primary);"></i> Follow-up Manual</h2>
+        </div>
+
+        <div class="fuwa-check-row" style="margin-bottom:14px;">
+            <label class="fuwa-check"><input type="radio" name="fuwa-manual-mode" value="data" checked> Data Kontak</label>
+            <label class="fuwa-check"><input type="radio" name="fuwa-manual-mode" value="paste"> Paste Kontak</label>
+        </div>
+
+        <div id="fuwa-manual-data">
+        <p class="subtitle" style="margin-top:0;">Ambil kontak, klik "Buka" untuk mengirim via WhatsApp — otomatis tercatat terkirim.</p>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
             <button type="button" class="fuwa-collapse-toggle" data-collapse="manual-config"><i class="fas fa-chevron-down"></i> Tampilkan / sembunyikan</button>
         </div>
 
         <div id="manual-config" hidden>
-        <p class="subtitle" style="margin-top:0;">Ambil kontak, klik "Buka" untuk mengirim via WhatsApp — otomatis tercatat terkirim.</p>
 
         <div class="fuwa-grid">
             <div class="form-group">
@@ -269,11 +278,23 @@
             </div>
         </div>
 
-        <div class="fuwa-grid">
+        <div class="form-group">
+            <label>Jumlah Kontak</label>
+            <input type="number" id="fuwa-manual-limit" min="1" max="200" value="20">
+        </div>
+
+        </div>
+        </div>
+
+        <div id="fuwa-manual-paste" hidden>
             <div class="form-group">
-                <label>Jumlah Kontak</label>
-                <input type="number" id="fuwa-manual-limit" min="1" max="200" value="20">
+                <label>Daftar Kontak</label>
+                <textarea id="fuwa-manual-paste-list" rows="6" placeholder="Bpk Agus,628123456789"></textarea>
+                <div class="fuwa-hint">Format: <code>Nama,NomorWhatsapp</code> — satu kontak per baris. Contoh: <code>Bpk Agus,628123456789</code></div>
             </div>
+        </div>
+
+        <div class="fuwa-grid">
             <div class="form-group">
                 <label>Whatsapp</label>
                 <select id="fuwa-manual-waapp">
@@ -291,7 +312,6 @@
 
         <div class="form-actions">
             <button type="button" class="btn btn-primary" id="fuwa-preview-manual"><i class="fas fa-eye"></i> Ambil Kontak</button>
-        </div>
         </div>
 
         <div id="manual-preview" style="margin-top:14px;"></div>
@@ -468,6 +488,27 @@
         });
     });
 
+    // Manual mode switch (Data Kontak / Paste Kontak)
+    var manualModeRadios = document.querySelectorAll('input[name="fuwa-manual-mode"]');
+    function manualMode() {
+        var mode = 'data';
+        manualModeRadios.forEach(function (r) { if (r.checked) mode = r.value; });
+        return mode;
+    }
+    function applyManualMode() {
+        var mode = manualMode();
+        var data = document.getElementById('fuwa-manual-data');
+        var paste = document.getElementById('fuwa-manual-paste');
+        if (data) data.hidden = mode !== 'data';
+        if (paste) paste.hidden = mode !== 'paste';
+        var preview = document.getElementById('manual-preview');
+        if (preview) preview.innerHTML = '';
+    }
+    if (manualModeRadios.length) {
+        manualModeRadios.forEach(function (r) { r.addEventListener('change', applyManualMode); });
+        applyManualMode();
+    }
+
     // Schedule toggles
     var scheduleType = document.getElementById('fuwa-schedule-type');
     var scheduledGroup = document.getElementById('fuwa-scheduled-group');
@@ -598,6 +639,7 @@
                 var app = document.getElementById('fuwa-manual-waapp');
                 link.href = buildWaUrl(link.dataset.phone, decodeURIComponent(link.dataset.msg || ''), app ? app.value : 'business');
                 markSent(link);
+                if (!link.dataset.id) return;
                 var body = new URLSearchParams();
                 body.append('contact_id', link.dataset.id);
                 body.append('message', decodeURIComponent(link.dataset.msg || ''));
@@ -627,14 +669,20 @@
     var previewManual = document.getElementById('fuwa-preview-manual');
     if (previewManual) {
         previewManual.addEventListener('click', function () {
-            fetchContacts(cfg.contactsManual, {
-                branch_id: document.getElementById('fuwa-manual-branch').value,
-                agen_id: document.getElementById('fuwa-manual-agen').value,
-                statuses: collectList('#fuwa-manual-status'),
-                followups: collectList('#fuwa-manual-followup'),
-                limit: document.getElementById('fuwa-manual-limit').value,
+            var payload = {
+                mode: manualMode(),
                 message: document.getElementById('fuwa-manual-message').value
-            }, document.getElementById('manual-preview'), true);
+            };
+            if (manualMode() === 'paste') {
+                payload.paste = document.getElementById('fuwa-manual-paste-list').value;
+            } else {
+                payload.branch_id = document.getElementById('fuwa-manual-branch').value;
+                payload.agen_id = document.getElementById('fuwa-manual-agen').value;
+                payload.statuses = collectList('#fuwa-manual-status');
+                payload.followups = collectList('#fuwa-manual-followup');
+                payload.limit = document.getElementById('fuwa-manual-limit').value;
+            }
+            fetchContacts(cfg.contactsManual, payload, document.getElementById('manual-preview'), true);
         });
     }
 })();

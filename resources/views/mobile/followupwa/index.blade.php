@@ -175,13 +175,23 @@
     {{-- MANUAL --}}
     <div id="mo-fuwa-manual" hidden>
         <div class="mo-form-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                <div class="mo-form-card-title" style="margin:0;"><i class="fas fa-hand-pointer"></i> Follow-up Manual</div>
+            <div class="mo-form-card-title"><i class="fas fa-hand-pointer"></i> Follow-up Manual</div>
+
+            <div class="mo-field">
+                <label>Mode</label>
+                <div style="display:flex;gap:16px;margin-top:2px;">
+                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;"><input type="radio" name="mo-manual-mode" value="data" checked> Data Kontak</label>
+                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;"><input type="radio" name="mo-manual-mode" value="paste"> Paste Kontak</label>
+                </div>
+            </div>
+
+            <div id="mo-manual-data">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
                 <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-manual-config" aria-expanded="false" aria-label="Tampilkan konfigurasi">
                     <i class="fas fa-chevron-down mo-collapse-chevron"></i>
                 </button>
             </div>
-            <div id="mo-manual-config" hidden style="margin-top:10px;">
+            <div id="mo-manual-config" hidden>
             <div class="mo-field">
                 <label>Cabang (opsional)</label>
                 <select class="mo-select" id="mo-manual-branch">
@@ -226,6 +236,17 @@
                 <label>Jumlah Kontak</label>
                 <input type="number" class="mo-input" id="mo-manual-limit" min="1" max="200" value="20">
             </div>
+            </div>
+            </div>
+
+            <div id="mo-manual-paste" hidden>
+                <div class="mo-field">
+                    <label>Daftar Kontak</label>
+                    <textarea id="mo-manual-paste-list" class="mo-textarea" rows="6" placeholder="Bpk Agus,628123456789"></textarea>
+                    <div class="mo-form-help">Format: Nama,NomorWhatsapp — satu kontak per baris. Contoh: Bpk Agus,628123456789</div>
+                </div>
+            </div>
+
             <div class="mo-field">
                 <label>Whatsapp</label>
                 <select class="mo-select" id="mo-manual-waapp">
@@ -238,8 +259,8 @@
                 <textarea id="mo-manual-message" class="mo-textarea" rows="4" placeholder="Assalamualaikum [nama], {Halo|Hai} ..."></textarea>
                 <div class="mo-form-help">Placeholder: [nama], [nomor], [nama_agen]. Variasi acak: {Halo|Hai|Assalamualaikum}.</div>
             </div>
+
             <button type="button" class="mo-btn mo-btn-primary" id="mo-preview-manual" style="width:100%;"><i class="fas fa-eye"></i> Ambil Kontak</button>
-            </div>
             <div id="mo-manual-preview" style="margin-top:12px;"></div>
         </div>
     </div>
@@ -523,6 +544,7 @@
                 var app = document.getElementById('mo-manual-waapp');
                 link.href = buildWaUrl(link.dataset.phone, decodeURIComponent(link.dataset.msg || ''), app ? app.value : 'business');
                 markSent(link);
+                if (!link.dataset.id) return;
                 var b = new URLSearchParams();
                 b.append('contact_id', link.dataset.id);
                 b.append('message', decodeURIComponent(link.dataset.msg || ''));
@@ -544,16 +566,42 @@
         }, document.getElementById('mo-otomatis-preview'), false);
     });
 
+    var moModeRadios = document.querySelectorAll('input[name="mo-manual-mode"]');
+    function moManualMode() {
+        var m = 'data';
+        moModeRadios.forEach(function (r) { if (r.checked) m = r.value; });
+        return m;
+    }
+    function applyMoManualMode() {
+        var m = moManualMode();
+        var data = document.getElementById('mo-manual-data');
+        var paste = document.getElementById('mo-manual-paste');
+        if (data) data.hidden = m !== 'data';
+        if (paste) paste.hidden = m !== 'paste';
+        var preview = document.getElementById('mo-manual-preview');
+        if (preview) preview.innerHTML = '';
+    }
+    if (moModeRadios.length) {
+        moModeRadios.forEach(function (r) { r.addEventListener('change', applyMoManualMode); });
+        applyMoManualMode();
+    }
+
     var pm = document.getElementById('mo-preview-manual');
     if (pm) pm.addEventListener('click', function () {
-        load(cfg.contacts, {
-            branch_id: document.getElementById('mo-manual-branch').value,
-            agen_id: document.getElementById('mo-manual-agen').value,
-            statuses: collectList('#mo-manual-status'),
-            followups: collectList('#mo-manual-followup'),
-            limit: document.getElementById('mo-manual-limit').value,
+        var payload = {
+            mode: moManualMode(),
             message: document.getElementById('mo-manual-message').value
-        }, document.getElementById('mo-manual-preview'), true);
+        };
+        if (moManualMode() === 'paste') {
+            payload.paste = document.getElementById('mo-manual-paste-list').value;
+        } else {
+            payload.branch_id = document.getElementById('mo-manual-branch').value;
+            payload.agen_id = document.getElementById('mo-manual-agen').value;
+            payload.statuses = collectList('#mo-manual-status');
+            payload.followups = collectList('#mo-manual-followup');
+            payload.limit = document.getElementById('mo-manual-limit').value;
+        }
+        load(cfg.contacts, payload, document.getElementById('mo-manual-preview'), true);
     });
 })();
 </script>
