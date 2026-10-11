@@ -51,7 +51,13 @@
     {{-- OTOMATIS --}}
     <div id="mo-fuwa-otomatis">
         <div class="mo-form-card">
-            <div class="mo-form-card-title"><i class="fas fa-robot"></i> Broadcast Otomatis</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div class="mo-form-card-title" style="margin:0;"><i class="fas fa-robot"></i> Broadcast Otomatis</div>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-otomatis-config" aria-expanded="false" aria-label="Tampilkan konfigurasi">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+            <div id="mo-otomatis-config" hidden style="margin-top:10px;">
             <form method="POST" action="{{ route('mo.whatsapp.broadcast') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="mo-field">
@@ -149,6 +155,7 @@
                 <button type="submit" class="mo-btn mo-btn-primary" style="width:100%;"><i class="fas fa-paper-plane"></i> Mulai Broadcast</button>
             </form>
             <div id="mo-otomatis-preview" style="margin-top:12px;"></div>
+            </div>
         </div>
 
         <div class="mo-form-card">
@@ -175,8 +182,13 @@
     {{-- MANUAL --}}
     <div id="mo-fuwa-manual" hidden>
         <div class="mo-form-card">
-            <div class="mo-form-card-title"><i class="fas fa-hand-pointer"></i> Follow-up Manual</div>
-
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div class="mo-form-card-title" style="margin:0;"><i class="fas fa-hand-pointer"></i> Follow-up Manual</div>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-manual-config" aria-expanded="false" aria-label="Tampilkan konfigurasi">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+            <div id="mo-manual-config" hidden style="margin-top:10px;">
             <div class="mo-field">
                 <label>Mode</label>
                 <div style="display:flex;gap:16px;margin-top:2px;">
@@ -186,12 +198,6 @@
             </div>
 
             <div id="mo-manual-data">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
-                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-manual-config" aria-expanded="false" aria-label="Tampilkan konfigurasi">
-                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
-                </button>
-            </div>
-            <div id="mo-manual-config" hidden>
             <div class="mo-field">
                 <label>Cabang (opsional)</label>
                 <select class="mo-select" id="mo-manual-branch">
@@ -237,7 +243,6 @@
                 <input type="number" class="mo-input" id="mo-manual-limit" min="1" max="200" value="20">
             </div>
             </div>
-            </div>
 
             <div id="mo-manual-paste" hidden>
                 <div class="mo-field">
@@ -262,6 +267,7 @@
 
             <button type="button" class="mo-btn mo-btn-primary" id="mo-preview-manual" style="width:100%;"><i class="fas fa-eye"></i> Ambil Kontak</button>
             <div id="mo-manual-preview" style="margin-top:12px;"></div>
+            </div>
         </div>
     </div>
 

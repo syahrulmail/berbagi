@@ -90,6 +90,10 @@ class FollowupWaTest extends TestCase
         $response->assertSee('Otomatis');
         $response->assertSee('Manual');
         $response->assertSee('Warming');
+        $response->assertSee('id="otomatis-config" hidden', false);
+        $response->assertSee('data-collapse="otomatis-config"', false);
+        $response->assertSee('id="manual-config" hidden', false);
+        $response->assertSee('data-collapse="manual-config"', false);
     }
 
     public function test_broadcast_sends_and_updates_contacts(): void
@@ -581,7 +585,14 @@ class FollowupWaTest extends TestCase
     {
         $admin = $this->makeUser('admin');
 
-        $this->actingAs($admin)->get(route('mo.whatsapp'))->assertOk()->assertSee('Otomatis');
+        $response = $this->actingAs($admin)->get(route('mo.whatsapp'));
+
+        $response->assertOk();
+        $response->assertSee('Otomatis');
+        $response->assertSee('id="mo-otomatis-config" hidden', false);
+        $response->assertSee('data-filter-toggle="mo-otomatis-config"', false);
+        $response->assertSee('id="mo-manual-config" hidden', false);
+        $response->assertSee('data-filter-toggle="mo-manual-config"', false);
     }
 
     public function test_warming_config_saves_days(): void

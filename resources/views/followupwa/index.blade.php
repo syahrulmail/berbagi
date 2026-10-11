@@ -178,9 +178,9 @@
                     <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Mulai Broadcast</button>
                 </div>
             </form>
-        </div>
 
-        <div id="otomatis-preview" style="margin-top:14px;"></div>
+            <div id="otomatis-preview" style="margin-top:14px;"></div>
+        </div>
     </div>
 
     <div class="card">
@@ -217,8 +217,10 @@
     <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
             <h2 style="margin:0;font-size:16px;"><i class="fas fa-hand-pointer" style="color:var(--primary);"></i> Follow-up Manual</h2>
+            <button type="button" class="fuwa-collapse-toggle" data-collapse="manual-config"><i class="fas fa-chevron-down"></i> Tampilkan / sembunyikan</button>
         </div>
 
+        <div id="manual-config" hidden>
         <div class="fuwa-check-row" style="margin-bottom:14px;">
             <label class="fuwa-check"><input type="radio" name="fuwa-manual-mode" value="data" checked> Data Kontak</label>
             <label class="fuwa-check"><input type="radio" name="fuwa-manual-mode" value="paste"> Paste Kontak</label>
@@ -226,11 +228,6 @@
 
         <div id="fuwa-manual-data">
         <p class="subtitle" style="margin-top:0;">Ambil kontak, klik "Buka" untuk mengirim via WhatsApp — otomatis tercatat terkirim.</p>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-            <button type="button" class="fuwa-collapse-toggle" data-collapse="manual-config"><i class="fas fa-chevron-down"></i> Tampilkan / sembunyikan</button>
-        </div>
-
-        <div id="manual-config" hidden>
 
         <div class="fuwa-grid">
             <div class="form-group">
@@ -282,8 +279,6 @@
             <label>Jumlah Kontak</label>
             <input type="number" id="fuwa-manual-limit" min="1" max="200" value="20">
         </div>
-
-        </div>
         </div>
 
         <div id="fuwa-manual-paste" hidden>
@@ -315,6 +310,7 @@
         </div>
 
         <div id="manual-preview" style="margin-top:14px;"></div>
+        </div>
     </div>
 </div>
 
