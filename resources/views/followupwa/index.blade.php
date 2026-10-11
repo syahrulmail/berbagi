@@ -215,25 +215,34 @@
 {{-- ===================== TAB MANUAL ===================== --}}
 <div class="fuwa-panel" id="fuwa-panel-manual">
     <div class="card">
-        <h2 style="margin:0 0 12px;font-size:16px;"><i class="fas fa-hand-pointer" style="color:var(--primary);"></i> Follow-up Manual</h2>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+            <h2 style="margin:0;font-size:16px;"><i class="fas fa-hand-pointer" style="color:var(--primary);"></i> Follow-up Manual</h2>
+            <button type="button" class="fuwa-collapse-toggle" data-collapse="manual-config"><i class="fas fa-chevron-down"></i> Tampilkan / sembunyikan</button>
+        </div>
+
+        <div id="manual-config" hidden>
         <p class="subtitle" style="margin-top:0;">Ambil kontak, klik "Buka" untuk mengirim via WhatsApp — otomatis tercatat terkirim.</p>
 
         <div class="fuwa-grid">
             <div class="form-group">
                 <label>Cabang (opsional)</label>
                 <select id="fuwa-manual-branch">
-                    <option value="">Semua Cabang</option>
+                    @if(auth()->user()->isAdmin())
+                        <option value="">Semua Cabang</option>
+                    @endif
                     @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                        <option value="{{ $branch->id }}"{{ (! auth()->user()->isAdmin() && (int) $branch->id === (int) auth()->user()->branch_id) ? ' selected' : '' }}>{{ $branch->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="form-group">
                 <label>Agen (opsional)</label>
                 <select id="fuwa-manual-agen">
-                    <option value="">Semua Agen</option>
+                    @if(! auth()->user()->isAgen())
+                        <option value="">Semua Agen</option>
+                    @endif
                     @foreach($agens as $agen)
-                        <option value="{{ $agen->id }}">{{ $agen->name }}</option>
+                        <option value="{{ $agen->id }}"{{ (auth()->user()->isAgen() && (int) $agen->id === (int) auth()->user()->id) ? ' selected' : '' }}>{{ $agen->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -263,7 +272,7 @@
         <div class="fuwa-grid">
             <div class="form-group">
                 <label>Jumlah Kontak</label>
-                <input type="number" id="fuwa-manual-limit" min="1" max="200" value="100">
+                <input type="number" id="fuwa-manual-limit" min="1" max="200" value="20">
             </div>
             <div class="form-group">
                 <label>Whatsapp</label>
@@ -282,6 +291,7 @@
 
         <div class="form-actions">
             <button type="button" class="btn btn-primary" id="fuwa-preview-manual"><i class="fas fa-eye"></i> Ambil Kontak</button>
+        </div>
         </div>
 
         <div id="manual-preview" style="margin-top:14px;"></div>

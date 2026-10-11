@@ -198,8 +198,9 @@ class FollowupWaTest extends TestCase
         $response->assertSee('WA Personal');
         $response->assertSee('id="fuwa-manual-status"', false);
         $response->assertSee('id="fuwa-manual-followup"', false);
-        $response->assertSee('id="fuwa-manual-limit"', false);
+        $response->assertSee('id="fuwa-manual-limit" min="1" max="200" value="20"', false);
         $response->assertSee('id="fuwa-manual-waapp"', false);
+        $response->assertSee('id="manual-config" hidden', false);
         $response->assertSee('com.whatsapp.w4b', false);
     }
 
@@ -212,9 +213,35 @@ class FollowupWaTest extends TestCase
         $response->assertOk();
         $response->assertSee('id="mo-manual-status"', false);
         $response->assertSee('id="mo-manual-followup"', false);
-        $response->assertSee('id="mo-manual-limit"', false);
+        $response->assertSee('id="mo-manual-limit" min="1" max="200" value="20"', false);
         $response->assertSee('id="mo-manual-waapp"', false);
+        $response->assertSee('id="mo-manual-config" hidden', false);
         $response->assertSee('com.whatsapp.w4b', false);
+    }
+
+    public function test_manual_panel_scopes_branch_for_supervisor(): void
+    {
+        $branchA = Branch::create(['code' => 'SA-' . uniqid(), 'name' => 'Scope A ' . uniqid(), 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'SB-' . uniqid(), 'name' => 'Scope B ' . uniqid(), 'is_active' => true]);
+        $supervisor = $this->makeUser('supervisor', $branchA);
+
+        $response = $this->actingAs($supervisor)->get(route('whatsapp.index'));
+
+        $response->assertOk();
+        $response->assertSee('id="fuwa-manual-branch"', false);
+        $response->assertSee('value="' . $branchA->id . '" selected', false);
+        $response->assertDontSee($branchB->name);
+    }
+
+    public function test_manual_panel_scopes_agent_to_self(): void
+    {
+        $agen = $this->makeUser('agen');
+
+        $response = $this->actingAs($agen)->get(route('whatsapp.index'));
+
+        $response->assertOk();
+        $response->assertSee('id="fuwa-manual-agen"', false);
+        $response->assertSee('value="' . $agen->id . '" selected', false);
     }
 
     public function test_mobile_log_tab_lists_and_deletes_messages(): void

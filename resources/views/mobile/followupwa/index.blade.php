@@ -175,22 +175,32 @@
     {{-- MANUAL --}}
     <div id="mo-fuwa-manual" hidden>
         <div class="mo-form-card">
-            <div class="mo-form-card-title"><i class="fas fa-hand-pointer"></i> Follow-up Manual</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div class="mo-form-card-title" style="margin:0;"><i class="fas fa-hand-pointer"></i> Follow-up Manual</div>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-manual-config" aria-expanded="false" aria-label="Tampilkan konfigurasi">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+            <div id="mo-manual-config" hidden style="margin-top:10px;">
             <div class="mo-field">
                 <label>Cabang (opsional)</label>
                 <select class="mo-select" id="mo-manual-branch">
-                    <option value="">Semua Cabang</option>
+                    @if(auth()->user()->isAdmin())
+                        <option value="">Semua Cabang</option>
+                    @endif
                     @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                        <option value="{{ $branch->id }}"{{ (! auth()->user()->isAdmin() && (int) $branch->id === (int) auth()->user()->branch_id) ? ' selected' : '' }}>{{ $branch->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="mo-field">
                 <label>Agen (opsional)</label>
                 <select class="mo-select" id="mo-manual-agen">
-                    <option value="">Semua Agen</option>
+                    @if(! auth()->user()->isAgen())
+                        <option value="">Semua Agen</option>
+                    @endif
                     @foreach($agens as $agen)
-                        <option value="{{ $agen->id }}">{{ $agen->name }}</option>
+                        <option value="{{ $agen->id }}"{{ (auth()->user()->isAgen() && (int) $agen->id === (int) auth()->user()->id) ? ' selected' : '' }}>{{ $agen->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -214,7 +224,7 @@
             </div>
             <div class="mo-field">
                 <label>Jumlah Kontak</label>
-                <input type="number" class="mo-input" id="mo-manual-limit" min="1" max="200" value="100">
+                <input type="number" class="mo-input" id="mo-manual-limit" min="1" max="200" value="20">
             </div>
             <div class="mo-field">
                 <label>Whatsapp</label>
@@ -229,6 +239,7 @@
                 <div class="mo-form-help">Placeholder: [nama], [nomor], [nama_agen]. Variasi acak: {Halo|Hai|Assalamualaikum}.</div>
             </div>
             <button type="button" class="mo-btn mo-btn-primary" id="mo-preview-manual" style="width:100%;"><i class="fas fa-eye"></i> Ambil Kontak</button>
+            </div>
             <div id="mo-manual-preview" style="margin-top:12px;"></div>
         </div>
     </div>
