@@ -216,7 +216,7 @@
 <div class="fuwa-panel" id="fuwa-panel-manual">
     <div class="card">
         <h2 style="margin:0 0 12px;font-size:16px;"><i class="fas fa-hand-pointer" style="color:var(--primary);"></i> Follow-up Manual</h2>
-        <p class="subtitle" style="margin-top:0;">Ambil kontak, buka WhatsApp, lalu tandai "Terkirim" untuk mencatat follow-up.</p>
+        <p class="subtitle" style="margin-top:0;">Ambil kontak, klik "Buka" untuk mengirim via WhatsApp — otomatis tercatat terkirim.</p>
 
         <div class="fuwa-grid">
             <div class="form-group">
@@ -239,28 +239,45 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Status Kontak</label>
-            <div class="fuwa-check-row">
-                @foreach($contactStatuses as $value => $label)
-                    <label class="fuwa-check"><input type="checkbox" class="fuwa-manual-status" value="{{ $value }}" @if(in_array($value, ['prospect','contacted'])) checked @endif> {{ $label }}</label>
-                @endforeach
+        <div class="fuwa-grid">
+            <div class="form-group">
+                <label>Status Kontak</label>
+                <select id="fuwa-manual-status">
+                    <option value="">Semua (kecuali Stop)</option>
+                    @foreach($contactStatuses as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Riwayat Follow-up</label>
+                <select id="fuwa-manual-followup">
+                    <option value="">Semua</option>
+                    @foreach($followupBuckets as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Riwayat Follow-up</label>
-            <div class="fuwa-check-row">
-                @foreach($followupBuckets as $value => $label)
-                    <label class="fuwa-check"><input type="checkbox" class="fuwa-manual-followup" value="{{ $value }}" checked> {{ $label }}</label>
-                @endforeach
+        <div class="fuwa-grid">
+            <div class="form-group">
+                <label>Jumlah Kontak</label>
+                <input type="number" id="fuwa-manual-limit" min="1" max="200" value="100">
+            </div>
+            <div class="form-group">
+                <label>Whatsapp</label>
+                <select id="fuwa-manual-waapp">
+                    <option value="business">WA Bisnis</option>
+                    <option value="personal">WA Personal</option>
+                </select>
             </div>
         </div>
 
         <div class="form-group">
             <label>Template Pesan</label>
-            <textarea id="fuwa-manual-message" rows="4" placeholder="Assalamualaikum [nama], ..."></textarea>
-            <div class="fuwa-hint">Placeholder: <code>[nama]</code>, <code>[nomor]</code>, <code>[nama_agen]</code>.</div>
+            <textarea id="fuwa-manual-message" rows="4" placeholder="Assalamualaikum [nama], {Halo|Hai} ..."></textarea>
+            <div class="fuwa-hint">Placeholder: <code>[nama]</code>, <code>[nomor]</code>, <code>[nama_agen]</code>. Variasi acak: <code>{Halo|Hai|Assalamualaikum}</code>.</div>
         </div>
 
         <div class="form-actions">
@@ -498,12 +515,11 @@
             html += '<div style="min-width:0;">';
             html += '<div style="font-weight:600;">' + esc(c.name) + ' <span class="badge badge-gray">' + esc(c.status_label) + '</span> <span class="badge badge-blue">' + esc(c.followup_count) + 'x</span></div>';
             html += '<div style="font-size:12.5px;color:var(--gray-500);">' + esc(c.phone) + '</div>';
-            if (c.message) html += '<div style="font-size:12.5px;color:var(--gray-700);margin-top:4px;white-space:pre-wrap;">' + esc(c.message) + '</div>';
+            if (!manual && c.message) html += '<div style="font-size:12.5px;color:var(--gray-700);margin-top:4px;white-space:pre-wrap;">' + esc(c.message) + '</div>';
             html += '</div>';
             if (manual) {
                 html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
-                html += '<a href="' + esc(c.wa_link) + '" target="_blank" rel="noopener" class="btn btn-sm btn-primary"><i class="fab fa-whatsapp"></i> Buka</a>';
-                html += '<button type="button" class="btn btn-sm fuwa-mark" data-id="' + esc(c.id) + '" data-msg="' + encodeURIComponent(c.message || '') + '"><i class="fas fa-check"></i> Terkirim</button>';
+                html += '<a href="' + esc(c.wa_link) + '" target="_blank" rel="noopener" class="btn btn-sm btn-primary fuwa-open" data-id="' + esc(c.id) + '" data-phone="' + esc(c.phone) + '" data-msg="' + encodeURIComponent(c.message || '') + '"><i class="fab fa-whatsapp"></i> Buka</a>';
                 html += '</div>';
             }
             html += '</div>';
@@ -530,28 +546,48 @@
             body: body.toString()
         }).then(function (r) { return r.json(); }).then(function (data) {
             renderPreview(container, data, manual);
-            if (manual) bindMarkButtons(container);
+            if (manual) bindOpenButtons(container);
         }).catch(function () {
             container.innerHTML = '<div class="alert alert-error"><i class="fas fa-circle-exclamation"></i> Gagal memuat kontak.</div>';
         });
     }
 
-    function bindMarkButtons(container) {
-        container.querySelectorAll('.fuwa-mark').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                btn.disabled = true;
+    function buildWaUrl(phone, message, app) {
+        var digits = String(phone == null ? '' : phone).replace(/[^0-9]/g, '');
+        var text = encodeURIComponent(message || '');
+        if (/android/i.test(navigator.userAgent)) {
+            var pkg = app === 'personal' ? 'com.whatsapp' : 'com.whatsapp.w4b';
+            return 'intent://send?phone=' + digits + '&text=' + text + '#Intent;scheme=whatsapp;package=' + pkg + ';end';
+        }
+        return 'https://wa.me/' + digits + '?text=' + text;
+    }
+
+    function markSent(link) {
+        link.dataset.sent = '1';
+        link.innerHTML = '<i class="fas fa-check-double"></i> Terkirim';
+        link.classList.remove('btn-primary');
+        link.style.background = '#e2e8f0';
+        link.style.color = '#64748b';
+        link.style.pointerEvents = 'none';
+    }
+
+    function bindOpenButtons(container) {
+        container.querySelectorAll('.fuwa-open').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                if (link.dataset.sent === '1') {
+                    e.preventDefault();
+                    return;
+                }
+                var app = document.getElementById('fuwa-manual-waapp');
+                link.href = buildWaUrl(link.dataset.phone, decodeURIComponent(link.dataset.msg || ''), app ? app.value : 'business');
+                markSent(link);
                 var body = new URLSearchParams();
-                body.append('contact_id', btn.dataset.id);
-                body.append('message', decodeURIComponent(btn.dataset.msg || ''));
+                body.append('contact_id', link.dataset.id);
+                body.append('message', decodeURIComponent(link.dataset.msg || ''));
                 fetch(cfg.manualLog, {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': cfg.csrf, 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: body.toString()
-                }).then(function (r) { return r.json(); }).then(function () {
-                    btn.innerHTML = '<i class="fas fa-check-double"></i> Tercatat';
-                    btn.classList.remove('btn-primary');
-                }).catch(function () {
-                    btn.disabled = false;
                 });
             });
         });
@@ -577,8 +613,9 @@
             fetchContacts(cfg.contactsManual, {
                 branch_id: document.getElementById('fuwa-manual-branch').value,
                 agen_id: document.getElementById('fuwa-manual-agen').value,
-                statuses: collectList('.fuwa-manual-status'),
-                followups: collectList('.fuwa-manual-followup'),
+                statuses: collectList('#fuwa-manual-status'),
+                followups: collectList('#fuwa-manual-followup'),
+                limit: document.getElementById('fuwa-manual-limit').value,
                 message: document.getElementById('fuwa-manual-message').value
             }, document.getElementById('manual-preview'), true);
         });

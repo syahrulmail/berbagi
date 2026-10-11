@@ -195,23 +195,37 @@
             </div>
             <div class="mo-field">
                 <label>Status Kontak</label>
-                <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                <select class="mo-select" id="mo-manual-status">
+                    <option value="">Semua (kecuali Stop)</option>
                     @foreach($contactStatuses as $value => $label)
-                        <label style="font-size:12.5px;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" class="mo-manual-status" value="{{ $value }}" @if(in_array($value, ['prospect','contacted'])) checked @endif> {{ $label }}</label>
+                        <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
-                </div>
+                </select>
             </div>
             <div class="mo-field">
                 <label>Riwayat Follow-up</label>
-                <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                <select class="mo-select" id="mo-manual-followup">
+                    <option value="">Semua</option>
                     @foreach($followupBuckets as $value => $label)
-                        <label style="font-size:12.5px;display:inline-flex;align-items:center;gap:5px;"><input type="checkbox" class="mo-manual-followup" value="{{ $value }}" checked> {{ $label }}</label>
+                        <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
-                </div>
+                </select>
+            </div>
+            <div class="mo-field">
+                <label>Jumlah Kontak</label>
+                <input type="number" class="mo-input" id="mo-manual-limit" min="1" max="200" value="100">
+            </div>
+            <div class="mo-field">
+                <label>Whatsapp</label>
+                <select class="mo-select" id="mo-manual-waapp">
+                    <option value="business">WA Bisnis</option>
+                    <option value="personal">WA Personal</option>
+                </select>
             </div>
             <div class="mo-field">
                 <label>Template Pesan</label>
-                <textarea id="mo-manual-message" class="mo-textarea" rows="4" placeholder="Assalamualaikum [nama] ..."></textarea>
+                <textarea id="mo-manual-message" class="mo-textarea" rows="4" placeholder="Assalamualaikum [nama], {Halo|Hai} ..."></textarea>
+                <div class="mo-form-help">Placeholder: [nama], [nomor], [nama_agen]. Variasi acak: {Halo|Hai|Assalamualaikum}.</div>
             </div>
             <button type="button" class="mo-btn mo-btn-primary" id="mo-preview-manual" style="width:100%;"><i class="fas fa-eye"></i> Ambil Kontak</button>
             <div id="mo-manual-preview" style="margin-top:12px;"></div>
@@ -393,11 +407,10 @@
             html += '<div class="mo-form-card" style="padding:12px;margin-bottom:8px;">';
             html += '<div style="font-weight:600;font-size:13px;">' + esc(c.name) + ' <span class="mo-badge blue">' + esc(c.followup_count) + 'x</span> <span class="mo-badge gray">' + esc(c.status_label) + '</span></div>';
             html += '<div style="font-size:12px;color:var(--mo-muted);">' + esc(c.phone) + '</div>';
-            if (c.message) html += '<div style="font-size:12px;color:var(--mo-text);margin-top:4px;white-space:pre-wrap;">' + esc(c.message) + '</div>';
+            if (!manual && c.message) html += '<div style="font-size:12px;color:var(--mo-text);margin-top:4px;white-space:pre-wrap;">' + esc(c.message) + '</div>';
             if (manual) {
-                html += '<div style="display:flex;gap:8px;margin-top:8px;">';
-                html += '<a href="' + esc(c.wa_link) + '" target="_blank" rel="noopener" class="mo-btn mo-btn-primary" style="flex:1;padding:9px;font-size:13px;"><i class="fab fa-whatsapp"></i> Buka</a>';
-                html += '<button type="button" class="mo-btn mo-btn-ghost mo-mark" data-id="' + esc(c.id) + '" data-msg="' + encodeURIComponent(c.message || '') + '" style="flex:1;padding:9px;font-size:13px;"><i class="fas fa-check"></i> Terkirim</button>';
+                html += '<div style="margin-top:8px;">';
+                html += '<a href="' + esc(c.wa_link) + '" target="_blank" rel="noopener" class="mo-btn mo-btn-primary mo-open" data-id="' + esc(c.id) + '" data-phone="' + esc(c.phone) + '" data-msg="' + encodeURIComponent(c.message || '') + '" style="width:100%;padding:9px;font-size:13px;"><i class="fab fa-whatsapp"></i> Buka</a>';
                 html += '</div>';
             }
             html += '</div>';
@@ -418,21 +431,47 @@
             .then(function (data) {
                 render(container, data, manual);
                 if (manual) {
-                    container.querySelectorAll('.mo-mark').forEach(function (btn) {
-                        btn.addEventListener('click', function () {
-                            btn.disabled = true;
-                            var b = new URLSearchParams();
-                            b.append('contact_id', btn.dataset.id);
-                            b.append('message', decodeURIComponent(btn.dataset.msg || ''));
-                            fetch(cfg.manualLog, { method: 'POST', headers: { 'X-CSRF-TOKEN': cfg.csrf, 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body: b.toString() })
-                                .then(function (r) { return r.json(); })
-                                .then(function () { btn.innerHTML = '<i class="fas fa-check-double"></i> Tercatat'; })
-                                .catch(function () { btn.disabled = false; });
-                        });
-                    });
+                    bindOpenButtons(container);
                 }
             })
             .catch(function () { container.innerHTML = '<div class="mo-form-help">Gagal memuat kontak.</div>'; });
+    }
+
+    function buildWaUrl(phone, message, app) {
+        var digits = String(phone == null ? '' : phone).replace(/[^0-9]/g, '');
+        var text = encodeURIComponent(message || '');
+        if (/android/i.test(navigator.userAgent)) {
+            var pkg = app === 'personal' ? 'com.whatsapp' : 'com.whatsapp.w4b';
+            return 'intent://send?phone=' + digits + '&text=' + text + '#Intent;scheme=whatsapp;package=' + pkg + ';end';
+        }
+        return 'https://wa.me/' + digits + '?text=' + text;
+    }
+
+    function markSent(link) {
+        link.dataset.sent = '1';
+        link.innerHTML = '<i class="fas fa-check-double"></i> Terkirim';
+        link.classList.remove('mo-btn-primary');
+        link.style.background = '#e2e8f0';
+        link.style.color = '#64748b';
+        link.style.pointerEvents = 'none';
+    }
+
+    function bindOpenButtons(container) {
+        container.querySelectorAll('.mo-open').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                if (link.dataset.sent === '1') {
+                    e.preventDefault();
+                    return;
+                }
+                var app = document.getElementById('mo-manual-waapp');
+                link.href = buildWaUrl(link.dataset.phone, decodeURIComponent(link.dataset.msg || ''), app ? app.value : 'business');
+                markSent(link);
+                var b = new URLSearchParams();
+                b.append('contact_id', link.dataset.id);
+                b.append('message', decodeURIComponent(link.dataset.msg || ''));
+                fetch(cfg.manualLog, { method: 'POST', headers: { 'X-CSRF-TOKEN': cfg.csrf, 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body: b.toString() });
+            });
+        });
     }
 
     var po = document.getElementById('mo-preview-otomatis');
@@ -453,8 +492,9 @@
         load(cfg.contacts, {
             branch_id: document.getElementById('mo-manual-branch').value,
             agen_id: document.getElementById('mo-manual-agen').value,
-            statuses: collectList('.mo-manual-status'),
-            followups: collectList('.mo-manual-followup'),
+            statuses: collectList('#mo-manual-status'),
+            followups: collectList('#mo-manual-followup'),
+            limit: document.getElementById('mo-manual-limit').value,
             message: document.getElementById('mo-manual-message').value
         }, document.getElementById('mo-manual-preview'), true);
     });

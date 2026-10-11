@@ -168,6 +168,49 @@ class FollowupWaTest extends TestCase
         $this->assertSame(3, $response->json('count'));
     }
 
+    public function test_manual_panel_renders_dropdowns_and_wa_app_choice(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $response = $this->actingAs($admin)->get(route('whatsapp.index'));
+
+        $response->assertOk();
+        $response->assertSee('Jumlah Kontak');
+        $response->assertSee('WA Bisnis');
+        $response->assertSee('WA Personal');
+        $response->assertSee('id="fuwa-manual-status"', false);
+        $response->assertSee('id="fuwa-manual-followup"', false);
+        $response->assertSee('id="fuwa-manual-limit"', false);
+        $response->assertSee('id="fuwa-manual-waapp"', false);
+        $response->assertSee('com.whatsapp.w4b', false);
+    }
+
+    public function test_mobile_manual_panel_renders_dropdowns_and_wa_app_choice(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $response = $this->actingAs($admin)->get(route('mo.whatsapp'));
+
+        $response->assertOk();
+        $response->assertSee('id="mo-manual-status"', false);
+        $response->assertSee('id="mo-manual-followup"', false);
+        $response->assertSee('id="mo-manual-limit"', false);
+        $response->assertSee('id="mo-manual-waapp"', false);
+        $response->assertSee('com.whatsapp.w4b', false);
+    }
+
+    public function test_template_message_supports_random_variation(): void
+    {
+        $service = app(FollowupWaService::class);
+        $contact = $this->makeContact('Random Kontak', '628999999999');
+
+        $rendered = $service->renderTemplate('{Halo|Hai|Assalamualaikum} [nama]', $contact);
+
+        $this->assertStringNotContainsString('{', $rendered);
+        $this->assertStringNotContainsString('|', $rendered);
+        $this->assertStringContainsString('Random Kontak', $rendered);
+    }
+
     public function test_auto_broadcast_first_batch_uses_limit_count(): void
     {
         $admin = $this->makeUser('admin');
