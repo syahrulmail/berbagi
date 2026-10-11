@@ -465,15 +465,28 @@ class MobileAppController extends Controller
         ->when($request->period === 'today', fn ($q) => $q->whereDate('donations.donation_date', now()->toDateString()))
         ->when($request->period === 'week', fn ($q) => $q->whereDate('donations.donation_date', '>=', now()->subDays(6)->toDateString()));
 
+        if (auth()->user()->isAdmin() && $request->filled('branch_id')) {
+            $query->where('donations.branch_id', $request->input('branch_id'));
+        }
+
+        if ((auth()->user()->isAdmin() || auth()->user()->isSupervisor()) && $request->filled('agen_id')) {
+            $query->where('donations.agen_id', $request->input('agen_id'));
+        }
+
+        $totalCount = (clone $query)->count();
+
+        $show = (int) $request->input('show', 10);
+        $show = max(10, min(200, $show));
+
         if ($request->get('sort') === 'amount') {
             $donations = $query->orderByDesc('donations.amount')
                 ->orderByDesc('donations.id')
-                ->limit(50)
+                ->limit($show)
                 ->get();
         } else {
             $donations = $query->orderByDesc('donations.donation_date')
                 ->orderByDesc('donations.id')
-                ->limit(50)
+                ->limit($show)
                 ->get();
         }
 
@@ -487,9 +500,37 @@ class MobileAppController extends Controller
             $d->payment_method_label = $this->paymentMethodLabel($d->payment_method);
         });
 
-        $downloadBranches = $this->visibleBranches();
+        $branches = $this->visibleBranches();
+        $agents = $this->filterAgents();
 
-        return view('mobile.donations', compact('donations', 'downloadBranches'));
+        return view('mobile.donations', [
+            'donations' => $donations,
+            'downloadBranches' => $branches,
+            'branches' => $branches,
+            'agents' => $agents,
+            'totalCount' => $totalCount,
+        ]);
+    }
+
+    /**
+     * Daftar agen untuk filter donasi: admin semua, supervisor hanya cabangnya.
+     */
+    protected function filterAgents()
+    {
+        $user = auth()->user();
+
+        if ($user->isAdmin()) {
+            return User::whereIn('role', ['agen', 'supervisor'])->orderBy('name')->get();
+        }
+
+        if ($user->isSupervisor()) {
+            return User::where('role', 'agen')
+                ->where('branch_id', $user->branch_id)
+                ->orderBy('name')
+                ->get();
+        }
+
+        return collect();
     }
 
     /**

@@ -20,7 +20,7 @@
 
 <div class="mo-content" style="padding-top:0;">
     @php
-        $hasDateFilter = request('period') || request('from') || request('to') || request('sort');
+        $hasDateFilter = request('period') || request('from') || request('to') || request('sort') || request('branch_id') || request('agen_id');
     @endphp
     <div class="mo-sticky-filter">
         <form method="GET" action="{{ route('mo.donations') }}" id="mo-donasi-form">
@@ -63,6 +63,30 @@
                         <i class="fas fa-arrow-down-wide-short"></i> Donasi Terbesar
                     </button>
                 </div>
+
+                @if(auth()->user()->isAdmin() && isset($branches) && $branches->count())
+                    <div style="margin-top:8px;">
+                        <label for="filter_branch" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Cabang</label>
+                        <select id="filter_branch" name="branch_id" class="mo-input" data-autosubmit>
+                            <option value="">Semua Cabang</option>
+                            @foreach($branches as $b)
+                                <option value="{{ $b->id }}" {{ (string) request('branch_id') === (string) $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                @if(isset($agents) && $agents->count())
+                    <div style="margin-top:8px;">
+                        <label for="filter_agen" style="display:block;font-size:11px;color:var(--mo-muted);margin-bottom:4px;">Nama Agen</label>
+                        <select id="filter_agen" name="agen_id" class="mo-input" data-autosubmit>
+                            <option value="">Semua Agen</option>
+                            @foreach($agents as $a)
+                                <option value="{{ $a->id }}" {{ (string) request('agen_id') === (string) $a->id ? 'selected' : '' }}>{{ $a->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
 
                 @if(request('search') || $hasDateFilter)
                     <div style="text-align:right;">
@@ -108,6 +132,14 @@
             </div>
         @endforelse
     </div>
+
+    @if(isset($totalCount) && $totalCount > $donations->count())
+        <div style="text-align:center;margin-top:14px;">
+            <a href="{{ route('mo.donations', array_merge(request()->query(), ['show' => $donations->count() + 10])) }}" class="mo-btn mo-btn-ghost" style="display:inline-flex;align-items:center;gap:8px;">
+                <i class="fas fa-arrow-down"></i> Tampilkan +10 Data
+            </a>
+        </div>
+    @endif
 </div>
 
 <a href="{{ route('mo.donation.create') }}" class="mo-fab" aria-label="Catat Donasi">

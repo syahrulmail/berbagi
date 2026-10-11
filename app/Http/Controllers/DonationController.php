@@ -54,10 +54,11 @@ class DonationController extends Controller
         $totalAmount = (clone $query)->sum('donations.amount');
 
         $branches = $this->visibleBranches();
+        $agents = $this->visibleAgents();
         $programs = Program::where('is_active', true)->orderBy('name')->get();
         $downloadBranches = $branches;
 
-        return view('donations.index', compact('donations', 'totalAmount', 'branches', 'programs', 'downloadBranches'));
+        return view('donations.index', compact('donations', 'totalAmount', 'branches', 'agents', 'programs', 'downloadBranches'));
     }
 
     /**
@@ -264,6 +265,9 @@ class DonationController extends Controller
         })
         ->when($request->branch_id, function ($q, $branchId) {
             return $q->where('donations.branch_id', $branchId);
+        })
+        ->when($request->agen_id, function ($q, $agenId) {
+            return $q->where('donations.agen_id', $agenId);
         })
         ->when(count($branchIds), function ($q) use ($branchIds) {
             return $q->whereIn('donations.branch_id', $branchIds);

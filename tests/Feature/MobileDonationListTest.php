@@ -181,4 +181,52 @@ class MobileDonationListTest extends TestCase
         $sorted->assertOk();
         $sorted->assertSeeInOrder(['Sort Besar', 'Sort Kecil']);
     }
+
+    public function test_mobile_admin_sees_branch_and_agent_filters(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($admin)->get(route('mo.donations'));
+
+        $response->assertOk();
+        $response->assertSee('id="filter_branch"', false);
+        $response->assertSee('id="filter_agen"', false);
+        $response->assertSee('Nama Agen');
+    }
+
+    public function test_mobile_agent_does_not_see_agent_filter(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.donations'));
+
+        $response->assertOk();
+        $response->assertDontSee('id="filter_agen"', false);
+        $response->assertDontSee('Nama Agen');
+    }
+
+    public function test_mobile_list_loads_more_in_steps_of_ten(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        for ($i = 0; $i < 12; $i++) {
+            $contact = $this->makeContact('Donatur ' . $i, '62811' . str_pad((string) $i, 8, '0', STR_PAD_LEFT), $agen, $branch);
+            $this->makeDonation($branch, $agen, $contact, $program, now()->subDays($i)->format('Y-m-d'));
+        }
+
+        $first = $this->actingAs($agen)->get(route('mo.donations'));
+        $first->assertOk();
+        $first->assertSee('Tampilkan +10 Data');
+        $first->assertDontSee('Donatur 11');
+
+        $more = $this->actingAs($agen)->get(route('mo.donations', ['show' => 20]));
+        $more->assertOk();
+        $more->assertSee('Donatur 11');
+        $more->assertDontSee('Tampilkan +10 Data');
+    }
 }

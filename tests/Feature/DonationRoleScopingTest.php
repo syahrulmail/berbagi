@@ -263,4 +263,43 @@ class DonationRoleScopingTest extends TestCase
             ->assertSee($branchA->name)
             ->assertSee($branchB->name);
     }
+
+    public function test_agent_filter_visible_for_admin_and_supervisor_only()
+    {
+        $branch = $this->makeBranch('Filter Agen');
+        $admin = $this->makeUser('admin');
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agent = $this->makeUser('agen', $branch);
+
+        $this->actingAs($admin)->get(route('donations.index'))
+            ->assertOk()
+            ->assertSee('Nama Agen');
+
+        $this->actingAs($supervisor)->get(route('donations.index'))
+            ->assertOk()
+            ->assertSee('Nama Agen');
+
+        $this->actingAs($agent)->get(route('donations.index'))
+            ->assertOk()
+            ->assertDontSee('Nama Agen');
+    }
+
+    public function test_admin_index_filters_donations_by_agent()
+    {
+        $branch = $this->makeBranch('Filter Agen Dua');
+        $admin = $this->makeUser('admin');
+        $agentA = $this->makeUser('agen', $branch);
+        $agentB = $this->makeUser('agen', $branch);
+
+        $contactA = Contact::create(['name' => 'Donatur Agen A ' . uniqid(), 'phone' => '0813000011', 'status' => 'prospect']);
+        $contactB = Contact::create(['name' => 'Donatur Agen B ' . uniqid(), 'phone' => '0813000012', 'status' => 'prospect']);
+
+        $this->makeDonation($branch, $agentA, $contactA);
+        $this->makeDonation($branch, $agentB, $contactB);
+
+        $this->actingAs($admin)->get(route('donations.index', ['agen_id' => $agentA->id]))
+            ->assertOk()
+            ->assertSee($contactA->name)
+            ->assertDontSee($contactB->name);
+    }
 }

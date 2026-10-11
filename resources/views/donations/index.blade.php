@@ -69,6 +69,19 @@
                 @endforeach
             </select>
         </div>
+        @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
+            <div class="form-group">
+                <label>Nama Agen</label>
+                <select name="agen_id">
+                    <option value="">Semua Agen</option>
+                    @foreach($agents as $agent)
+                        <option value="{{ $agent->id }}" {{ (string) request('agen_id') === (string) $agent->id ? 'selected' : '' }}>
+                            {{ $agent->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <input type="hidden" name="sort" value="{{ $sort }}">
         <input type="hidden" name="dir" value="{{ $dir }}">
         <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
