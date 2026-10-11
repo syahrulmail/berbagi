@@ -330,22 +330,22 @@ class FollowupWaTest extends TestCase
         $agen = $this->makeUser('agen');
 
         $this->actingAs($admin)->get(route('whatsapp.index'))
-            ->assertOk()->assertSee('id="warming-config"', false);
+            ->assertOk()->assertSee('id="warming-config"', false)->assertSee('Cron terakhir');
 
         $this->actingAs($supervisor)->get(route('whatsapp.index'))
-            ->assertOk()->assertDontSee('id="warming-config"', false);
+            ->assertOk()->assertDontSee('id="warming-config"', false)->assertDontSee('Cron terakhir');
 
         $this->actingAs($agen)->get(route('whatsapp.index'))
-            ->assertOk()->assertDontSee('id="warming-config"', false);
+            ->assertOk()->assertDontSee('id="warming-config"', false)->assertDontSee('Cron terakhir');
 
         $this->actingAs($admin)->get(route('mo.whatsapp'))
-            ->assertOk()->assertSee('id="mo-warming-run"', false);
+            ->assertOk()->assertSee('id="mo-warming-run"', false)->assertSee('Status Cron Warming');
 
         $this->actingAs($supervisor)->get(route('mo.whatsapp'))
-            ->assertOk()->assertDontSee('id="mo-warming-run"', false);
+            ->assertOk()->assertDontSee('id="mo-warming-run"', false)->assertDontSee('Status Cron Warming');
 
         $this->actingAs($agen)->get(route('mo.whatsapp'))
-            ->assertOk()->assertDontSee('id="mo-warming-run"', false);
+            ->assertOk()->assertDontSee('id="mo-warming-run"', false)->assertDontSee('Status Cron Warming');
     }
 
     public function test_warming_recipients_include_branch_and_api(): void

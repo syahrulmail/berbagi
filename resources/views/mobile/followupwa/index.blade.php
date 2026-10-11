@@ -319,6 +319,7 @@
             </div>
         </div>
 
+        @if(auth()->user()->isAdmin())
         <div class="mo-form-card">
             <div class="mo-form-card-title"><i class="fas fa-clock"></i> Status Cron Warming</div>
             @php $cronDot = ['ok' => '#22c55e', 'fail' => '#ef4444', 'empty' => '#cbd5e1'][$cronStatus['status']] ?? '#cbd5e1'; @endphp
@@ -327,6 +328,7 @@
                 <span>Cron terakhir: <strong>{{ $cronStatus['label'] }}</strong>@if($cronStatus['last']) · {{ $cronStatus['last']->format('d M Y H:i') }}@endif</span>
             </div>
         </div>
+        @endif
     </div>
 
     {{-- LOG PESAN --}}
