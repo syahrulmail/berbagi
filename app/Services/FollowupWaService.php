@@ -685,7 +685,7 @@ class FollowupWaService
             $query->where('branch_id', $runner->branch_id);
         }
 
-        $users = $query->orderBy('name')->get();
+        $users = $query->with('branch')->orderBy('name')->get();
 
         $profiles = [];
         foreach ($users as $user) {
@@ -712,6 +712,7 @@ class FollowupWaService
                 'name' => $user->name,
                 'phone' => $user->phone,
                 'role' => $user->roleLabel(),
+                'branch' => $user->branch->name ?? '-',
                 'ss' => $statuses[$user->id]['ss'] ?? IntegrationCheckService::STATUS_EMPTY,
                 'cc' => $statuses[$user->id]['cc'] ?? IntegrationCheckService::STATUS_EMPTY,
                 'sent' => $sent,

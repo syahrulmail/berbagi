@@ -235,6 +235,7 @@
 
     {{-- WARMING --}}
     <div id="mo-fuwa-warming" hidden>
+        @if(auth()->user()->isAdmin())
         <div class="mo-form-card">
             <div class="mo-form-card-title"><i class="fas fa-fire"></i> Warming Nomor</div>
             <form method="POST" action="{{ route('mo.whatsapp.warming') }}">
@@ -294,6 +295,7 @@
                 <button type="submit" class="mo-btn mo-btn-ghost" style="width:100%;"><i class="fas fa-fire"></i> Jalankan Warming Sekarang</button>
             </form>
         </div>
+        @endif
 
         <div class="mo-form-card">
             <div class="mo-form-card-title"><i class="fas fa-users"></i> Pengguna Warming</div>
@@ -303,11 +305,12 @@
                         <div class="mo-row-body">
                             <div class="mo-row-title">{{ $r['name'] }}</div>
                             <div class="mo-row-sub">{{ $r['phone'] }} · {{ $r['role'] }}</div>
+                            <div class="mo-row-sub">{{ $r['branch'] ?? '-' }}</div>
                             <div style="margin-top:5px;font-size:11px;color:var(--mo-muted);">Kirim: {{ $r['sent'] }} · Terima: {{ $r['received'] }}</div>
                         </div>
-                        <div class="mo-row-end">
-                            <span style="width:9px;height:9px;border-radius:50%;background:{{ $dotColors[$r['ss']] ?? '#cbd5e1' }}"></span>
-                            <span style="width:9px;height:9px;border-radius:50%;background:{{ $dotColors[$r['cc']] ?? '#cbd5e1' }}"></span>
+                        <div class="mo-row-end" style="flex-direction:column;align-items:flex-end;gap:4px;">
+                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--mo-muted);"><span style="width:9px;height:9px;border-radius:50%;background:{{ $dotColors[$r['ss']] ?? '#cbd5e1' }}"></span> SS</span>
+                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--mo-muted);"><span style="width:9px;height:9px;border-radius:50%;background:{{ $dotColors[$r['cc']] ?? '#cbd5e1' }}"></span> CC</span>
                         </div>
                     </div>
                 @empty

@@ -293,9 +293,12 @@
     <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
             <h2 style="margin:0;font-size:16px;"><i class="fas fa-fire" style="color:var(--primary);"></i> Warming Nomor</h2>
-            <button type="button" class="fuwa-collapse-toggle" data-collapse="warming-config"><i class="fas fa-chevron-down"></i> Tampilkan / sembunyikan</button>
+            @if(auth()->user()->isAdmin())
+                <button type="button" class="fuwa-collapse-toggle" data-collapse="warming-config"><i class="fas fa-chevron-down"></i> Tampilkan / sembunyikan</button>
+            @endif
         </div>
 
+        @if(auth()->user()->isAdmin())
         <div id="warming-config" hidden>
             <form method="POST" action="{{ route('followupwa.warming') }}">
                 @csrf
@@ -352,24 +355,26 @@
                 </div>
             </form>
         </div>
+        @endif
 
         <div class="table-responsive" style="margin-top:14px;">
             <table class="table">
                 <thead>
-                    <tr><th>Pengguna</th><th>Nomor</th><th>API SS</th><th>API CC</th><th>Kirim Hari Ini</th><th>Terima Hari Ini</th></tr>
+                    <tr><th>Pengguna</th><th>Nomor</th><th>Cabang</th><th>API SS</th><th>API CC</th><th>Kirim Hari Ini</th><th>Terima Hari Ini</th></tr>
                 </thead>
                 <tbody>
                     @forelse($warmingRecipients as $r)
                         <tr>
                             <td>{{ $r['name'] }} <small style="color:var(--gray-500);">· {{ $r['role'] }}</small></td>
                             <td>{{ $r['phone'] }}</td>
+                            <td>{{ $r['branch'] ?? '-' }}</td>
                             <td><span class="api-dot" style="background:{{ $dotColors[$r['ss']] ?? '#cbd5e1' }}"></span> {{ $dotLabels[$r['ss']] ?? '-' }}</td>
                             <td><span class="api-dot" style="background:{{ $dotColors[$r['cc']] ?? '#cbd5e1' }}"></span> {{ $dotLabels[$r['cc']] ?? '-' }}</td>
                             <td>{{ $r['sent'] }}</td>
                             <td>{{ $r['received'] }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="empty-state"><i class="fas fa-users"></i><p>Belum ada pengguna tujuan warming.</p></td></tr>
+                        <tr><td colspan="7" class="empty-state"><i class="fas fa-users"></i><p>Belum ada pengguna tujuan warming.</p></td></tr>
                     @endforelse
                 </tbody>
             </table>

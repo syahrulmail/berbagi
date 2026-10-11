@@ -323,6 +323,47 @@ class FollowupWaTest extends TestCase
         $response->assertDontSee('MSG-004');
     }
 
+    public function test_warming_config_visible_only_for_admin(): void
+    {
+        $admin = $this->makeUser('admin');
+        $supervisor = $this->makeUser('supervisor');
+        $agen = $this->makeUser('agen');
+
+        $this->actingAs($admin)->get(route('whatsapp.index'))
+            ->assertOk()->assertSee('id="warming-config"', false);
+
+        $this->actingAs($supervisor)->get(route('whatsapp.index'))
+            ->assertOk()->assertDontSee('id="warming-config"', false);
+
+        $this->actingAs($agen)->get(route('whatsapp.index'))
+            ->assertOk()->assertDontSee('id="warming-config"', false);
+
+        $this->actingAs($admin)->get(route('mo.whatsapp'))
+            ->assertOk()->assertSee('id="mo-warming-run"', false);
+
+        $this->actingAs($supervisor)->get(route('mo.whatsapp'))
+            ->assertOk()->assertDontSee('id="mo-warming-run"', false);
+
+        $this->actingAs($agen)->get(route('mo.whatsapp'))
+            ->assertOk()->assertDontSee('id="mo-warming-run"', false);
+    }
+
+    public function test_warming_recipients_include_branch_and_api(): void
+    {
+        $branch = Branch::create(['code' => 'WR-' . uniqid(), 'name' => 'Warming Cabang ' . uniqid(), 'is_active' => true]);
+        $admin = $this->makeUser('admin');
+        $agen = $this->makeUser('agen', $branch, '628120000123');
+        $this->setApi($agen, 'SS-KEY');
+
+        $service = app(FollowupWaService::class);
+        $row = collect($service->warmingRecipients($admin))->firstWhere('id', $agen->id);
+
+        $this->assertNotNull($row);
+        $this->assertSame($branch->name, $row['branch']);
+        $this->assertArrayHasKey('ss', $row);
+        $this->assertArrayHasKey('cc', $row);
+    }
+
     public function test_template_message_supports_random_variation(): void
     {
         $service = app(FollowupWaService::class);
