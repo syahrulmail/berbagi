@@ -52,6 +52,18 @@ Route::post('/program/{program}/klik', [PublicController::class, 'klik'])
 
 /*
 |--------------------------------------------------------------------------
+| Laporan Dashboard Publik (password tunggal, tanpa role)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/mo/lapdfbwa', [MobileAppController::class, 'publicDashboard'])->name('lapdfbwa.show');
+
+Route::post('/mo/lapdfbwa', [MobileAppController::class, 'publicDashboardAuth'])
+    ->name('lapdfbwa.auth')
+    ->middleware('throttle:10,1');
+
+/*
+|--------------------------------------------------------------------------
 | WhatsApp Webhook (public, tanpa auth, dikecualikan dari CSRF)
 |--------------------------------------------------------------------------
 */

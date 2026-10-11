@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Branch;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class SettingController extends Controller
 {
@@ -21,6 +22,7 @@ class SettingController extends Controller
             'wa_public_number' => Setting::get('wa_public_number', '6281234567890'),
             'wa_public_template' => Setting::get('wa_public_template', 'Assalamualaikum, saya ingin berdonasi untuk program {program}. Mohon info selanjutnya.'),
             'wa_agent_template' => Setting::get('wa_agent_template', 'Assalamualaikum {agen}, saya ingin berdonasi untuk program {program} melalui Anda.'),
+            'lapdfbwa_password_set' => (bool) Setting::get('lapdfbwa_password'),
         ];
 
         $totalGlobalTarget = Branch::where('is_active', true)->sum('target_amount');
@@ -38,6 +40,7 @@ class SettingController extends Controller
             'wa_public_number' => ['required', 'string', 'max:30'],
             'wa_public_template' => ['nullable', 'string'],
             'wa_agent_template' => ['nullable', 'string'],
+            'lapdfbwa_password' => ['nullable', 'string', 'min:4', 'max:60'],
             'testimonials' => ['nullable', 'array'],
             'testimonials.*.photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'testimonials.*.existing_photo' => ['nullable', 'string', 'max:255'],
@@ -59,6 +62,12 @@ class SettingController extends Controller
         Setting::set('wa_public_number', $data['wa_public_number']);
         Setting::set('wa_public_template', $data['wa_public_template'] ?? '');
         Setting::set('wa_agent_template', $data['wa_agent_template'] ?? '');
+
+        if ($request->filled('lapdfbwa_password')) {
+            Setting::set('lapdfbwa_password', Hash::make($request->input('lapdfbwa_password')));
+        } elseif ($request->boolean('lapdfbwa_password_clear')) {
+            Setting::set('lapdfbwa_password', '');
+        }
 
         $this->saveTestimonials($request);
         $this->savePartnerLogos($request);

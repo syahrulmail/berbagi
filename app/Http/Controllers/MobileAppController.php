@@ -12,6 +12,7 @@ use App\Services\IntegrationCheckService;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 class MobileAppController extends Controller
 {
@@ -112,15 +113,27 @@ class MobileAppController extends Controller
      */
     public function dashboard(Request $request)
     {
-        $user = auth()->user();
+        return view('mobile.home', $this->dashboardData($request, auth()->user(), false));
+    }
+
+    /**
+     * Susun data dashboard. Dipakai halaman internal (/mo/dashboard)
+     * dan laporan publik (/mo/lapdfbwa).
+     *
+     * @param  User|null  $user
+     */
+    protected function dashboardData(Request $request, $user, bool $publicAccess): array
+    {
         $today = now()->toDateString();
+        $isAdmin = $publicAccess ? true : $user->isAdmin();
 
         // Ringkasan donasi (scoped)
         $donationsQuery = Donation::query();
-        $this->scopeDonations($donationsQuery);
+        if (! $publicAccess) {
+            $this->scopeDonations($donationsQuery);
+        }
 
         // Pemilihan cabang (khusus admin, bisa lebih dari satu)
-        $isAdmin = $user->isAdmin();
         $branches = $isAdmin
             ? Branch::where('is_active', true)->orderBy('name')->get()
             : collect();
@@ -218,7 +231,7 @@ class MobileAppController extends Controller
             $totalTarget = empty($selectedBranches)
                 ? Branch::where('is_active', true)->sum('target_amount')
                 : Branch::whereIn('id', $selectedBranches)->sum('target_amount');
-        } elseif ($user->isSupervisor() && $user->branch) {
+        } elseif (! $publicAccess && $user->isSupervisor() && $user->branch) {
             $totalTarget = (float) $user->branch->target_amount;
         } else {
             $totalTarget = 0;
@@ -300,7 +313,9 @@ class MobileAppController extends Controller
                 ->whereDate('donations.donation_date', '>=', $from)
                 ->whereDate('donations.donation_date', '<=', $to))
             ->when($isAdmin && ! empty($selectedBranches), fn ($q) => $q->whereIn('donations.branch_id', $selectedBranches));
-        $this->scopeDonations($topProgramQuery, 'donations');
+        if (! $publicAccess) {
+            $this->scopeDonations($topProgramQuery, 'donations');
+        }
 
         $topProgramRows = $topProgramQuery
             ->groupBy('donation_items.program_id')
@@ -381,8 +396,13 @@ class MobileAppController extends Controller
         });
 
         $totalPrograms = Program::where('is_active', true)->count();
-        $totalContacts = (clone $this->scopeContacts(Contact::query()))->count();
-        $donatedContacts = (clone $this->scopeContacts(Contact::query()))->where('status', 'donated')->count();
+        if ($publicAccess) {
+            $totalContacts = Contact::count();
+            $donatedContacts = Contact::where('status', 'donated')->count();
+        } else {
+            $totalContacts = (clone $this->scopeContacts(Contact::query()))->count();
+            $donatedContacts = (clone $this->scopeContacts(Contact::query()))->where('status', 'donated')->count();
+        }
 
         if ($periodIsAll) {
             $periodLabel = 'Seluruh data';
@@ -418,10 +438,10 @@ class MobileAppController extends Controller
                 $branchSummary = count($selectedBranches) . ' Cabang';
             }
         } else {
-            $branchSummary = $user->branch->name ?? '-';
+            $branchSummary = $user ? ($user->branch->name ?? '-') : '-';
         }
 
-        return view('mobile.home', compact(
+        return compact(
             'user', 'greeting', 'todayTotal', 'todayTransactions', 'donorsToday',
             'periodTotal', 'periodTransactions', 'periodDonors', 'periodLabel', 'growthPercent',
             'overallProgress', 'totalTarget', 'trend', 'trendMax',
@@ -431,7 +451,71 @@ class MobileAppController extends Controller
             'totalRecorded', 'totalTransactions', 'totalDonors',
             'branches', 'selectedBranches', 'branchSummary', 'isAdmin', 'from', 'to',
             'periodIsAll', 'range', 'activeRange'
-        ));
+        );
+    }
+
+    /**
+     * Laporan dashboard publik (/mo/lapdfbwa).
+     * Wajib membawa token bertanda-tangan; jika tidak, tampilkan form password.
+     */
+    public function publicDashboard(Request $request)
+    {
+        $token = $request->query('t');
+
+        if (! $this->validPublicToken($token)) {
+            return view('mobile.lapdfbwa-login', [
+                'passwordSet' => (bool) Setting::get('lapdfbwa_password'),
+            ]);
+        }
+
+        $data = $this->dashboardData($request, null, true);
+        $data['token'] = $token;
+
+        return view('mobile.home-public', $data);
+    }
+
+    /**
+     * Verifikasi password tunggal untuk laporan publik.
+     */
+    public function publicDashboardAuth(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $hash = Setting::get('lapdfbwa_password');
+
+        if (! $hash) {
+            return back()->with('error', 'Password laporan belum diatur oleh admin.');
+        }
+
+        if (! Hash::check($request->input('password'), $hash)) {
+            return back()->with('error', 'Password salah.');
+        }
+
+        $token = encrypt(json_encode(['exp' => now()->addHours(6)->timestamp]));
+
+        return redirect()->route('lapdfbwa.show', ['t' => $token]);
+    }
+
+    /**
+     * Validasi token akses laporan publik (kedaluwarsa / rusak dianggap tidak valid).
+     */
+    protected function validPublicToken($token): bool
+    {
+        if (! is_string($token) || $token === '') {
+            return false;
+        }
+
+        try {
+            $data = json_decode(decrypt($token), true);
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return is_array($data)
+            && isset($data['exp'])
+            && (int) $data['exp'] >= now()->timestamp;
     }
 
     /**

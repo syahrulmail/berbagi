@@ -203,6 +203,26 @@
             <small style="color: var(--gray-500);">Dijalankan oleh cron job melalui <code>php artisan schedule:run</code>.</small>
         </div>
 
+        <h3 style="font-size: 15px; margin: 24px 0 14px;">Laporan Publik (DFBWA)</h3>
+
+        <div class="form-group">
+            <label for="lapdfbwa_password">Password Laporan Publik</label>
+            <input type="password" id="lapdfbwa_password" name="lapdfbwa_password" value="" autocomplete="new-password" minlength="4" maxlength="60" placeholder="{{ $settings['lapdfbwa_password_set'] ? 'Kosongkan bila tidak ingin mengubah' : 'Belum diatur' }}">
+            <small style="color: var(--gray-500);">
+                Digunakan untuk membuka halaman publik <a href="{{ route('lapdfbwa.show') }}" target="_blank" rel="noopener">{{ route('lapdfbwa.show') }}</a>.
+                Hanya password (tanpa username) yang diminta pengunjung. Biarkan kosong bila tidak ingin mengubah.
+            </small>
+        </div>
+
+        @if($settings['lapdfbwa_password_set'])
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="lapdfbwa_password_clear" value="1" {{ old('lapdfbwa_password_clear') ? 'checked' : '' }}>
+                    Hapus / nonaktifkan password laporan publik
+                </label>
+            </div>
+        @endif
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Pengaturan</button>
         </div>
