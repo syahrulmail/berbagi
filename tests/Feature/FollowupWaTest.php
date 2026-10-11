@@ -62,6 +62,24 @@ class FollowupWaTest extends TestCase
         ], $extra));
     }
 
+    protected function makeLog(Contact $contact, string $message, ?Carbon $at = null): WhatsappMessage
+    {
+        $log = WhatsappMessage::create([
+            'contact_id' => $contact->id,
+            'phone' => $contact->phone,
+            'message' => $message,
+            'status' => WhatsappMessage::STATUS_SENT,
+            'sent_at' => $at ?: Carbon::now(),
+        ]);
+
+        if ($at) {
+            $log->created_at = $at;
+            $log->save();
+        }
+
+        return $log;
+    }
+
     public function test_followup_wa_page_renders_tabs(): void
     {
         $admin = $this->makeUser('admin');
@@ -240,6 +258,69 @@ class FollowupWaTest extends TestCase
         $this->actingAs($other)->delete(route('mo.whatsapp.log.destroy', $message))
             ->assertForbidden();
         $this->assertNotNull(WhatsappMessage::find($message->id));
+    }
+
+    public function test_desktop_log_scope_by_role(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $branchA = Branch::create(['code' => 'LA-' . uniqid(), 'name' => 'Log A ' . uniqid(), 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'LB-' . uniqid(), 'name' => 'Log B ' . uniqid(), 'is_active' => true]);
+
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $agenA = $this->makeUser('agen', $branchA);
+        $agenB = $this->makeUser('agen', $branchB);
+
+        $cA = $this->makeContact('Kontak A', '628100000001', ['agen_id' => $agenA->id, 'branch_id' => $branchA->id]);
+        $cB = $this->makeContact('Kontak B', '628100000002', ['agen_id' => $agenB->id, 'branch_id' => $branchB->id]);
+        $cA2 = $this->makeContact('Kontak A2', '628100000003', ['agen_id' => $agenA->id]);
+
+        $this->makeLog($cA, 'LOG-A');
+        $this->makeLog($cB, 'LOG-B');
+        $this->makeLog($cA2, 'LOG-A2');
+
+        $this->actingAs($admin)->get(route('whatsapp.index'))
+            ->assertOk()->assertSee('LOG-A')->assertSee('LOG-B')->assertSee('LOG-A2');
+
+        $this->actingAs($supervisor)->get(route('whatsapp.index'))
+            ->assertOk()->assertSee('LOG-A')->assertSee('LOG-A2')->assertDontSee('LOG-B');
+
+        $this->actingAs($agenA)->get(route('whatsapp.index'))
+            ->assertOk()->assertSee('LOG-A')->assertSee('LOG-A2')->assertDontSee('LOG-B');
+    }
+
+    public function test_mobile_log_scope_by_role(): void
+    {
+        $branchA = Branch::create(['code' => 'MA-' . uniqid(), 'name' => 'Mob A ' . uniqid(), 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'MB-' . uniqid(), 'name' => 'Mob B ' . uniqid(), 'is_active' => true]);
+
+        $agenA = $this->makeUser('agen', $branchA);
+        $agenB = $this->makeUser('agen', $branchB);
+
+        $cA = $this->makeContact('Mob Kontak A', '628200000001', ['agen_id' => $agenA->id, 'branch_id' => $branchA->id]);
+        $cB = $this->makeContact('Mob Kontak B', '628200000002', ['agen_id' => $agenB->id, 'branch_id' => $branchB->id]);
+
+        $this->makeLog($cA, 'MLOG-A');
+        $this->makeLog($cB, 'MLOG-B');
+
+        $this->actingAs($agenA)->get(route('mo.whatsapp'))
+            ->assertOk()->assertSee('MLOG-A')->assertDontSee('MLOG-B');
+    }
+
+    public function test_log_lists_only_last_50_messages(): void
+    {
+        $admin = $this->makeUser('admin');
+        $contact = $this->makeContact('Banyak Log', '628100000009');
+
+        for ($i = 0; $i < 55; $i++) {
+            $this->makeLog($contact, 'MSG-' . str_pad((string) $i, 3, '0', STR_PAD_LEFT), Carbon::now()->subMinutes(100 - $i));
+        }
+
+        $response = $this->actingAs($admin)->get(route('whatsapp.index'));
+        $response->assertOk();
+        $response->assertSee('MSG-054');
+        $response->assertSee('MSG-005');
+        $response->assertDontSee('MSG-004');
     }
 
     public function test_template_message_supports_random_variation(): void

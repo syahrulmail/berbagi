@@ -55,7 +55,7 @@ class FollowupWaController extends Controller
         $logs = $this->logScope($user)
             ->with('contact')
             ->orderByDesc('created_at')
-            ->limit(20)
+            ->limit(50)
             ->get();
 
         $webhookUrl = $this->service->webhookUrl($user);
@@ -255,8 +255,10 @@ class FollowupWaController extends Controller
                 $sub->where('agen_id', $viewer->id);
             });
         } elseif ($viewer->isSupervisor() && $viewer->branch_id) {
-            $query->whereHas('contact', function ($sub) use ($viewer) {
-                $sub->where('branch_id', $viewer->branch_id);
+            $agentIds = User::where('branch_id', $viewer->branch_id)->pluck('id');
+            $query->whereHas('contact', function ($sub) use ($viewer, $agentIds) {
+                $sub->where('branch_id', $viewer->branch_id)
+                    ->orWhereIn('agen_id', $agentIds);
             });
         }
 
