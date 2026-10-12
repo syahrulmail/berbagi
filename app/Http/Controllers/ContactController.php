@@ -78,6 +78,12 @@ class ContactController extends Controller
         ->when($request->agen_id, function ($q, $agenId) {
             return $q->where('agen_id', $agenId);
         })
+        ->when($request->from, function ($q, $from) {
+            return $q->whereDate('created_at', '>=', $from);
+        })
+        ->when($request->to, function ($q, $to) {
+            return $q->whereDate('created_at', '<=', $to);
+        })
         ->when($request->search, function ($q, $search) {
             return $q->where(function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")

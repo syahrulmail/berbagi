@@ -622,11 +622,13 @@ class MobileAppController extends Controller
      */
     public function contacts(Request $request)
     {
-        $query = Contact::with(['agen', 'branch'])
+        $base = $this->applyContactFilters(Contact::query(), $request);
+
+        $query = (clone $base)
+            ->with(['agen', 'branch'])
             ->withCount('donations as donation_count')
             ->withSum('donations as donation_total', 'amount')
             ->withMax('donations as last_donation_date', 'donation_date');
-        $this->scopeContacts($query);
 
         $query->when($request->search, function ($q, $search) {
             $search = trim($search);
@@ -659,14 +661,57 @@ class MobileAppController extends Controller
         });
 
         $statusCounts = [
-            'all' => (clone $this->scopeContacts(Contact::query()))->count(),
-            'donated' => (clone $this->scopeContacts(Contact::query()))->where('status', 'donated')->count(),
-            'prospect' => (clone $this->scopeContacts(Contact::query()))->where('status', 'prospect')->count(),
-            'contacted' => (clone $this->scopeContacts(Contact::query()))->where('status', 'contacted')->count(),
-            'churned' => (clone $this->scopeContacts(Contact::query()))->where('status', 'churned')->count(),
+            'all' => (clone $base)->count(),
+            'donated' => (clone $base)->where('status', 'donated')->count(),
+            'prospect' => (clone $base)->where('status', 'prospect')->count(),
+            'contacted' => (clone $base)->where('status', 'contacted')->count(),
+            'churned' => (clone $base)->where('status', 'churned')->count(),
         ];
 
-        return view('mobile.contacts', compact('contacts', 'statusCounts'));
+        $branches = $this->visibleBranches();
+        $agents = $this->contactFilterAgents();
+
+        return view('mobile.contacts', compact('contacts', 'statusCounts', 'branches', 'agents'));
+    }
+
+    /**
+     * Terapkan filter kontak (role + cabang/agen/tanggal) pada query.
+     */
+    protected function applyContactFilters($query, Request $request)
+    {
+        $this->scopeContacts($query);
+
+        $query->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->get('branch_id')))
+            ->when($request->filled('agen_id'), fn ($q) => $q->where('agen_id', $request->get('agen_id')))
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->get('from')))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->get('to')));
+
+        return $query;
+    }
+
+    /**
+     * Daftar agen untuk filter kontak: admin semua, supervisor cabangnya, agen diri sendiri.
+     */
+    protected function contactFilterAgents()
+    {
+        $user = auth()->user();
+
+        if ($user->isAdmin()) {
+            return User::where('role', 'agen')->orderBy('name')->get();
+        }
+
+        if ($user->isSupervisor()) {
+            return User::where('role', 'agen')
+                ->where('branch_id', $user->branch_id)
+                ->orderBy('name')
+                ->get();
+        }
+
+        if ($user->isAgen()) {
+            return collect([$user]);
+        }
+
+        return collect();
     }
 
     /**

@@ -12,7 +12,7 @@
         <a href="{{ route('mo.contact.import-form') }}" class="mo-icon-btn" aria-label="Impor Kontak">
             <i class="fas fa-file-import"></i>
         </a>
-        <a href="{{ route('contacts.download', request()->only('search', 'status', 'sort')) }}" class="mo-icon-btn" aria-label="Unduh Kontak">
+        <a href="{{ route('contacts.download', request()->only('search', 'status', 'sort', 'branch_id', 'agen_id', 'from', 'to')) }}" class="mo-icon-btn" aria-label="Unduh Kontak">
             <i class="fas fa-download"></i>
         </a>
         <a href="{{ route('mo.more') }}" class="mo-icon-btn" aria-label="Menu">
@@ -25,7 +25,9 @@
     @php
         $hasStatusFilter = (bool) request('status');
         $hasSortFilter = in_array(request('sort'), ['donation'], true);
-        $hasActiveFilter = $hasStatusFilter || $hasSortFilter;
+        $hasActiveFilter = $hasStatusFilter || $hasSortFilter
+            || request()->filled('branch_id') || request()->filled('agen_id')
+            || request()->filled('from') || request()->filled('to');
     @endphp
     <div class="mo-sticky-filter">
         <form method="GET" action="{{ route('mo.contacts') }}" id="mo-kontak-form">
@@ -42,6 +44,45 @@
             <div id="mo-contact-filters" hidden>
                 <input type="hidden" name="status" value="{{ request('status') }}">
                 <input type="hidden" name="sort" value="{{ request('sort') }}">
+
+                @if($branches->count() > 1 || $agents->count() > 1)
+                    <div style="display:flex;gap:10px;margin-top:10px;">
+                        @if($branches->count() > 1)
+                            <div class="mo-field" style="flex:1;">
+                                <label for="mo-contact-branch">Cabang</label>
+                                <select id="mo-contact-branch" name="branch_id" class="mo-select" onchange="this.form.submit()">
+                                    <option value="">— Semua Cabang —</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}" {{ (string) request('branch_id') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                        @if($agents->count() > 1)
+                            <div class="mo-field" style="flex:1;">
+                                <label for="mo-contact-agen">Agen</label>
+                                <select id="mo-contact-agen" name="agen_id" class="mo-select" onchange="this.form.submit()">
+                                    <option value="">— Semua Agen —</option>
+                                    @foreach($agents as $agen)
+                                        <option value="{{ $agen->id }}" {{ (string) request('agen_id') === (string) $agen->id ? 'selected' : '' }} data-branch="{{ $agen->branch_id }}">{{ $agen->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <div style="display:flex;gap:10px;">
+                    <div class="mo-field" style="flex:1;">
+                        <label for="mo-contact-from">Dari Tanggal</label>
+                        <input type="date" id="mo-contact-from" name="from" class="mo-input" value="{{ request('from') }}" onchange="this.form.submit()">
+                    </div>
+                    <div class="mo-field" style="flex:1;">
+                        <label for="mo-contact-to">Sampai Tanggal</label>
+                        <input type="date" id="mo-contact-to" name="to" class="mo-input" value="{{ request('to') }}" onchange="this.form.submit()">
+                    </div>
+                </div>
+
                 <div class="mo-segmented mo-segmented--scroll" style="margin-top:10px;margin-bottom:6px;">
                     <button type="submit" name="status" value="" class="mo-segmented-item {{ !request('status') ? 'active' : '' }}">
                         Semua ({{ $statusCounts['all'] }})
@@ -127,3 +168,28 @@
 @section('sheets')
 @include('mobile.partials.contact-sheet')
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    var branch = document.getElementById('mo-contact-branch');
+    var agen = document.getElementById('mo-contact-agen');
+    if (!branch || !agen) return;
+
+    function filterAgen() {
+        var val = branch.value;
+        Array.prototype.forEach.call(agen.options, function (opt) {
+            if (!opt.value) return;
+            var match = !val || opt.getAttribute('data-branch') === val;
+            opt.hidden = !match;
+            opt.disabled = !match;
+        });
+        var current = agen.options[agen.selectedIndex];
+        if (current && current.disabled) { agen.value = ''; }
+    }
+
+    branch.addEventListener('change', filterAgen);
+    filterAgen();
+})();
+</script>
+@endpush

@@ -479,6 +479,88 @@ class MobileModulesTest extends TestCase
         }
     }
 
+    public function test_contact_branch_and_agen_filters_are_scoped_by_role(): void
+    {
+        $branchA = $this->makeBranch('A');
+        $branchB = $this->makeBranch('B');
+        $admin = $this->makeUser('admin');
+        $agenA = $this->makeUser('agen', $branchA);
+        $agenB = $this->makeUser('agen', $branchB);
+
+        $contactA = Contact::create([
+            'name' => 'Kontak Filter A ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'prospect',
+            'agen_id' => $agenA->id,
+            'branch_id' => $branchA->id,
+        ]);
+        $contactB = Contact::create([
+            'name' => 'Kontak Filter B ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'prospect',
+            'agen_id' => $agenB->id,
+            'branch_id' => $branchB->id,
+        ]);
+
+        $adminResponse = $this->actingAs($admin)->get(route('mo.contacts'));
+        $adminResponse->assertOk();
+        $adminResponse->assertSee('id="mo-contact-branch"', false);
+        $adminResponse->assertSee($branchA->name);
+        $adminResponse->assertSee($branchB->name);
+
+        $branchResponse = $this->actingAs($admin)->get(route('mo.contacts', ['branch_id' => $branchA->id]));
+        $branchResponse->assertSee($contactA->name);
+        $branchResponse->assertDontSee($contactB->name);
+
+        $agenResponse = $this->actingAs($admin)->get(route('mo.contacts', ['agen_id' => $agenB->id]));
+        $agenResponse->assertSee($contactB->name);
+        $agenResponse->assertDontSee($contactA->name);
+
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $supervisorResponse = $this->actingAs($supervisor)->get(route('mo.contacts'));
+        $supervisorResponse->assertOk();
+        $supervisorResponse->assertSee($contactA->name);
+        $supervisorResponse->assertDontSee($contactB->name);
+        $supervisorResponse->assertDontSee($branchB->name);
+
+        $agenSelfResponse = $this->actingAs($agenA)->get(route('mo.contacts'));
+        $agenSelfResponse->assertSee($contactA->name);
+        $agenSelfResponse->assertDontSee($contactB->name);
+    }
+
+    public function test_contact_date_range_filters_by_created_at(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $old = Contact::create([
+            'name' => 'Kontak Lama ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'prospect',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+        $old->created_at = now()->subDays(30);
+        $old->save();
+
+        $recent = Contact::create([
+            'name' => 'Kontak Baru ' . uniqid(),
+            'phone' => '62812' . random_int(1000000, 9999999),
+            'status' => 'prospect',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        $fromResponse = $this->actingAs($agen)->get(route('mo.contacts', ['from' => now()->subDays(7)->format('Y-m-d')]));
+        $fromResponse->assertOk();
+        $fromResponse->assertSee($recent->name);
+        $fromResponse->assertDontSee($old->name);
+
+        $toResponse = $this->actingAs($agen)->get(route('mo.contacts', ['to' => now()->subDays(7)->format('Y-m-d')]));
+        $toResponse->assertSee($old->name);
+        $toResponse->assertDontSee($recent->name);
+    }
+
     public function test_contact_detail_json_lists_donation_history(): void
     {
         $branch = $this->makeBranch();
