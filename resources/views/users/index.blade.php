@@ -76,7 +76,7 @@
                 <tr>
                     <th>Nama</th>
                     <th>Username</th>
-                    <th>Email</th>
+                    <th>No Handphone</th>
                     <th>Role</th>
                     <th>Cabang</th>
                     <th>Link Agen</th>
@@ -97,7 +97,7 @@
                             </div>
                         </td>
                         <td>{{ $user->username }}</td>
-                        <td>{{ $user->email }}</td>
+                        <td>{{ $user->phone ?: '-' }}</td>
                         <td>
                             @php
                                 $roleColors = [
