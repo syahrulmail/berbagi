@@ -91,4 +91,56 @@ class ContactIndexTest extends TestCase
             ->assertSee($branch->name)
             ->assertSee('Rp 40.000');
     }
+
+    public function test_branch_and_agen_filters_are_scoped_by_role()
+    {
+        $branchA = $this->makeBranch();
+        $branchB = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $agentA = $this->makeUser('agen', $branchA);
+        $agentB = $this->makeUser('agen', $branchB);
+
+        $contactA = Contact::create([
+            'name' => 'Kontak Cabang A ' . uniqid(),
+            'phone' => '628111000001',
+            'status' => 'prospect',
+            'agen_id' => $agentA->id,
+            'branch_id' => $branchA->id,
+        ]);
+
+        $contactB = Contact::create([
+            'name' => 'Kontak Cabang B ' . uniqid(),
+            'phone' => '628111000002',
+            'status' => 'prospect',
+            'agen_id' => $agentB->id,
+            'branch_id' => $branchB->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('contacts.index', ['branch_id' => $branchA->id]))
+            ->assertOk()
+            ->assertSee($contactA->name)
+            ->assertDontSee($contactB->name);
+
+        $this->actingAs($admin)
+            ->get(route('contacts.index', ['agen_id' => $agentB->id]))
+            ->assertOk()
+            ->assertSee($contactB->name)
+            ->assertDontSee($contactA->name);
+
+        $this->actingAs($admin)
+            ->get(route('contacts.index'))
+            ->assertOk()
+            ->assertSee('name="branch_id"', false)
+            ->assertSee('name="agen_id"', false)
+            ->assertSee('data-branch="' . $branchB->id . '"', false);
+
+        $this->actingAs($supervisor)
+            ->get(route('contacts.index'))
+            ->assertOk()
+            ->assertSee('data-branch="' . $branchA->id . '"', false)
+            ->assertDontSee('data-branch="' . $branchB->id . '"', false)
+            ->assertDontSee($branchB->name);
+    }
 }

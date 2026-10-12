@@ -51,7 +51,26 @@
                 <option value="churned" {{ request('status') == 'churned' ? 'selected' : '' }}>Stop</option>
             </select>
         </div>
+        <div class="form-group">
+            <select name="branch_id" id="contact-branch-filter">
+                <option value="">Semua Cabang</option>
+                @foreach($branches as $branch)
+                    <option value="{{ $branch->id }}" {{ (string) request('branch_id') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
+            <select name="agen_id" id="contact-agen-filter">
+                <option value="">Semua Agen</option>
+                @foreach($agents as $agen)
+                    <option value="{{ $agen->id }}" data-branch="{{ $agen->branch_id }}" {{ (string) request('agen_id') === (string) $agen->id ? 'selected' : '' }}>{{ $agen->name }}</option>
+                @endforeach
+            </select>
+        </div>
         <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+        @if(request('search') || request('status') || request('branch_id') || request('agen_id'))
+            <a href="{{ route('contacts.index') }}" class="btn btn-outline"><i class="fas fa-rotate-left"></i> Reset</a>
+        @endif
     </form>
 
     <div class="table-responsive">
@@ -135,4 +154,28 @@
 <script src="{{ assetv('js/donation-form.js') }}"></script>
 <script src="{{ assetv('js/contact-detail.js') }}"></script>
 <script src="{{ assetv('js/donation-detail.js') }}"></script>
+<script>
+    (function () {
+        var branchEl = document.getElementById('contact-branch-filter');
+        var agenEl = document.getElementById('contact-agen-filter');
+        if (!branchEl || !agenEl) return;
+
+        var options = Array.prototype.slice.call(agenEl.options);
+
+        function apply() {
+            var branch = branchEl.value;
+            options.forEach(function (opt) {
+                if (opt.value === '') { opt.hidden = false; opt.disabled = false; return; }
+                var hide = branch !== '' && opt.dataset.branch !== branch;
+                opt.hidden = hide;
+                opt.disabled = hide;
+            });
+            var sel = agenEl.options[agenEl.selectedIndex];
+            if (sel && sel.hidden) agenEl.value = '';
+        }
+
+        branchEl.addEventListener('change', apply);
+        apply();
+    })();
+</script>
 @endpush

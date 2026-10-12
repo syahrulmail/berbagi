@@ -49,8 +49,9 @@ class ContactController extends Controller
         $contacts = $query->paginate(15)->withQueryString();
 
         $agents = $this->visibleAgents();
+        $branches = $this->visibleBranches();
 
-        return view('contacts.index', compact('contacts', 'agents'));
+        return view('contacts.index', compact('contacts', 'agents', 'branches'));
     }
 
     /**
@@ -70,6 +71,12 @@ class ContactController extends Controller
 
         $query->when($request->status, function ($q, $status) {
             return $q->where('status', $status);
+        })
+        ->when($request->branch_id, function ($q, $branchId) {
+            return $q->where('branch_id', $branchId);
+        })
+        ->when($request->agen_id, function ($q, $agenId) {
+            return $q->where('agen_id', $agenId);
         })
         ->when($request->search, function ($q, $search) {
             return $q->where(function ($query) use ($search) {
