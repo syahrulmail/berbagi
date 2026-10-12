@@ -300,6 +300,58 @@ class FollowupWaTest extends TestCase
         $response->assertSee('value="' . $agen->id . '" selected', false);
     }
 
+    public function test_followup_branch_filter_scopes_agen_to_branch(): void
+    {
+        $branchA = Branch::create(['code' => 'FA-' . uniqid(), 'name' => 'Filter A ' . uniqid(), 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'FB-' . uniqid(), 'name' => 'Filter B ' . uniqid(), 'is_active' => true]);
+        $admin = $this->makeUser('admin');
+        $agentA = $this->makeUser('agen', $branchA);
+        $agentB = $this->makeUser('agen', $branchB);
+
+        $response = $this->actingAs($admin)->get(route('whatsapp.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-branch="' . $branchA->id . '"', false);
+        $response->assertSee('data-branch="' . $branchB->id . '"', false);
+        $response->assertSee('bindBranchAgen', false);
+        $response->assertSee($agentA->name);
+        $response->assertSee($agentB->name);
+    }
+
+    public function test_desktop_agen_dropdown_scopes_supervisor_branch(): void
+    {
+        $branchA = Branch::create(['code' => 'DA-' . uniqid(), 'name' => 'Desk A ' . uniqid(), 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'DB-' . uniqid(), 'name' => 'Desk B ' . uniqid(), 'is_active' => true]);
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $agentA = $this->makeUser('agen', $branchA);
+        $agentB = $this->makeUser('agen', $branchB);
+
+        $response = $this->actingAs($supervisor)->get(route('whatsapp.index'));
+
+        $response->assertOk();
+        $response->assertSee($agentA->name);
+        $response->assertDontSee($agentB->name);
+        $response->assertDontSee($branchB->name);
+    }
+
+    public function test_mobile_agen_dropdown_scopes_supervisor_branch(): void
+    {
+        $branchA = Branch::create(['code' => 'MA-' . uniqid(), 'name' => 'Mob A ' . uniqid(), 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'MB-' . uniqid(), 'name' => 'Mob B ' . uniqid(), 'is_active' => true]);
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $agentA = $this->makeUser('agen', $branchA);
+        $agentB = $this->makeUser('agen', $branchB);
+
+        $response = $this->actingAs($supervisor)->get(route('mo.whatsapp'));
+
+        $response->assertOk();
+        $response->assertSee('data-branch="' . $branchA->id . '"', false);
+        $response->assertSee('bindBranchAgen', false);
+        $response->assertSee($agentA->name);
+        $response->assertDontSee($agentB->name);
+        $response->assertDontSee($branchB->name);
+    }
+
     public function test_mobile_log_tab_lists_and_deletes_messages(): void
     {
         $admin = $this->makeUser('admin');

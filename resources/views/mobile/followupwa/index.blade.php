@@ -113,9 +113,9 @@
                     <label>Agen (opsional)</label>
                     <select name="agen_id" class="mo-select">
                         <option value="">Semua Agen</option>
-                        @foreach($agens as $agen)
-                            <option value="{{ $agen->id }}">{{ $agen->name }}</option>
-                        @endforeach
+                    @foreach($agens as $agen)
+                        <option value="{{ $agen->id }}" data-branch="{{ $agen->branch_id }}">{{ $agen->name }}</option>
+                    @endforeach
                     </select>
                 </div>
                 <div class="mo-field">
@@ -216,7 +216,7 @@
                         <option value="">Semua Agen</option>
                     @endif
                     @foreach($agens as $agen)
-                        <option value="{{ $agen->id }}"{{ (auth()->user()->isAgen() && (int) $agen->id === (int) auth()->user()->id) ? ' selected' : '' }}>{{ $agen->name }}</option>
+                        <option value="{{ $agen->id }}"{{ (auth()->user()->isAgen() && (int) $agen->id === (int) auth()->user()->id) ? ' selected' : '' }} data-branch="{{ $agen->branch_id }}">{{ $agen->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -474,6 +474,33 @@
         });
         return out;
     }
+
+    // Pilihan Cabang menyaring daftar Agen (Otomatis & Manual)
+    function bindBranchAgen(branchEl, agenEl) {
+        if (!branchEl || !agenEl) return;
+        var options = Array.prototype.slice.call(agenEl.options);
+        function apply() {
+            var branch = branchEl.value;
+            options.forEach(function (opt) {
+                if (opt.value === '') { opt.hidden = false; opt.disabled = false; return; }
+                var hide = branch !== '' && opt.dataset.branch !== branch;
+                opt.hidden = hide;
+                opt.disabled = hide;
+            });
+            var sel = agenEl.options[agenEl.selectedIndex];
+            if (sel && sel.hidden) agenEl.value = '';
+        }
+        branchEl.addEventListener('change', apply);
+        apply();
+    }
+    bindBranchAgen(
+        document.querySelector('#mo-fuwa-otomatis [name=branch_id]'),
+        document.querySelector('#mo-fuwa-otomatis [name=agen_id]')
+    );
+    bindBranchAgen(
+        document.getElementById('mo-manual-branch'),
+        document.getElementById('mo-manual-agen')
+    );
 
     function esc(value) {
         return String(value == null ? '' : value).replace(/[&<>"']/g, function (m) {

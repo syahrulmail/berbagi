@@ -130,7 +130,7 @@
                         <select name="agen_id">
                             <option value="">Semua Agen</option>
                             @foreach($agens as $agen)
-                                <option value="{{ $agen->id }}">{{ $agen->name }}</option>
+                                <option value="{{ $agen->id }}" data-branch="{{ $agen->branch_id }}">{{ $agen->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -248,7 +248,7 @@
                         <option value="">Semua Agen</option>
                     @endif
                     @foreach($agens as $agen)
-                        <option value="{{ $agen->id }}"{{ (auth()->user()->isAgen() && (int) $agen->id === (int) auth()->user()->id) ? ' selected' : '' }}>{{ $agen->name }}</option>
+                        <option value="{{ $agen->id }}"{{ (auth()->user()->isAgen() && (int) $agen->id === (int) auth()->user()->id) ? ' selected' : '' }} data-branch="{{ $agen->branch_id }}">{{ $agen->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -483,6 +483,33 @@
             if (target) target.hidden = !target.hidden;
         });
     });
+
+    // Pilihan Cabang menyaring daftar Agen (Otomatis & Manual)
+    function bindBranchAgen(branchEl, agenEl) {
+        if (!branchEl || !agenEl) return;
+        var options = Array.prototype.slice.call(agenEl.options);
+        function apply() {
+            var branch = branchEl.value;
+            options.forEach(function (opt) {
+                if (opt.value === '') { opt.hidden = false; opt.disabled = false; return; }
+                var hide = branch !== '' && opt.dataset.branch !== branch;
+                opt.hidden = hide;
+                opt.disabled = hide;
+            });
+            var sel = agenEl.options[agenEl.selectedIndex];
+            if (sel && sel.hidden) agenEl.value = '';
+        }
+        branchEl.addEventListener('change', apply);
+        apply();
+    }
+    bindBranchAgen(
+        document.querySelector('#fuwa-broadcast-form [name=branch_id]'),
+        document.querySelector('#fuwa-broadcast-form [name=agen_id]')
+    );
+    bindBranchAgen(
+        document.getElementById('fuwa-manual-branch'),
+        document.getElementById('fuwa-manual-agen')
+    );
 
     // Manual mode switch (Data Kontak / Paste Kontak)
     var manualModeRadios = document.querySelectorAll('input[name="fuwa-manual-mode"]');
