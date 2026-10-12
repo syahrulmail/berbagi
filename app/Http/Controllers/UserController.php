@@ -19,8 +19,11 @@ class UserController extends Controller
 
         $users = User::with('branch')
             ->visibleTo($actor)
-            ->when($actor->isAdmin() && $request->role, function ($query, $role) {
-                return $query->where('role', $role);
+            ->when($actor->isAdmin() && $request->filled('role'), function ($query) use ($request) {
+                return $query->where('role', $request->input('role'));
+            })
+            ->when($actor->isAdmin() && $request->filled('branch_id'), function ($query) use ($request) {
+                return $query->where('branch_id', $request->input('branch_id'));
             })
             ->when($request->search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
@@ -35,10 +38,11 @@ class UserController extends Controller
             ->withQueryString();
 
         $stats = $this->userStats($actor);
+        $branches = $actor->isAdmin() ? $this->selectableBranches($actor) : collect();
 
         $this->attachIntegrationStatus($users, $integration);
 
-        return view('users.index', compact('users', 'stats'));
+        return view('users.index', compact('users', 'stats', 'branches'));
     }
 
     /**

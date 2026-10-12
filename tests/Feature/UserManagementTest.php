@@ -644,6 +644,33 @@ class UserManagementTest extends TestCase
             ->assertDontSee('Terapkan');
     }
 
+    public function test_desktop_users_branch_filter_only_for_admin(): void
+    {
+        $branchA = $this->makeBranch();
+        $branchB = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $agentA = $this->makeUser('agen', $branchA);
+        $agentB = $this->makeUser('agen', $branchB);
+
+        $this->actingAs($admin)
+            ->get(route('users.index', ['branch_id' => $branchA->id]))
+            ->assertOk()
+            ->assertSee($agentA->name)
+            ->assertDontSee($agentB->name);
+
+        $this->actingAs($admin)
+            ->get(route('users.index'))
+            ->assertOk()
+            ->assertSee('name="branch_id"', false)
+            ->assertSee('Semua Cabang');
+
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $this->actingAs($supervisor)
+            ->get(route('users.index'))
+            ->assertOk()
+            ->assertDontSee('name="branch_id"', false);
+    }
+
     public function test_users_date_range_filters_donation_totals(): void
     {
         $branch = $this->makeBranch();

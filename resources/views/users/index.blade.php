@@ -63,9 +63,17 @@
                 <option value="donatur" {{ request('role') == 'donatur' ? 'selected' : '' }}>Donatur</option>
             </select>
         </div>
+        <div class="form-group">
+            <select name="branch_id">
+                <option value="">Semua Cabang</option>
+                @foreach($branches as $branch)
+                    <option value="{{ $branch->id }}" {{ (string) request('branch_id') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                @endforeach
+            </select>
+        </div>
         @endif
         <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
-        @if(request('search') || request('role'))
+        @if(request('search') || request('role') || request('branch_id'))
             <a href="{{ route('users.index') }}" class="btn btn-outline"><i class="fas fa-rotate-left"></i> Reset</a>
         @endif
     </form>
