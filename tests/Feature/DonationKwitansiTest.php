@@ -121,5 +121,30 @@ class DonationKwitansiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('kwitansi_url', route('donations.kwitansi', $donation->id));
+
+        $this->assertStringStartsWith('https://wa.me/6281234567890?text=', $response->json('wa_kwitansi_url'));
+    }
+
+    public function test_desktop_detail_exposes_kwitansi_whatsapp_url(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $response = $this->actingAs($admin)->getJson(route('donations.detail', $donation));
+
+        $response->assertOk();
+        $this->assertStringStartsWith('https://wa.me/6281234567890?text=', $response->json('wa_kwitansi_url'));
+        $this->assertStringContainsString('Kwitansi', rawurldecode($response->json('wa_kwitansi_url')));
+    }
+
+    public function test_kwitansi_whatsapp_url_is_empty_without_phone(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, , $contact, , $donation] = $this->makeDonation($admin);
+
+        $contact->update(['phone' => '']);
+        $donation->load('contact');
+
+        $this->assertSame('', kwitansi_wa_url($donation));
     }
 }

@@ -22,10 +22,12 @@
             <div id="donation-detail-body"></div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn" id="donation-detail-kwitansi-btn" style="margin-right:auto;"><i class="fas fa-print"></i> Cetak Kwitansi</button>
+            <button type="button" class="btn" id="donation-detail-kwitansi-btn"><i class="fas fa-print"></i> Cetak Kwitansi</button>
+            <a class="btn" id="donation-detail-wa-btn" href="#" target="_blank" rel="noopener" style="display:none;background:#25D366;color:#fff;"><i class="fab fa-whatsapp"></i> Kirim Kwitansi</a>
             @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
                 <button type="button" class="btn btn-danger" id="donation-detail-delete-btn" style="display:none;"><i class="fas fa-trash"></i> Hapus Donasi</button>
             @endif
+            <span style="flex:1 1 auto;"></span>
             <button type="button" class="btn" data-donation-detail-close>Tutup</button>
             <button type="button" class="btn btn-primary" id="donation-detail-edit-btn"><i class="fas fa-pen"></i> Edit</button>
             <button type="button" class="btn btn-primary" id="donation-detail-save-btn" style="display:none;"><i class="fas fa-save"></i> Simpan</button>

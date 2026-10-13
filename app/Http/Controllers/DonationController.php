@@ -547,6 +547,7 @@ class DonationController extends Controller
             'proof_url' => $donation->payment_proof ? asset_photo_url($donation->payment_proof) : null,
             'created_at_formatted' => $donation->created_at ? $donation->created_at->format('d M Y H:i') : '-',
             'creator' => $donation->creator->name ?? '-',
+            'wa_kwitansi_url' => kwitansi_wa_url($donation),
         ]);
     }
 

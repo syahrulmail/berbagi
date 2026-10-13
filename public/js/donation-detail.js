@@ -8,6 +8,7 @@
     var saveBtn = document.getElementById('donation-detail-save-btn');
     var deleteBtn = document.getElementById('donation-detail-delete-btn');
     var kwitansiBtn = document.getElementById('donation-detail-kwitansi-btn');
+    var waBtn = document.getElementById('donation-detail-wa-btn');
     var confirmModal = document.getElementById('donation-delete-confirm');
     var confirmBtn = document.getElementById('donation-delete-confirm-btn');
     var confirmCancelBtns = document.querySelectorAll('[data-donation-delete-cancel]');
@@ -15,6 +16,7 @@
     var currentId = null;
     var editing = false;
     var busy = false;
+    var currentWaUrl = '';
 
     if (!modal || !body) return;
 
@@ -57,6 +59,7 @@
         document.body.style.overflow = '';
         errorBox.classList.remove('show');
         errorBox.textContent = '';
+        currentWaUrl = '';
         closeConfirm();
     }
 
@@ -109,6 +112,12 @@
                 '</div>' +
                 detailItem('Dicatat oleh', (d.creator || '-') + ' · ' + (d.created_at_formatted || '-')) +
             '</div>';
+
+        currentWaUrl = d.wa_kwitansi_url || '';
+        if (waBtn) {
+            waBtn.setAttribute('href', currentWaUrl || '#');
+            waBtn.style.display = currentWaUrl ? '' : 'none';
+        }
     }
 
     function detailItem(label, value) {
@@ -137,6 +146,7 @@
         if (saveBtn) saveBtn.style.display = viewMode ? 'none' : '';
         if (deleteBtn) deleteBtn.style.display = viewMode ? '' : 'none';
         if (kwitansiBtn) kwitansiBtn.style.display = viewMode ? '' : 'none';
+        if (waBtn) waBtn.style.display = (viewMode && currentWaUrl) ? '' : 'none';
     }
 
     function openConfirm() {
