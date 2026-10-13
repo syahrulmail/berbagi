@@ -34,3 +34,105 @@ if (! function_exists('asset_photo_url')) {
         return asset('storage/' . ltrim($path, '/'));
     }
 }
+
+if (! function_exists('terbilang_id')) {
+    /**
+     * Ubah angka menjadi terbilang bahasa Indonesia (mis. 1500000 => "satu juta lima ratus ribu").
+     */
+    function terbilang_id($number)
+    {
+        $number = (int) round((float) $number);
+
+        if ($number < 0) {
+            return 'minus ' . terbilang_id(abs($number));
+        }
+
+        $satuan = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'];
+
+        if ($number < 12) {
+            return $satuan[$number];
+        }
+
+        if ($number < 20) {
+            return terbilang_id($number - 10) . ' belas';
+        }
+
+        if ($number < 100) {
+            $sisa = $number % 10;
+
+            return terbilang_id((int) ($number / 10)) . ' puluh' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+        }
+
+        if ($number < 200) {
+            $sisa = $number % 100;
+
+            return 'seratus' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+        }
+
+        if ($number < 1000) {
+            $sisa = $number % 100;
+
+            return terbilang_id((int) ($number / 100)) . ' ratus' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+        }
+
+        if ($number < 2000) {
+            $sisa = $number % 1000;
+
+            return 'seribu' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+        }
+
+        if ($number < 1000000) {
+            $sisa = $number % 1000;
+
+            return terbilang_id((int) ($number / 1000)) . ' ribu' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+        }
+
+        if ($number < 1000000000) {
+            $sisa = $number % 1000000;
+
+            return terbilang_id((int) ($number / 1000000)) . ' juta' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+        }
+
+        if ($number < 1000000000000) {
+            $sisa = $number % 1000000000;
+
+            return terbilang_id((int) ($number / 1000000000)) . ' miliar' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+        }
+
+        $sisa = $number % 1000000000000;
+
+        return terbilang_id((int) ($number / 1000000000000)) . ' triliun' . ($sisa ? ' ' . terbilang_id($sisa) : '');
+    }
+}
+
+if (! function_exists('mask_phone')) {
+    /**
+     * Sembunyikan 4 digit terakhir nomor telepon dengan tanda bintang,
+     * mempertahankan format asli (spasi, tanda hubung).
+     */
+    function mask_phone($phone)
+    {
+        $phone = (string) $phone;
+
+        if ($phone === '') {
+            return '';
+        }
+
+        $chars = preg_split('//u', $phone, -1, PREG_SPLIT_NO_EMPTY);
+
+        if ($chars === false) {
+            return $phone;
+        }
+
+        $masked = 0;
+
+        for ($i = count($chars) - 1; $i >= 0 && $masked < 4; $i--) {
+            if (ctype_digit($chars[$i])) {
+                $chars[$i] = '*';
+                $masked++;
+            }
+        }
+
+        return implode('', $chars);
+    }
+}

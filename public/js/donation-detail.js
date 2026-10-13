@@ -7,6 +7,7 @@
     var editBtn = document.getElementById('donation-detail-edit-btn');
     var saveBtn = document.getElementById('donation-detail-save-btn');
     var deleteBtn = document.getElementById('donation-detail-delete-btn');
+    var kwitansiBtn = document.getElementById('donation-detail-kwitansi-btn');
     var confirmModal = document.getElementById('donation-delete-confirm');
     var confirmBtn = document.getElementById('donation-delete-confirm-btn');
     var confirmCancelBtns = document.querySelectorAll('[data-donation-delete-cancel]');
@@ -22,6 +23,7 @@
     var urlEditFields = cfg.editFieldsUrl || '';
     var urlUpdate = cfg.updateUrl || '';
     var urlDelete = cfg.deleteUrl || '';
+    var urlKwitansi = cfg.kwitansiUrl || '';
 
     function buildUrl(base, id) {
         return base.replace('__ID__', encodeURIComponent(id));
@@ -134,6 +136,7 @@
         if (editBtn) editBtn.style.display = viewMode ? '' : 'none';
         if (saveBtn) saveBtn.style.display = viewMode ? 'none' : '';
         if (deleteBtn) deleteBtn.style.display = viewMode ? '' : 'none';
+        if (kwitansiBtn) kwitansiBtn.style.display = viewMode ? '' : 'none';
     }
 
     function openConfirm() {
@@ -306,6 +309,14 @@
 
     if (deleteBtn) {
         deleteBtn.addEventListener('click', openConfirm);
+    }
+
+    if (kwitansiBtn) {
+        kwitansiBtn.addEventListener('click', function () {
+            if (currentId && urlKwitansi) {
+                window.open(buildUrl(urlKwitansi, currentId), '_blank');
+            }
+        });
     }
 
     if (confirmBtn) {

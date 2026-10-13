@@ -8,6 +8,7 @@
         'editFieldsUrl' => route('donations.edit-fields', ['donation' => '__ID__']),
         'updateUrl' => route('donations.update', ['donation' => '__ID__']),
         'deleteUrl' => route('donations.destroy', ['donation' => '__ID__']),
+        'kwitansiUrl' => route('donations.kwitansi', ['donation' => '__ID__']),
     ];
 @endphp
 <div class="modal-backdrop" id="donation-detail-modal" role="dialog" aria-modal="true">
@@ -21,8 +22,9 @@
             <div id="donation-detail-body"></div>
         </div>
         <div class="modal-footer">
+            <button type="button" class="btn" id="donation-detail-kwitansi-btn" style="margin-right:auto;"><i class="fas fa-print"></i> Cetak Kwitansi</button>
             @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
-                <button type="button" class="btn btn-danger" id="donation-detail-delete-btn" style="display:none;margin-right:auto;"><i class="fas fa-trash"></i> Hapus Donasi</button>
+                <button type="button" class="btn btn-danger" id="donation-detail-delete-btn" style="display:none;"><i class="fas fa-trash"></i> Hapus Donasi</button>
             @endif
             <button type="button" class="btn" data-donation-detail-close>Tutup</button>
             <button type="button" class="btn btn-primary" id="donation-detail-edit-btn"><i class="fas fa-pen"></i> Edit</button>

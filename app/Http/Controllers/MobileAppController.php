@@ -960,6 +960,7 @@ class MobileAppController extends Controller
             'creator' => $donation->creator->name ?? '-',
             'can_edit' => true,
             'edit_url' => route('mo.donation.edit', $donation->id),
+            'kwitansi_url' => route('donations.kwitansi', $donation->id),
             'can_delete' => auth()->user()->isAdmin() || auth()->user()->isSupervisor(),
             'delete_url' => route('mo.donation.destroy', $donation->id),
         ]);

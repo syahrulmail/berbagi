@@ -142,6 +142,7 @@ Route::middleware('auth')->group(function () {
         Route::get('donations/download-proof', [DonationController::class, 'downloadProof'])->name('donations.download-proof');
         Route::resource('donations', DonationController::class)->except('show');
         Route::get('donations/{donation}/detail', [DonationController::class, 'detail'])->name('donations.detail');
+        Route::get('donations/{donation}/kwitansi', [DonationController::class, 'kwitansi'])->name('donations.kwitansi');
         Route::get('donations/{donation}/edit-fields', [DonationController::class, 'editFields'])->name('donations.edit-fields');
         Route::resource('programs', ProgramController::class)->except('show');
         Route::get('programs/{program}/donors', [ProgramController::class, 'donors'])->name('programs.donors');

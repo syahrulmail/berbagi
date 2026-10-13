@@ -551,6 +551,51 @@ class DonationController extends Controller
     }
 
     /**
+     * Halaman kwitansi/invoice donasi siap cetak (format formulir wakaf BWA).
+     */
+    public function kwitansi(Donation $donation)
+    {
+        $this->authorizeAccess($donation);
+
+        $donation->load(['branch', 'agen', 'contact', 'items.program', 'program']);
+
+        $contact = $donation->contact;
+        $wakifName = $contact ? (string) $contact->name : (string) ($donation->donor_info ?: '');
+        $phone = $contact ? (string) $contact->phone : '';
+
+        $items = $donation->items->map(function ($item) {
+            return [
+                'category_label' => $item->program ? $item->program->category_label : ($item->program_category ?: ''),
+                'amount' => (float) $item->amount,
+            ];
+        })->values()->all();
+
+        if (empty($items)) {
+            $items[] = [
+                'category_label' => $donation->program ? $donation->program->category_label : '',
+                'amount' => (float) $donation->amount,
+            ];
+        }
+
+        $total = (float) $donation->amount;
+
+        return view('donations.kwitansi', [
+            'donation' => $donation,
+            'wakifName' => $wakifName,
+            'pendaftar' => (string) ($donation->donor_info ?: ''),
+            'phoneMasked' => mask_phone($phone),
+            'items' => $items,
+            'total' => $total,
+            'totalFormatted' => 'Rp ' . number_format($total, 0, ',', '.'),
+            'terbilang' => ucfirst(trim(terbilang_id($total))) . ' Rupiah',
+            'paymentDateFormatted' => $donation->payment_date ? $donation->payment_date->format('d F Y') : '-',
+            'donationDateFormatted' => $donation->donation_date ? $donation->donation_date->format('d F Y') : '-',
+            'invoiceNumber' => 'FKJ-' . str_pad((string) $donation->id, 6, '0', STR_PAD_LEFT),
+            'branchName' => $donation->branch->name ?? '',
+        ]);
+    }
+
+    /**
      * Field form edit donasi untuk dimuat di dalam modal rincian (format JSON).
      */
     public function editFields(Donation $donation)
