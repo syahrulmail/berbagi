@@ -580,18 +580,14 @@ class DonationController extends Controller
         $total = (float) $donation->amount;
 
         return view('donations.kwitansi', [
-            'donation' => $donation,
             'wakifName' => $wakifName,
             'pendaftar' => (string) ($donation->donor_info ?: ''),
             'phoneMasked' => mask_phone($phone),
             'items' => $items,
             'total' => $total,
-            'totalFormatted' => 'Rp ' . number_format($total, 0, ',', '.'),
             'terbilang' => ucfirst(trim(terbilang_id($total))) . ' Rupiah',
             'paymentDateFormatted' => $donation->payment_date ? $donation->payment_date->format('d F Y') : '-',
             'donationDateFormatted' => $donation->donation_date ? $donation->donation_date->format('d F Y') : '-',
-            'invoiceNumber' => 'FKJ-' . str_pad((string) $donation->id, 6, '0', STR_PAD_LEFT),
-            'branchName' => $donation->branch->name ?? '',
         ]);
     }
 

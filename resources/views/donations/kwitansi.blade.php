@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Kwitansi {{ $invoiceNumber }} - {{ $wakifName }}</title>
+<title>Kwitansi - {{ $wakifName }}</title>
 <style>
     :root {
         --green: #2f7a52;
@@ -32,25 +32,13 @@
         cursor: pointer;
     }
     .sheet {
-        width: 297mm;
-        min-height: 210mm;
+        width: 194mm;
+        min-height: 135mm;
         margin: 0 auto 24px;
         background: #fff;
-        padding: 8mm;
+        padding: 6mm;
         box-shadow: 0 4px 18px rgba(0, 0, 0, .15);
         position: relative;
-    }
-    .fkj {
-        position: absolute;
-        top: 6px;
-        right: 8mm;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        padding: 5px 12px;
-        font-weight: 700;
-        font-size: 13px;
-        background: #fff;
-        z-index: 2;
     }
     .sheet-inner { border: 1px solid var(--line); display: flex; }
     .col-left { width: 71%; border-right: 1px dashed #999; }
@@ -106,12 +94,8 @@
     .verif th { background: var(--green); color: #fff; }
     .verif-note { font-size: 8.5px; font-style: italic; margin-top: 3px; }
 
-    .sign-row { display: flex; justify-content: space-between; margin: 16px 12px 0; font-size: 10.5px; }
-    .sign-line { border-bottom: 1px dotted #666; min-width: 150px; }
-
     .syarat { margin: 14px 12px 0; font-size: 9px; line-height: 1.55; }
     .syarat ol { margin: 4px 0 0; padding-left: 16px; }
-    .color-note { font-size: 8px; font-style: italic; text-align: right; margin: 6px 12px 0; }
 
     .stub-logo { text-align: center; margin: 6px 0 4px; }
     .stub-logo .logo { display: inline-block; color: var(--green); font-size: 42px; }
@@ -165,7 +149,7 @@
             padding: 0;
             box-shadow: none;
         }
-        @page { size: A4 landscape; margin: 8mm; }
+        @page { size: A4 portrait; margin: 8mm; }
     }
 </style>
 </head>
@@ -175,7 +159,6 @@
     </div>
 
     <div class="sheet">
-        <div class="fkj">No. FKJ &nbsp; {{ $invoiceNumber }}</div>
         <div class="sheet-inner">
             <div class="col-left">
                 <div class="header">
@@ -194,35 +177,35 @@
 
                 <div class="frow">
                     <span class="flabel">Nama Wakif / Donatur <b>*</b></span>
-                    <span class="fval">{{ $wakifName ?: '&nbsp;' }}</span>
+                    <span class="fval">{{ $wakifName }}</span>
                     <span class="flabel sm">Gelar</span>
-                    <span class="fval sm">&nbsp;</span>
+                    <span class="fval sm"></span>
                 </div>
                 <div class="frow">
                     <span class="flabel">Nama Pendaftar <b>*</b></span>
-                    <span class="fval">{{ $pendaftar ?: '&nbsp;' }}</span>
+                    <span class="fval">{{ $pendaftar }}</span>
                 </div>
                 <div class="frow">
                     <span class="flabel">Alamat Surat</span>
-                    <span class="fval">&nbsp;</span>
+                    <span class="fval"></span>
                     <span class="flabel sm">Kode Pos</span>
-                    <span class="fval sm">&nbsp;</span>
+                    <span class="fval sm"></span>
                 </div>
                 <div class="frow">
                     <span class="flabel">Kota / Kabupaten</span>
-                    <span class="fval">&nbsp;</span>
+                    <span class="fval"></span>
                     <span class="flabel sm">Propinsi</span>
-                    <span class="fval sm">&nbsp;</span>
+                    <span class="fval sm"></span>
                 </div>
                 <div class="frow">
                     <span class="flabel">No. Handphone</span>
-                    <span class="fval mask">{{ $phoneMasked ?: '&nbsp;' }}</span>
+                    <span class="fval mask">{{ $phoneMasked }}</span>
                     <span class="flabel sm">Telepon Rumah</span>
-                    <span class="fval sm">&nbsp;</span>
+                    <span class="fval sm"></span>
                 </div>
                 <div class="frow">
                     <span class="flabel">email (wajib diisi)</span>
-                    <span class="fval">&nbsp;</span>
+                    <span class="fval"></span>
                 </div>
 
                 <div class="table-wrap">
@@ -247,10 +230,10 @@
                                 </tr>
                             @endforeach
                             @for($i = count($items); $i < 5; $i++)
-                                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+                                <tr><td></td><td></td><td></td><td></td><td></td></tr>
                             @endfor
                             <tr class="total-row">
-                                <td colspan="4">Total ...</td>
+                                <td colspan="4">Total: {{ $terbilang }}</td>
                                 <td class="num">{{ number_format($total, 0, ',', '.') }}</td>
                             </tr>
                         </tbody>
@@ -262,19 +245,14 @@
                                 <tr><th>Keterangan</th><th>Paraf</th><th>Tanggal</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td>Terima</td><td>&nbsp;</td><td></td></tr>
-                                <tr><td>Konfirmasi</td><td>&nbsp;</td><td></td></tr>
-                                <tr><td>Input</td><td>&nbsp;</td><td></td></tr>
-                                <tr><td>Verifikasi</td><td>&nbsp;</td><td></td></tr>
+                                <tr><td>Terima</td><td></td><td></td></tr>
+                                <tr><td>Konfirmasi</td><td></td><td></td></tr>
+                                <tr><td>Input</td><td></td><td></td></tr>
+                                <tr><td>Verifikasi</td><td></td><td></td></tr>
                             </tbody>
                         </table>
                         <div class="verif-note">* Diisi oleh Bag. Keuangan</div>
                     </div>
-                </div>
-
-                <div class="sign-row">
-                    <div>Tanggal : <span class="sign-line">&nbsp;</span>, 20<span class="sign-line" style="min-width:50px;">{{ $donation->donation_date ? $donation->donation_date->format('y') : '' }}</span></div>
-                    <div>Ttd Wakif/Pendaftar : <span class="sign-line">&nbsp;</span></div>
                 </div>
 
                 <div class="syarat">
@@ -284,7 +262,6 @@
                         <li>Konfirmasi dana wakaf/sedekah kepada Anda, kami lakukan dalam waktu maksimal 3 (tiga) hari setelah bukti setoran wakaf/sedekah terverifikasi oleh Bagian keuangan kami.</li>
                         <li>Apabila proyek wakaf/sedekah pilihan anda ternyata telah terpenuhi, maka dengan ini anda menyerahkan kepada kami (BWA) untuk memanfaatkan dana anda dalam pembiayaan proyek wakaf/sedekah BWA lainnya.</li>
                     </ol>
-                    <div class="color-note">Asli (putih) &middot; Wakif (kuning) &middot; BWA &middot; Relawan</div>
                 </div>
             </div>
 
@@ -300,7 +277,6 @@
                 <div class="label">dari :</div>
                 <div class="line-field">{{ $wakifName }}</div>
                 <div class="label" style="margin-top:16px;">Tanggal : {{ $donationDateFormatted }}</div>
-                <div class="label" style="margin-top:26px;">Ttd Wakif/Pendaftar :</div>
                 <div class="watermark">BWA</div>
                 <div class="org-name">BADAN WAKAF AL QUR'AN</div>
             </div>

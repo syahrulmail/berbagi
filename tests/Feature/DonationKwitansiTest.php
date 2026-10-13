@@ -75,7 +75,10 @@ class DonationKwitansiTest extends TestCase
         $response->assertSee('Quran');
         $response->assertSee('50.000');
         $response->assertSee('Lima puluh ribu Rupiah');
-        $response->assertSee('FKJ-');
+        $response->assertSee('Total: Lima puluh ribu Rupiah');
+        $response->assertDontSee('No. FKJ');
+        $response->assertDontSee('Ttd Wakif/Pendaftar');
+        $response->assertDontSee('Asli (putih)');
     }
 
     public function test_kwitansi_is_forbidden_for_unrelated_agen(): void
