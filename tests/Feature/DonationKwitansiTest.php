@@ -147,4 +147,88 @@ class DonationKwitansiTest extends TestCase
 
         $this->assertSame('', kwitansi_wa_url($donation));
     }
+
+    public function test_public_kwitansi_requires_valid_signature(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        // Tanpa tanda tangan -> ditolak.
+        $this->get(route('kwitansi.public', $donation))->assertForbidden();
+
+        // Dengan tanda tangan -> dapat dibuka tanpa login.
+        $signed = \Illuminate\Support\Facades\URL::signedRoute('kwitansi.public', ['donation' => $donation->id]);
+        $this->get($signed)->assertOk()->assertSee('Budi Test');
+    }
+
+    public function test_kirim_kwitansi_falls_back_to_whatsapp_link_without_api(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $response = $this->actingAs($admin)
+            ->postJson(route('donations.kirim-kwitansi', $donation));
+
+        $response->assertOk();
+        $response->assertJsonPath('sent', false);
+
+        $link = $response->json('link');
+        $this->assertNotEmpty($link);
+
+        $waUrl = $response->json('wa_url');
+        $this->assertStringStartsWith('https://wa.me/6281234567890?text=', $waUrl);
+        $this->assertStringContainsString(rawurlencode($link), $waUrl);
+    }
+
+    public function test_kirim_kwitansi_without_phone_reports_reason(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, , $contact, , $donation] = $this->makeDonation($admin);
+
+        $contact->update(['phone' => '']);
+
+        $response = $this->actingAs($admin)
+            ->postJson(route('donations.kirim-kwitansi', $donation));
+
+        $response->assertOk();
+        $response->assertJsonPath('sent', false);
+        $this->assertSame('', $response->json('wa_url'));
+    }
+
+    public function test_kirim_kwitansi_is_forbidden_for_unrelated_agen(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $otherBranch = Branch::create(['code' => 'BR-' . uniqid(), 'name' => 'Cabang Lain', 'is_active' => true]);
+        $otherAgen = $this->makeUser('agen', $otherBranch);
+
+        $this->actingAs($otherAgen)
+            ->postJson(route('donations.kirim-kwitansi', $donation))
+            ->assertForbidden();
+    }
+
+    public function test_kwitansi_image_service_renders_png(): void
+    {
+        if (! function_exists('imagettftext')) {
+            $this->markTestSkipped('GD FreeType tidak tersedia.');
+        }
+
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $service = new \App\Services\KwitansiImageService();
+        $rel = $service->render($donation->fresh(['contact', 'items.program', 'program']));
+
+        $this->assertNotNull($rel);
+
+        $path = storage_path('app/public/' . $rel);
+        $this->assertFileExists($path);
+
+        $size = getimagesize($path);
+        $this->assertSame(1000, $size[0]);
+        $this->assertSame('image/png', $size['mime']);
+
+        @unlink($path);
+    }
 }

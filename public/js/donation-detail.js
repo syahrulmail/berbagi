@@ -26,6 +26,7 @@
     var urlUpdate = cfg.updateUrl || '';
     var urlDelete = cfg.deleteUrl || '';
     var urlKwitansi = cfg.kwitansiUrl || '';
+    var urlKirimKwitansi = cfg.kirimKwitansiUrl || '';
 
     function buildUrl(base, id) {
         return base.replace('__ID__', encodeURIComponent(id));
@@ -47,6 +48,21 @@
     function showError(msg) {
         errorBox.textContent = msg || '';
         errorBox.classList.toggle('show', !!msg);
+        errorBox.style.background = '';
+        errorBox.style.borderColor = '';
+        errorBox.style.color = '';
+    }
+
+    function showMessage(msg, ok) {
+        if (!msg) {
+            showError('');
+            return;
+        }
+        errorBox.textContent = msg;
+        errorBox.classList.add('show');
+        errorBox.style.background = ok ? '#e6f4ec' : '#fdecea';
+        errorBox.style.borderColor = ok ? '#bfe3cf' : '#f5c6c2';
+        errorBox.style.color = ok ? '#1e6b46' : '#b23b30';
     }
 
     function open() {
@@ -115,7 +131,6 @@
 
         currentWaUrl = d.wa_kwitansi_url || '';
         if (waBtn) {
-            waBtn.setAttribute('href', currentWaUrl || '#');
             waBtn.style.display = currentWaUrl ? '' : 'none';
         }
     }
@@ -326,6 +341,49 @@
             if (currentId && urlKwitansi) {
                 window.open(buildUrl(urlKwitansi, currentId), '_blank');
             }
+        });
+    }
+
+    if (waBtn) {
+        waBtn.addEventListener('click', function () {
+            if (busy || !currentId || !urlKirimKwitansi) return;
+
+            busy = true;
+            waBtn.disabled = true;
+            var original = waBtn.innerHTML;
+            waBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+            showMessage('Mengirim kwitansi ke WhatsApp donatur...', true);
+
+            var token = csrfToken();
+            var fd = new FormData();
+            fd.set('_token', token);
+
+            fetchJson(buildUrl(urlKirimKwitansi, currentId), {
+                method: 'POST',
+                body: fd,
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token }
+            })
+                .then(function (r) {
+                    var d = r.data || {};
+                    if (d.sent) {
+                        showMessage('Kwitansi berhasil dikirim ke WhatsApp donatur.', true);
+                        return;
+                    }
+                    if (d.wa_url) {
+                        window.open(d.wa_url, '_blank');
+                        showMessage('Gagal kirim otomatis' + (d.reason ? ' (' + d.reason + ')' : '') + '. Membuka WhatsApp berisi tautan kwitansi.', false);
+                    } else {
+                        showMessage(d.reason || d.error || 'Gagal mengirim kwitansi.', false);
+                    }
+                })
+                .catch(function () {
+                    showMessage('Terjadi kesalahan jaringan. Coba lagi.', false);
+                })
+                .finally(function () {
+                    busy = false;
+                    waBtn.disabled = false;
+                    waBtn.innerHTML = original;
+                });
         });
     }
 

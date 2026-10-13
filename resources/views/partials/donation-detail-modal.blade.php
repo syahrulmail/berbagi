@@ -9,6 +9,7 @@
         'updateUrl' => route('donations.update', ['donation' => '__ID__']),
         'deleteUrl' => route('donations.destroy', ['donation' => '__ID__']),
         'kwitansiUrl' => route('donations.kwitansi', ['donation' => '__ID__']),
+        'kirimKwitansiUrl' => route('donations.kirim-kwitansi', ['donation' => '__ID__']),
     ];
 @endphp
 <div class="modal-backdrop" id="donation-detail-modal" role="dialog" aria-modal="true">
@@ -24,7 +25,7 @@
         <div class="modal-footer" style="flex-direction:column;align-items:stretch;">
             <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
                 <button type="button" class="btn" id="donation-detail-kwitansi-btn"><i class="fas fa-print"></i> Cetak Kwitansi</button>
-                <a class="btn" id="donation-detail-wa-btn" href="#" target="_blank" rel="noopener" style="display:none;background:#25D366;color:#fff;"><i class="fab fa-whatsapp"></i> Kirim Kwitansi</a>
+                <button type="button" class="btn" id="donation-detail-wa-btn" style="display:none;background:#25D366;color:#fff;"><i class="fab fa-whatsapp"></i> Kirim Kwitansi</button>
             </div>
             <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
                 @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())

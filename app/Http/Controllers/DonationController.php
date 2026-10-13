@@ -558,6 +558,38 @@ class DonationController extends Controller
     {
         $this->authorizeAccess($donation);
 
+        return view('donations.kwitansi', $this->kwitansiData($donation));
+    }
+
+    /**
+     * Kwitansi publik (tanpa login) yang hanya bisa dibuka via tautan bertanda tangan.
+     */
+    public function publicKwitansi(Request $request, Donation $donation)
+    {
+        if (! $request->hasValidSignature()) {
+            abort(403, 'Tautan kwitansi tidak valid.');
+        }
+
+        return view('donations.kwitansi', $this->kwitansiData($donation));
+    }
+
+    /**
+     * Kirim gambar + tautan kwitansi ke WhatsApp donatur.
+     */
+    public function kirimKwitansi(Request $request, Donation $donation)
+    {
+        $this->authorizeAccess($donation);
+
+        $result = app(\App\Services\KwitansiDispatcher::class)->send($request->user(), $donation);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Data yang dipakai bersama oleh kwitansi internal & publik.
+     */
+    protected function kwitansiData(Donation $donation): array
+    {
         $donation->load(['branch', 'agen', 'contact', 'items.program', 'program']);
 
         $contact = $donation->contact;
@@ -580,7 +612,7 @@ class DonationController extends Controller
 
         $total = (float) $donation->amount;
 
-        return view('donations.kwitansi', [
+        return [
             'wakifName' => $wakifName,
             'pendaftar' => (string) ($donation->donor_info ?: ''),
             'phoneMasked' => mask_phone($phone),
@@ -590,7 +622,7 @@ class DonationController extends Controller
             'paymentMethodLabel' => $this->paymentMethodLabel($donation->payment_method),
             'paymentDateFormatted' => $donation->payment_date ? $donation->payment_date->format('d F Y') : '-',
             'donationDateFormatted' => $donation->donation_date ? $donation->donation_date->format('d F Y') : '-',
-        ]);
+        ];
     }
 
     /**

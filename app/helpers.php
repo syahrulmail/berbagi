@@ -175,3 +175,94 @@ if (! function_exists('kwitansi_wa_url')) {
         return 'https://wa.me/' . $digits . '?text=' . rawurlencode(implode("\n", $lines));
     }
 }
+
+if (! function_exists('kwitansi_public_url')) {
+    /**
+     * URL publik (bertanda tangan, tanpa kedaluwarsa) untuk membuka kwitansi
+     * donasi tanpa login. Dipakai pada tautan yang dikirim ke donatur.
+     */
+    function kwitansi_public_url($donation)
+    {
+        return \Illuminate\Support\Facades\URL::signedRoute('kwitansi.public', ['donation' => $donation->id]);
+    }
+}
+
+if (! function_exists('kwitansi_link_wa_url')) {
+    /**
+     * URL wa.me (fallback) yang membawa tautan kwitansi publik beserta ringkasan
+     * donasi. Kosong bila donatur tidak memiliki nomor telepon.
+     */
+    function kwitansi_link_wa_url($donation, $link = null)
+    {
+        $contact = $donation->contact;
+        $phone = $contact ? (string) $contact->phone : '';
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        if ($digits !== '' && $digits[0] === '0') {
+            $digits = '62' . substr($digits, 1);
+        }
+
+        if ($digits === '') {
+            return '';
+        }
+
+        if ($link === null) {
+            $link = kwitansi_public_url($donation);
+        }
+
+        return 'https://wa.me/' . $digits . '?text=' . rawurlencode(kwitansi_caption($donation, $link));
+    }
+}
+
+if (! function_exists('kwitansi_caption')) {
+    /**
+     * Teks pesan WhatsApp berisi rincian donasi, tautan kwitansi publik
+     * (di atas ucapan terima kasih), lalu penutup.
+     */
+    function kwitansi_caption($donation, $link)
+    {
+        $contact = $donation->contact;
+        $wakif = $contact ? (string) $contact->name : (string) ($donation->donor_info ?: '');
+        if ($wakif === '') {
+            $wakif = 'Bapak/Ibu';
+        }
+
+        $date = $donation->donation_date ? $donation->donation_date->format('d/m/Y') : '-';
+        $total = (float) $donation->amount;
+
+        $programs = [];
+        if ($donation->relationLoaded('items')) {
+            foreach ($donation->items as $item) {
+                $label = $item->program ? $item->program->category_label : ($item->program_category ?: '');
+                if ($label !== '' && ! in_array($label, $programs, true)) {
+                    $programs[] = $label;
+                }
+            }
+        }
+        if (empty($programs) && $donation->program) {
+            $programs[] = $donation->program->category_label;
+        }
+
+        $lines = [
+            'Assalamu\'alaikum ' . $wakif . ',',
+            '',
+            'Berikut rincian donasi Anda:',
+            'Nama : ' . $wakif,
+            'Tanggal : ' . $date,
+        ];
+
+        if (! empty($programs)) {
+            $lines[] = 'Program : ' . implode(', ', $programs);
+        }
+
+        $lines[] = 'Total : Rp ' . number_format($total, 0, ',', '.');
+        $lines[] = 'Terbilang : ' . ucfirst(trim(terbilang_id($total))) . ' Rupiah';
+        $lines[] = '';
+        $lines[] = 'Kwitansi donasi Anda dapat dilihat pada tautan berikut:';
+        $lines[] = (string) $link;
+        $lines[] = '';
+        $lines[] = 'Terima kasih atas wakaf/sedekah Anda. Semoga Allah membalas dengan kebaikan yang berlipat.';
+
+        return implode("\n", $lines);
+    }
+}

@@ -968,6 +968,26 @@ class MobileAppController extends Controller
     }
 
     /**
+     * Kirim gambar + tautan kwitansi ke WhatsApp donatur (mobile).
+     */
+    public function sendKwitansi(Request $request, $id)
+    {
+        $donation = Donation::with(['contact'])->find($id);
+
+        if (! $donation) {
+            return response()->json(['error' => 'Donasi tidak ditemukan.'], 404);
+        }
+
+        if (! $this->canAccessDonation($donation)) {
+            return response()->json(['error' => 'Anda tidak memiliki izin untuk mengirim kwitansi donasi ini.'], 403);
+        }
+
+        $result = app(\App\Services\KwitansiDispatcher::class)->send($request->user(), $donation);
+
+        return response()->json($result);
+    }
+
+    /**
      * Detail pengguna (JSON, untuk bottom sheet mobile).
      */
     public function userDetail($id)

@@ -88,7 +88,7 @@
             ((data.note) ? '<div class="mo-detail-item full" style="margin-top:10px;"><div class="mo-detail-label">Catatan</div><div class="mo-detail-value">' + esc(data.note) + '</div></div>' : '') +
             ((data.proof_url) ? '<a href="' + esc(data.proof_url) + '" target="_blank" rel="noopener" style="display:block;margin-top:12px;text-align:center;background:#eefaf8;color:var(--mo-primary);font-weight:600;font-size:12.5px;padding:11px;border-radius:12px;text-decoration:none;"><i class="fas fa-image"></i> Lihat Bukti Pembayaran</a>' : '') +
             ((data.can_edit && data.edit_url) ? '<a href="' + esc(data.edit_url) + '" style="display:block;margin-top:12px;text-align:center;background:var(--mo-primary);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fas fa-pen"></i> Edit Donasi</a>' : '') +
-            ((data.wa_kwitansi_url) ? '<a href="' + esc(data.wa_kwitansi_url) + '" target="_blank" rel="noopener" style="display:block;margin-top:10px;text-align:center;background:#25D366;color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;text-decoration:none;"><i class="fab fa-whatsapp"></i> Kirim Kwitansi</a>' : '') +
+            ((data.wa_kwitansi_url) ? '<button type="button" data-mo-kirim-kwitansi="' + esc(data.id) + '" style="display:block;width:100%;margin-top:10px;text-align:center;background:#25D366;color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;border:none;cursor:pointer;"><i class="fab fa-whatsapp"></i> Kirim Kwitansi</button>' : '') +
             ((data.can_delete && data.delete_url) ? '<button type="button" id="mo-donation-delete-btn" data-delete-url="' + esc(data.delete_url) + '" style="display:block;width:100%;margin-top:10px;text-align:center;background:var(--mo-danger);color:#fff;font-weight:700;font-size:13px;padding:13px;border-radius:14px;border:none;cursor:pointer;"><i class="fas fa-trash-can"></i> Hapus Donasi</button>' : '');
     }
 
@@ -331,9 +331,55 @@
             }
         });
 
+        // Kirim kwitansi (foto + tautan) via WhatsApp
+        document.addEventListener('click', function (e) {
+            var kirimBtn = e.target.closest ? e.target.closest('[data-mo-kirim-kwitansi]') : null;
+            if (!kirimBtn || kirimBtn.disabled) return;
+
+            var id = kirimBtn.getAttribute('data-mo-kirim-kwitansi');
+            if (!id) return;
+
+            var original = kirimBtn.innerHTML;
+            kirimBtn.disabled = true;
+            kirimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+
+            fetch(root.api + '/donasi/' + id + '/kirim-kwitansi', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': root.csrf || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+                .then(function (r) { return r.json().then(function (d) { return d; }); })
+                .then(function (d) {
+                    if (d && d.sent) {
+                        kirimBtn.innerHTML = '<i class="fas fa-circle-check"></i> Kwitansi terkirim';
+                        setTimeout(function () {
+                            kirimBtn.disabled = false;
+                            kirimBtn.innerHTML = original;
+                        }, 2500);
+                        return;
+                    }
+                    kirimBtn.disabled = false;
+                    kirimBtn.innerHTML = original;
+                    if (d && d.wa_url) {
+                        window.open(d.wa_url, '_blank');
+                        alert('Gagal kirim otomatis' + (d.reason ? ': ' + d.reason : '') + '. Membuka WhatsApp berisi tautan kwitansi.');
+                    } else {
+                        alert((d && (d.reason || d.error)) || 'Gagal mengirim kwitansi.');
+                    }
+                })
+                .catch(function () {
+                    kirimBtn.disabled = false;
+                    kirimBtn.innerHTML = original;
+                    alert('Terjadi kesalahan jaringan. Coba lagi.');
+                });
+        });
+
         // Contact detail rows
         document.addEventListener('click', function (e) {
-            var row = e.target.closest('[data-contact-detail]');
+            var row = e.target.closest ? e.target.closest('[data-contact-detail]') : null;
             if (row) {
                 var id = row.getAttribute('data-contact-detail');
                 var body = document.getElementById('mo-contact-sheet-body');
