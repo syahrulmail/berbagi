@@ -170,6 +170,8 @@ class DonationKwitansiTest extends TestCase
         $admin = $this->makeUser('admin');
         [, , , , $donation] = $this->makeDonation($admin);
 
+        \Illuminate\Support\Facades\Storage::fake('public');
+
         $signed = \Illuminate\Support\Facades\URL::signedRoute('kwitansi.public', ['donation' => $donation->id]);
 
         $this->get($signed)
@@ -232,6 +234,8 @@ class DonationKwitansiTest extends TestCase
             $this->markTestSkipped('GD FreeType tidak tersedia.');
         }
 
+        \Illuminate\Support\Facades\Storage::fake('public');
+
         $admin = $this->makeUser('admin');
         [, , , , $donation] = $this->makeDonation($admin);
 
@@ -239,14 +243,13 @@ class DonationKwitansiTest extends TestCase
         $rel = $service->render($donation->fresh(['contact', 'items.program', 'program']));
 
         $this->assertNotNull($rel);
+        $this->assertStringStartsWith('kwitansi/', $rel);
 
-        $path = storage_path('app/public/' . $rel);
-        $this->assertFileExists($path);
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $this->assertTrue($disk->exists($rel));
 
-        $size = getimagesize($path);
+        $size = getimagesize($disk->path($rel));
         $this->assertSame(1000, $size[0]);
         $this->assertSame('image/png', $size['mime']);
-
-        @unlink($path);
     }
 }

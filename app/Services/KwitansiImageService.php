@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Donation;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Membuat gambar (PNG) kwitansi donasi memakai GD, agar dapat dilampirkan
@@ -306,7 +307,7 @@ class KwitansiImageService
     public function ensure(Donation $donation): ?string
     {
         $rel = $this->pathFor($donation);
-        if (is_file(storage_path('app/public/' . $rel))) {
+        if (Storage::disk('public')->exists($rel)) {
             return $rel;
         }
 
@@ -324,18 +325,21 @@ class KwitansiImageService
     }
 
     /**
-     * Simpan gambar ke disk public.
+     * Simpan gambar ke disk public (root: public/storage) agar dapat disajikan web.
      */
     protected function store(Donation $donation, $img): ?string
     {
-        $dir = storage_path('app/public/kwitansi');
-        if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
+        $rel = $this->pathFor($donation);
+
+        ob_start();
+        $saved = imagepng($img);
+        $binary = ob_get_clean();
+
+        if (! $saved || $binary === false || $binary === '') {
             return null;
         }
 
-        $rel = $this->pathFor($donation);
-
-        if (! @imagepng($img, storage_path('app/public/' . $rel))) {
+        if (! Storage::disk('public')->put($rel, $binary)) {
             return null;
         }
 
