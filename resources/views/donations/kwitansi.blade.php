@@ -57,13 +57,6 @@
     .logo small { display: block; font-size: 8px; font-weight: 400; letter-spacing: 1.5px; margin-top: 2px; }
     .header-addr { font-size: 8.5px; line-height: 1.55; }
     .header-title { flex: 1; text-align: center; font-size: 23px; font-weight: 800; letter-spacing: 1px; }
-    .header-sub {
-        font-size: 8.5px;
-        text-align: center;
-        color: var(--green-dark);
-        padding: 3px 0;
-        border-bottom: 1px solid #ccd;
-    }
 
     .statement { font-size: 11.5px; margin: 12px 12px 10px; }
 
@@ -171,7 +164,6 @@
                     </div>
                     <div class="header-title">FORMULIR WAKAF</div>
                 </div>
-                <div class="header-sub">www.facebook.com/wakafalquran &nbsp;|&nbsp; www.twitter.com/wakafalquran</div>
 
                 <div class="statement">Saya amanahkan wakaf/sedekah Saya kepada Badan Wakaf Al Qur'an sebagai berikut :</div>
 
@@ -213,7 +205,7 @@
                         <thead>
                             <tr>
                                 <th style="width:24%;">Jenis Donasi</th>
-                                <th style="width:18%;">Kode Unik Proyek</th>
+                                <th style="width:18%;">Kode</th>
                                 <th style="width:12%;">Banyak</th>
                                 <th style="width:20%;">Nilai (Rp)</th>
                                 <th style="width:26%;">Jumlah (Rp)</th>
@@ -229,7 +221,7 @@
                                     <td class="num">{{ number_format($item['amount'], 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
-                            @for($i = count($items); $i < 5; $i++)
+                            @for($i = count($items); $i < 3; $i++)
                                 <tr><td></td><td></td><td></td><td></td><td></td></tr>
                             @endfor
                             <tr class="total-row">
@@ -274,6 +266,7 @@
                 <div class="label">terbilang :</div>
                 <div class="line-field">{{ $terbilang }}</div>
                 <div class="pay-date">Tanggal Pembayaran : {{ $paymentDateFormatted }}</div>
+                <div class="pay-date">Metode Pembayaran : {{ $paymentMethodLabel }}</div>
                 <div class="label">dari :</div>
                 <div class="line-field">{{ $wakifName }}</div>
                 <div class="label" style="margin-top:16px;">Tanggal : {{ $donationDateFormatted }}</div>

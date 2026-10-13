@@ -586,6 +586,7 @@ class DonationController extends Controller
             'items' => $items,
             'total' => $total,
             'terbilang' => ucfirst(trim(terbilang_id($total))) . ' Rupiah',
+            'paymentMethodLabel' => $this->paymentMethodLabel($donation->payment_method),
             'paymentDateFormatted' => $donation->payment_date ? $donation->payment_date->format('d F Y') : '-',
             'donationDateFormatted' => $donation->donation_date ? $donation->donation_date->format('d F Y') : '-',
         ]);

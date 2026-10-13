@@ -76,6 +76,10 @@ class DonationKwitansiTest extends TestCase
         $response->assertSee('50.000');
         $response->assertSee('Lima puluh ribu Rupiah');
         $response->assertSee('Total: Lima puluh ribu Rupiah');
+        $response->assertSee('Metode Pembayaran : Transfer Bank');
+        $response->assertSee('Kode');
+        $response->assertDontSee('Kode Unik Proyek');
+        $response->assertDontSee('facebook.com/wakafalquran');
         $response->assertDontSee('No. FKJ');
         $response->assertDontSee('Ttd Wakif/Pendaftar');
         $response->assertDontSee('Asli (putih)');
