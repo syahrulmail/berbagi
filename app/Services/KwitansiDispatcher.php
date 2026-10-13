@@ -55,7 +55,7 @@ class KwitansiDispatcher
             ];
         }
 
-        $imagePath = $this->images->render($donation);
+        $imagePath = $this->images->ensure($donation);
         $imageUrl = $imagePath ? asset_photo_url($imagePath) : '';
 
         $provider = $this->followup->resolveProvider($user, false);

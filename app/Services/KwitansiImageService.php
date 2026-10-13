@@ -299,6 +299,31 @@ class KwitansiImageService
     }
 
     /**
+     * Pastikan gambar kwitansi tersedia, render hanya bila belum ada.
+     *
+     * @return string|null  Path relatif pada disk "public".
+     */
+    public function ensure(Donation $donation): ?string
+    {
+        $rel = $this->pathFor($donation);
+        if (is_file(storage_path('app/public/' . $rel))) {
+            return $rel;
+        }
+
+        return $this->render($donation);
+    }
+
+    /**
+     * Path relatif gambar (deterministik) untuk donasi.
+     */
+    protected function pathFor(Donation $donation): string
+    {
+        $hash = substr(md5($donation->id . '|' . $donation->amount . '|' . (string) $donation->updated_at), 0, 10);
+
+        return 'kwitansi/kwitansi-' . $donation->id . '-' . $hash . '.png';
+    }
+
+    /**
      * Simpan gambar ke disk public.
      */
     protected function store(Donation $donation, $img): ?string
@@ -308,8 +333,7 @@ class KwitansiImageService
             return null;
         }
 
-        $hash = substr(md5($donation->id . '|' . $donation->amount . '|' . (string) $donation->updated_at), 0, 10);
-        $rel = 'kwitansi/kwitansi-' . $donation->id . '-' . $hash . '.png';
+        $rel = $this->pathFor($donation);
 
         if (! @imagepng($img, storage_path('app/public/' . $rel))) {
             return null;

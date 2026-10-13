@@ -161,6 +161,24 @@ class DonationKwitansiTest extends TestCase
         $this->get($signed)->assertOk()->assertSee('Budi Test');
     }
 
+    public function test_public_kwitansi_exposes_thumbnail_open_graph_image(): void
+    {
+        if (! function_exists('imagettftext')) {
+            $this->markTestSkipped('GD FreeType tidak tersedia.');
+        }
+
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $signed = \Illuminate\Support\Facades\URL::signedRoute('kwitansi.public', ['donation' => $donation->id]);
+
+        $this->get($signed)
+            ->assertOk()
+            ->assertSee('property="og:image"', false)
+            ->assertSee('/storage/kwitansi/', false)
+            ->assertSee('summary_large_image');
+    }
+
     public function test_kirim_kwitansi_falls_back_to_whatsapp_link_without_api(): void
     {
         $admin = $this->makeUser('admin');

@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Kwitansi - {{ $wakifName }}</title>
+@php $thumb = $kwitansiImageUrl ?? null; @endphp
+@if($thumb)
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kwitansi Donasi - BWA">
+<meta property="og:description" content="Kwitansi donasi {{ $wakifName }} sebesar Rp {{ number_format($total, 0, ',', '.') }}">
+<meta property="og:image" content="{{ $thumb }}">
+<meta property="og:image:secure_url" content="{{ $thumb }}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1000">
+<meta property="og:image:height" content="1414">
+<meta property="og:image:alt" content="Kwitansi donasi {{ $wakifName }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kwitansi Donasi - BWA">
+<meta name="twitter:description" content="Kwitansi donasi {{ $wakifName }} sebesar Rp {{ number_format($total, 0, ',', '.') }}">
+<meta name="twitter:image" content="{{ $thumb }}">
+@endif
 <style>
     :root {
         --green: #2f7a52;

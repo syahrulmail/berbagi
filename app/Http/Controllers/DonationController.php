@@ -9,6 +9,7 @@ use App\Models\Donation;
 use App\Models\Program;
 use App\Models\User;
 use App\Services\DocxWriter;
+use App\Services\KwitansiImageService;
 use App\Services\XlsxWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -570,7 +571,10 @@ class DonationController extends Controller
             abort(403, 'Tautan kwitansi tidak valid.');
         }
 
-        return view('donations.kwitansi', $this->kwitansiData($donation));
+        $data = $this->kwitansiData($donation);
+        $data['kwitansiImageUrl'] = $this->kwitansiThumbnail($donation);
+
+        return view('donations.kwitansi', $data);
     }
 
     /**
@@ -623,6 +627,16 @@ class DonationController extends Controller
             'paymentDateFormatted' => $donation->payment_date ? $donation->payment_date->format('d F Y') : '-',
             'donationDateFormatted' => $donation->donation_date ? $donation->donation_date->format('d F Y') : '-',
         ];
+    }
+
+    /**
+     * URL publik gambar kwitansi (untuk pratinjau/thumbnail tautan).
+     */
+    protected function kwitansiThumbnail(Donation $donation): ?string
+    {
+        $rel = app(KwitansiImageService::class)->ensure($donation);
+
+        return $rel ? asset_photo_url($rel) : null;
     }
 
     /**
