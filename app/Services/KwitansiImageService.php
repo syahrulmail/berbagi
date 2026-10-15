@@ -20,7 +20,7 @@ class KwitansiImageService
     protected const MARGIN = 28;
 
     /** Versi tata letak — naikkan agar gambar lama di-regenerate ulang. */
-    protected const VERSION = 2;
+    protected const VERSION = 3;
 
     /** @var string */
     protected $font;
@@ -30,6 +30,9 @@ class KwitansiImageService
 
     /** @var string  Logo BWA (di public/images). */
     protected $logo;
+
+    /** @var string  Logo BWA putih untuk header hijau (di public/images). */
+    protected $logoWhite;
 
     /** @var string  Stempel BWA (di public/images). */
     protected $stamp;
@@ -47,6 +50,7 @@ class KwitansiImageService
         $this->font = resource_path('fonts/DejaVuSans.ttf');
         $this->fontBold = resource_path('fonts/DejaVuSans-Bold.ttf');
         $this->logo = public_path('images/logo-bwa.png');
+        $this->logoWhite = public_path('images/logo-bwa-putih.png');
         $this->stamp = public_path('images/stamp-bwa.png');
     }
 
@@ -151,8 +155,8 @@ class KwitansiImageService
 
         imagefilledrectangle($img, $x1, $y1, $x2, $y2, $this->color($img, $this->green));
 
-        // Logo BWA langsung di atas header hijau (PNG transparan).
-        $logo = $this->loadImage($this->logo);
+        // Logo BWA putih langsung di atas header hijau (PNG transparan).
+        $logo = $this->loadImage($this->logoWhite);
         if ($logo) {
             $bh = 76;
             $lw0 = imagesx($logo);

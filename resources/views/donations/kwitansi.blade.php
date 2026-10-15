@@ -150,7 +150,7 @@
         <div class="sheet-inner">
             <div class="col-left">
                 <div class="header">
-                    <img class="brand-logo" src="{{ asset('images/logo-bwa.png') }}" alt="BWA Inovasi Wakaf">
+                    <img class="brand-logo" src="{{ asset('images/logo-bwa-putih.png') }}" alt="BWA Inovasi Wakaf">
                     <div class="header-addr">
                         Jl. Tebet Timur Dalam I, No. 1<br>
                         Tebet &ndash; Jakarta Selatan 12820<br>
