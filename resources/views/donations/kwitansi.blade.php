@@ -69,8 +69,7 @@
         align-items: center;
         gap: 14px;
     }
-    .brand-plate { background: #fff; border-radius: 4px; padding: 5px 9px; display: flex; align-items: center; }
-    .brand-logo { height: 58px; width: auto; display: block; }
+    .brand-logo { height: 62px; width: auto; display: block; }
     .header-addr { font-size: 8.5px; line-height: 1.55; }
     .header-title { flex: 1; text-align: center; font-size: 23px; font-weight: 800; letter-spacing: 1px; }
 
@@ -108,9 +107,9 @@
 
     .stub-logo { text-align: center; margin: 6px 0 4px; }
     .stub-logo-img { height: 56px; width: auto; }
-    .sign-area { position: absolute; right: 10px; bottom: 36px; width: 150px; height: 108px; pointer-events: none; }
-    .sign-area .sign-img { position: absolute; right: 0; bottom: 0; max-width: 140px; max-height: 70px; }
-    .sign-area .stamp-img { position: absolute; right: 0; bottom: 30px; max-width: 116px; z-index: 2; }
+    .sign-area { position: absolute; right: 22px; bottom: 34px; width: 150px; height: 108px; pointer-events: none; }
+    .sign-area .sign-img { position: absolute; right: 0; bottom: 0; max-width: 136px; max-height: 68px; }
+    .sign-area .stamp-img { position: absolute; right: 26px; bottom: 30px; max-width: 112px; z-index: 2; }
     .tagline { font-size: 9.5px; font-style: italic; line-height: 1.5; margin: 8px 0 12px; }
     .officer { font-size: 9px; color: var(--muted); margin-bottom: 6px; }
     .col-right .label { font-size: 10.5px; margin-top: 8px; }
@@ -127,29 +126,6 @@
     }
     .line-field { border-bottom: 1px dotted #666; min-height: 16px; font-size: 10.5px; padding: 2px 4px 0; }
     .pay-date { font-size: 9px; color: var(--muted); margin-top: 3px; }
-    .watermark {
-        position: absolute;
-        bottom: 24px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 72px;
-        font-weight: 800;
-        letter-spacing: 3px;
-        color: rgba(47, 122, 82, .12);
-        pointer-events: none;
-    }
-    .org-name {
-        position: absolute;
-        bottom: 8px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        color: var(--muted);
-    }
 
     @media print {
         body { background: #fff; }
@@ -174,9 +150,7 @@
         <div class="sheet-inner">
             <div class="col-left">
                 <div class="header">
-                    <div class="brand-plate">
-                        <img class="brand-logo" src="{{ asset('images/logo-bwa.png') }}" alt="BWA Inovasi Wakaf">
-                    </div>
+                    <img class="brand-logo" src="{{ asset('images/logo-bwa.png') }}" alt="BWA Inovasi Wakaf">
                     <div class="header-addr">
                         Jl. Tebet Timur Dalam I, No. 1<br>
                         Tebet &ndash; Jakarta Selatan 12820<br>
@@ -297,8 +271,6 @@
                     @endif
                     <img class="stamp-img" src="{{ asset('images/stamp-bwa.png') }}" alt="Stempel BWA">
                 </div>
-                <div class="watermark">BWA</div>
-                <div class="org-name">BADAN WAKAF AL QUR'AN</div>
             </div>
         </div>
     </div>

@@ -37,7 +37,6 @@ class KwitansiImageService
     protected $white = [255, 255, 255];
     protected $muted = [110, 110, 110];
     protected $line = [51, 51, 51];
-    protected $watermarkColor = [227, 238, 232];
     protected $soft = [242, 247, 244];
 
     public function __construct()
@@ -65,7 +64,6 @@ class KwitansiImageService
 
         imagefilledrectangle($img, 0, 0, self::WIDTH, self::HEIGHT, $this->color($img, $this->white));
 
-        $this->drawWatermark($img);
         $this->drawFrame($img);
         $this->drawHeader($img);
 
@@ -133,11 +131,6 @@ class KwitansiImageService
         return Storage::disk('public')->path($rel);
     }
 
-    protected function drawWatermark($img): void
-    {
-        $this->text($img, 150, 0, self::HEIGHT - 150, 'BWA', $this->watermarkColor, true, 'center', self::WIDTH);
-    }
-
     protected function drawFrame($img): void
     {
         $m = self::MARGIN;
@@ -155,20 +148,18 @@ class KwitansiImageService
 
         imagefilledrectangle($img, $x1, $y1, $x2, $y2, $this->color($img, $this->green));
 
-        // Logo BWA pada plat putih agar kontras di atas header hijau.
-        $plateX = $x1 + 16;
-        $plateY = $y1 + 13;
-        $plateW = 156;
-        $plateH = 94;
-        imagefilledrectangle($img, $plateX, $plateY, $plateX + $plateW, $plateY + $plateH, $this->color($img, $this->white));
-
+        // Logo BWA langsung di atas header hijau (PNG transparan).
         $logo = $this->loadImage($this->logo);
         if ($logo) {
-            $this->pasteFit($img, $logo, $plateX + 10, $plateY + 10, $plateW - 20, $plateH - 20);
+            $bh = 76;
+            $lw0 = imagesx($logo);
+            $lh0 = imagesy($logo);
+            $lw = (int) round($bh * $lw0 / max(1, $lh0));
+            imagecopyresampled($img, $logo, $x1 + 20, $y1 + (int) round(($height - $bh) / 2), 0, 0, $lw, $bh, $lw0, $lh0);
             imagedestroy($logo);
         } else {
-            $this->text($img, 30, $plateX + 12, $plateY + 58, 'BWA', $this->green, true);
-            $this->text($img, 9.5, $plateX + 12, $plateY + 78, 'Inovasi Wakaf', $this->muted, false);
+            $this->text($img, 30, $x1 + 22, $y1 + 62, 'BWA', $this->white, true);
+            $this->text($img, 9.5, $x1 + 22, $y1 + 84, 'Inovasi Wakaf', $this->white, false);
         }
 
         $addrX = $x2 - 16;
@@ -343,30 +334,28 @@ class KwitansiImageService
         $y += 40;
 
         $this->text($img, 9.5, $x, $y, 'Tanggal : ' . $data['donationDate'], $this->ink);
-
-        $this->text($img, 10, $x, self::HEIGHT - self::MARGIN - 24, 'BADAN WAKAF AL QUR\'AN', $this->muted, true, 'center', $right);
     }
 
     /**
      * Tanda tangan agen + stempel BWA di kanan bawah kwitansi.
-     * Stempel diletakkan sedikit di atas & menimpa bagian atas tanda tangan.
+     * Stempel digeser ke kiri agar menimpa bagian kanan tanda tangan.
      */
     protected function drawSignature($img, array $data): void
     {
-        $right = 950;
+        $right = 906;
 
         $sigTop = 1255;
         $sig = $this->loadImage($data['signaturePath'] ?? '');
         if ($sig) {
             $sw = imagesx($sig);
             $sh = imagesy($sig);
-            $w = 205;
+            $w = 200;
             $h = (int) round($w * $sh / max(1, $sw));
-            if ($h > 110) {
-                $h = 110;
+            if ($h > 108) {
+                $h = 108;
                 $w = (int) round($h * $sw / max(1, $sh));
             }
-            $sigTop = 1310 - $h;
+            $sigTop = 1314 - $h;
             imagecopyresampled($img, $sig, $right - $w, $sigTop, 0, 0, $w, $h, $sw, $sh);
             imagedestroy($sig);
         }
@@ -375,10 +364,10 @@ class KwitansiImageService
         if ($stamp) {
             $sw = imagesx($stamp);
             $sh = imagesy($stamp);
-            $w = 168;
+            $w = 152;
             $h = (int) round($w * $sh / max(1, $sw));
-            $bottom = $sigTop + 46;
-            imagecopyresampled($img, $stamp, $right - $w, $bottom - $h, 0, 0, $w, $h, $sw, $sh);
+            $bottom = $sigTop + 30;
+            imagecopyresampled($img, $stamp, $right - 30 - $w, $bottom - $h, 0, 0, $w, $h, $sw, $sh);
             imagedestroy($stamp);
         }
     }
@@ -419,26 +408,6 @@ class KwitansiImageService
         imagesavealpha($im, true);
 
         return $im;
-    }
-
-    /**
-     * Tempel gambar ke dalam kotak dengan skala proporsional & rata tengah.
-     */
-    protected function pasteFit($img, $src, $boxX, $boxY, $boxW, $boxH): void
-    {
-        $sw = imagesx($src);
-        $sh = imagesy($src);
-        if ($sw <= 0 || $sh <= 0) {
-            return;
-        }
-
-        $scale = min($boxW / $sw, $boxH / $sh);
-        $dw = (int) round($sw * $scale);
-        $dh = (int) round($sh * $scale);
-        $dx = $boxX + (int) round(($boxW - $dw) / 2);
-        $dy = $boxY + (int) round(($boxH - $dh) / 2);
-
-        imagecopyresampled($img, $src, $dx, $dy, 0, 0, $dw, $dh, $sw, $sh);
     }
 
     /**
