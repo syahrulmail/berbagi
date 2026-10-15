@@ -19,6 +19,9 @@ class KwitansiImageService
 
     protected const MARGIN = 28;
 
+    /** Versi tata letak — naikkan agar gambar lama di-regenerate ulang. */
+    protected const VERSION = 2;
+
     /** @var string */
     protected $font;
 
@@ -430,7 +433,7 @@ class KwitansiImageService
      */
     protected function pathFor(Donation $donation): string
     {
-        $hash = substr(md5($donation->id . '|' . $donation->amount . '|' . (string) $donation->updated_at), 0, 10);
+        $hash = substr(md5(self::VERSION . '|' . $donation->id . '|' . $donation->amount . '|' . (string) $donation->updated_at), 0, 10);
 
         return 'kwitansi/kwitansi-' . $donation->id . '-' . $hash . '.png';
     }
