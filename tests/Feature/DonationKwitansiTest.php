@@ -302,4 +302,19 @@ class DonationKwitansiTest extends TestCase
         $response->assertSee('images/stamp-bwa.png', false);
         $response->assertSee('/storage/signatures/ttd.png', false);
     }
+
+    public function test_kwitansi_print_preserves_background_colors(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $response = $this->actingAs($admin)->get(route('donations.kwitansi', $donation));
+
+        $response->assertOk();
+        $response->assertSee('print-color-adjust: exact', false);
+        $response->assertSee('-webkit-print-color-adjust: exact', false);
+        $response->assertSee('images/logo-bwa-putih.png', false);
+    }
 }

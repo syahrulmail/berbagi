@@ -128,6 +128,11 @@
     .pay-date { font-size: 9px; color: var(--muted); margin-top: 3px; }
 
     @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
         body { background: #fff; }
         .toolbar { display: none; }
         .sheet {
