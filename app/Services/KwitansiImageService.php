@@ -25,6 +25,12 @@ class KwitansiImageService
     /** @var string */
     protected $fontBold;
 
+    /** @var string  Logo BWA (di public/images). */
+    protected $logo;
+
+    /** @var string  Stempel BWA (di public/images). */
+    protected $stamp;
+
     protected $green = [47, 122, 82];
     protected $greenDark = [36, 92, 62];
     protected $ink = [34, 34, 34];
@@ -38,6 +44,8 @@ class KwitansiImageService
     {
         $this->font = resource_path('fonts/DejaVuSans.ttf');
         $this->fontBold = resource_path('fonts/DejaVuSans-Bold.ttf');
+        $this->logo = public_path('images/logo-bwa.png');
+        $this->stamp = public_path('images/stamp-bwa.png');
     }
 
     /**
@@ -63,6 +71,7 @@ class KwitansiImageService
 
         $this->drawLeftColumn($img, $data, self::MARGIN + 18, 688 - 16);
         $this->drawRightColumn($img, $data, 704, self::WIDTH - self::MARGIN - 18);
+        $this->drawSignature($img, $data);
 
         $path = $this->store($donation, $img);
         imagedestroy($img);
@@ -75,7 +84,7 @@ class KwitansiImageService
      */
     protected function data(Donation $donation): array
     {
-        $donation->load(['contact', 'items.program', 'program']);
+        $donation->load(['contact', 'items.program', 'program', 'agen']);
 
         $contact = $donation->contact;
         $wakifName = $contact ? (string) $contact->name : (string) ($donation->donor_info ?: '');
@@ -107,7 +116,21 @@ class KwitansiImageService
             'paymentMethod' => $this->paymentMethodLabel($donation->payment_method),
             'paymentDate' => $donation->payment_date ? $donation->payment_date->format('d F Y') : '-',
             'donationDate' => $donation->donation_date ? $donation->donation_date->format('d F Y') : '-',
+            'signaturePath' => $this->signaturePath($donation->agen),
         ];
+    }
+
+    /**
+     * Path filesystem tanda tangan agen (bila ada).
+     */
+    protected function signaturePath($agen): string
+    {
+        $rel = agent_signature_path($agen);
+        if ($rel === '' || ! Storage::disk('public')->exists($rel)) {
+            return '';
+        }
+
+        return Storage::disk('public')->path($rel);
     }
 
     protected function drawWatermark($img): void
@@ -132,8 +155,21 @@ class KwitansiImageService
 
         imagefilledrectangle($img, $x1, $y1, $x2, $y2, $this->color($img, $this->green));
 
-        $this->text($img, 30, $x1 + 20, $y1 + 62, 'BWA', $this->white, true);
-        $this->text($img, 9.5, $x1 + 20, $y1 + 84, 'Inovasi Wakaf', $this->white, false);
+        // Logo BWA pada plat putih agar kontras di atas header hijau.
+        $plateX = $x1 + 16;
+        $plateY = $y1 + 13;
+        $plateW = 156;
+        $plateH = 94;
+        imagefilledrectangle($img, $plateX, $plateY, $plateX + $plateW, $plateY + $plateH, $this->color($img, $this->white));
+
+        $logo = $this->loadImage($this->logo);
+        if ($logo) {
+            $this->pasteFit($img, $logo, $plateX + 10, $plateY + 10, $plateW - 20, $plateH - 20);
+            imagedestroy($logo);
+        } else {
+            $this->text($img, 30, $plateX + 12, $plateY + 58, 'BWA', $this->green, true);
+            $this->text($img, 9.5, $plateX + 12, $plateY + 78, 'Inovasi Wakaf', $this->muted, false);
+        }
 
         $addrX = $x2 - 16;
         $addrY = $y1 + 34;
@@ -260,10 +296,22 @@ class KwitansiImageService
         $width = $right - $x;
         $y = 232;
 
-        $this->text($img, 46, $x, $y, 'BWA', $this->green, true, 'center', $right);
-        $y += 26;
-        $this->text($img, 11, $x, $y, 'Inovasi Wakaf', $this->green, false, 'center', $right);
-        $y += 40;
+        $logo = $this->loadImage($this->logo);
+        if ($logo) {
+            $lw = 126;
+            $lw0 = imagesx($logo);
+            $lh0 = imagesy($logo);
+            $lh = (int) round($lw * $lh0 / max(1, $lw0));
+            $lx = $x + (int) round(($width - $lw) / 2);
+            imagecopyresampled($img, $logo, $lx, 214, 0, 0, $lw, $lh, $lw0, $lh0);
+            imagedestroy($logo);
+            $y = 214 + $lh + 22;
+        } else {
+            $this->text($img, 46, $x, $y, 'BWA', $this->green, true, 'center', $right);
+            $y += 26;
+            $this->text($img, 11, $x, $y, 'Inovasi Wakaf', $this->green, false, 'center', $right);
+            $y += 40;
+        }
 
         $y = $this->wrapped($img, 9.5, $x, $y, $width,
             '"Wakaf yang Anda tunaikan tak hanya berbuah pahala yang mengalir abadi, namun akan membangkitkan saudara kita meraih impiannya"',
@@ -297,6 +345,100 @@ class KwitansiImageService
         $this->text($img, 9.5, $x, $y, 'Tanggal : ' . $data['donationDate'], $this->ink);
 
         $this->text($img, 10, $x, self::HEIGHT - self::MARGIN - 24, 'BADAN WAKAF AL QUR\'AN', $this->muted, true, 'center', $right);
+    }
+
+    /**
+     * Tanda tangan agen + stempel BWA di kanan bawah kwitansi.
+     * Stempel diletakkan sedikit di atas & menimpa bagian atas tanda tangan.
+     */
+    protected function drawSignature($img, array $data): void
+    {
+        $right = 950;
+
+        $sigTop = 1255;
+        $sig = $this->loadImage($data['signaturePath'] ?? '');
+        if ($sig) {
+            $sw = imagesx($sig);
+            $sh = imagesy($sig);
+            $w = 205;
+            $h = (int) round($w * $sh / max(1, $sw));
+            if ($h > 110) {
+                $h = 110;
+                $w = (int) round($h * $sw / max(1, $sh));
+            }
+            $sigTop = 1310 - $h;
+            imagecopyresampled($img, $sig, $right - $w, $sigTop, 0, 0, $w, $h, $sw, $sh);
+            imagedestroy($sig);
+        }
+
+        $stamp = $this->loadImage($this->stamp);
+        if ($stamp) {
+            $sw = imagesx($stamp);
+            $sh = imagesy($stamp);
+            $w = 168;
+            $h = (int) round($w * $sh / max(1, $sw));
+            $bottom = $sigTop + 46;
+            imagecopyresampled($img, $stamp, $right - $w, $bottom - $h, 0, 0, $w, $h, $sw, $sh);
+            imagedestroy($stamp);
+        }
+    }
+
+    /**
+     * Muat gambar (png/jpg/webp) sebagai resource GD dengan dukungan alpha.
+     */
+    protected function loadImage($path)
+    {
+        if (! $path || ! is_file($path)) {
+            return null;
+        }
+
+        $info = @getimagesize($path);
+        if (! $info) {
+            return null;
+        }
+
+        switch ($info[2]) {
+            case IMAGETYPE_PNG:
+                $im = @imagecreatefrompng($path);
+                break;
+            case IMAGETYPE_JPEG:
+                $im = @imagecreatefromjpeg($path);
+                break;
+            case IMAGETYPE_WEBP:
+                $im = function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : null;
+                break;
+            default:
+                $im = null;
+        }
+
+        if (! $im) {
+            return null;
+        }
+
+        imagealphablending($im, true);
+        imagesavealpha($im, true);
+
+        return $im;
+    }
+
+    /**
+     * Tempel gambar ke dalam kotak dengan skala proporsional & rata tengah.
+     */
+    protected function pasteFit($img, $src, $boxX, $boxY, $boxW, $boxH): void
+    {
+        $sw = imagesx($src);
+        $sh = imagesy($src);
+        if ($sw <= 0 || $sh <= 0) {
+            return;
+        }
+
+        $scale = min($boxW / $sw, $boxH / $sh);
+        $dw = (int) round($sw * $scale);
+        $dh = (int) round($sh * $scale);
+        $dx = $boxX + (int) round(($boxW - $dw) / 2);
+        $dy = $boxY + (int) round(($boxH - $dh) / 2);
+
+        imagecopyresampled($img, $src, $dx, $dy, 0, 0, $dw, $dh, $sw, $sh);
     }
 
     /**

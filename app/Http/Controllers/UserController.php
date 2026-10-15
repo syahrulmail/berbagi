@@ -163,6 +163,7 @@ class UserController extends Controller
 
         Setting::set('agent_profile_' . $user->slug, json_encode([
             'photo' => $photo,
+            'signature' => '',
             'intro' => trim((string) $request->input('intro', '')),
             'api_ss' => trim((string) $request->input('api_ss', '')),
             'api_cc' => trim((string) $request->input('api_cc', '')),
@@ -302,6 +303,7 @@ class UserController extends Controller
 
         Setting::set($newKey, json_encode([
             'photo' => $photo,
+            'signature' => (string) ($profile['signature'] ?? ''),
             'intro' => $intro,
             'api_ss' => $apiSs,
             'api_cc' => $apiCc,
@@ -313,11 +315,12 @@ class UserController extends Controller
         $decoded = json_decode($json, true);
 
         if (! is_array($decoded)) {
-            return ['photo' => '', 'intro' => '', 'api_ss' => '', 'api_cc' => ''];
+            return ['photo' => '', 'signature' => '', 'intro' => '', 'api_ss' => '', 'api_cc' => ''];
         }
 
         return [
             'photo' => (string) ($decoded['photo'] ?? ''),
+            'signature' => (string) ($decoded['signature'] ?? ''),
             'intro' => (string) ($decoded['intro'] ?? ''),
             'api_ss' => (string) ($decoded['api_ss'] ?? ''),
             'api_cc' => (string) ($decoded['api_cc'] ?? ''),

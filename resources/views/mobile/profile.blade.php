@@ -88,10 +88,31 @@
                     <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
                 @enderror
             </div>
-            <div class="mo-field" style="margin-bottom:0;">
+            <div class="mo-field">
                 <label for="phone">No. Handphone</label>
                 <input type="text" id="phone" name="phone" class="mo-input" value="{{ old('phone', $user->phone) }}" placeholder="08xxxxxxxxxx">
                 @error('phone')
+                    <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
+                @enderror
+            </div>
+            @php $sigPath = $profile['signature'] ?? ''; $sigUrl = asset_photo_url($sigPath); @endphp
+            <div class="mo-field" style="margin-bottom:0;">
+                <label>Tanda Tangan Agen (untuk kwitansi)</label>
+                <div style="margin-bottom:8px;">
+                    <img id="moSignaturePreview" src="{{ $sigUrl }}" alt="Tanda tangan {{ $user->name }}"
+                         style="max-width:200px;max-height:110px;border:1px solid var(--mo-border,#e2e8f0);border-radius:8px;background:#fff;padding:6px;{{ $sigUrl === '' ? 'display:none;' : '' }}">
+                </div>
+                <input type="file" id="moSignatureInput" name="signature" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                <input type="hidden" name="existing_signature" value="{{ $sigPath }}">
+                <input type="hidden" name="signature_remove" id="moSignatureRemove" value="0">
+                <label for="moSignatureInput" class="mo-btn mo-btn-ghost" style="display:inline-flex;width:auto;">
+                    <i class="fas fa-signature"></i> Pilih Tanda Tangan
+                </label>
+                <button type="button" id="moSignatureDelete" class="mo-btn mo-btn-ghost" style="display:{{ $sigUrl !== '' ? 'inline-flex' : 'none' }};width:auto;">
+                    <i class="fas fa-trash-can"></i> Hapus
+                </button>
+                <small style="color:var(--mo-muted);display:block;margin-top:6px;">Disarankan PNG transparan. JPG/PNG/WebP maks. 2MB.</small>
+                @error('signature')
                     <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
                 @enderror
             </div>
@@ -186,6 +207,39 @@
                 preview.removeAttribute('src');
                 preview.style.display = 'none';
                 placeholder.style.display = '';
+                if (removeField) removeField.value = '1';
+                deleteBtn.style.display = 'none';
+            });
+        }
+    })();
+
+    (function () {
+        var input = document.getElementById('moSignatureInput');
+        if (!input) return;
+
+        var preview = document.getElementById('moSignaturePreview');
+        var removeField = document.getElementById('moSignatureRemove');
+        var deleteBtn = document.getElementById('moSignatureDelete');
+
+        input.addEventListener('change', function () {
+            var file = input.files && input.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.style.display = '';
+                if (removeField) removeField.value = '0';
+                if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+                input.value = '';
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
                 if (removeField) removeField.value = '1';
                 deleteBtn.style.display = 'none';
             });

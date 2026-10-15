@@ -69,8 +69,8 @@
         align-items: center;
         gap: 14px;
     }
-    .logo { font-weight: 800; font-size: 24px; letter-spacing: 1px; line-height: 1; }
-    .logo small { display: block; font-size: 8px; font-weight: 400; letter-spacing: 1.5px; margin-top: 2px; }
+    .brand-plate { background: #fff; border-radius: 4px; padding: 5px 9px; display: flex; align-items: center; }
+    .brand-logo { height: 58px; width: auto; display: block; }
     .header-addr { font-size: 8.5px; line-height: 1.55; }
     .header-title { flex: 1; text-align: center; font-size: 23px; font-weight: 800; letter-spacing: 1px; }
 
@@ -107,7 +107,10 @@
     .syarat ol { margin: 4px 0 0; padding-left: 16px; }
 
     .stub-logo { text-align: center; margin: 6px 0 4px; }
-    .stub-logo .logo { display: inline-block; color: var(--green); font-size: 42px; }
+    .stub-logo-img { height: 56px; width: auto; }
+    .sign-area { position: absolute; right: 10px; bottom: 36px; width: 150px; height: 108px; pointer-events: none; }
+    .sign-area .sign-img { position: absolute; right: 0; bottom: 0; max-width: 140px; max-height: 70px; }
+    .sign-area .stamp-img { position: absolute; right: 0; bottom: 30px; max-width: 116px; z-index: 2; }
     .tagline { font-size: 9.5px; font-style: italic; line-height: 1.5; margin: 8px 0 12px; }
     .officer { font-size: 9px; color: var(--muted); margin-bottom: 6px; }
     .col-right .label { font-size: 10.5px; margin-top: 8px; }
@@ -171,7 +174,9 @@
         <div class="sheet-inner">
             <div class="col-left">
                 <div class="header">
-                    <div class="logo">BWA<small>Inovasi Wakaf</small></div>
+                    <div class="brand-plate">
+                        <img class="brand-logo" src="{{ asset('images/logo-bwa.png') }}" alt="BWA Inovasi Wakaf">
+                    </div>
                     <div class="header-addr">
                         Jl. Tebet Timur Dalam I, No. 1<br>
                         Tebet &ndash; Jakarta Selatan 12820<br>
@@ -274,7 +279,7 @@
             </div>
 
             <div class="col-right">
-                <div class="stub-logo"><span class="logo">BWA<small style="color:var(--green);">Inovasi Wakaf</small></span></div>
+                <div class="stub-logo"><img class="stub-logo-img" src="{{ asset('images/logo-bwa.png') }}" alt="BWA Inovasi Wakaf"></div>
                 <div class="tagline">&ldquo;Wakaf yang Anda tunaikan tak hanya berbuah pahala yang mengalir abadi, namun akan membangkitkan saudara kita meraih impiannya&rdquo;</div>
                 <div class="officer">Diisi oleh petugas</div>
                 <div class="label">Sudah terima uang sebesar :</div>
@@ -286,6 +291,12 @@
                 <div class="label">dari :</div>
                 <div class="line-field">{{ $wakifName }}</div>
                 <div class="label" style="margin-top:16px;">Tanggal : {{ $donationDateFormatted }}</div>
+                <div class="sign-area">
+                    @if(!empty($signatureUrl))
+                        <img class="sign-img" src="{{ $signatureUrl }}" alt="Tanda tangan">
+                    @endif
+                    <img class="stamp-img" src="{{ asset('images/stamp-bwa.png') }}" alt="Stempel BWA">
+                </div>
                 <div class="watermark">BWA</div>
                 <div class="org-name">BADAN WAKAF AL QUR'AN</div>
             </div>

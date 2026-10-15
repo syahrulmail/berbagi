@@ -252,4 +252,54 @@ class DonationKwitansiTest extends TestCase
         $this->assertSame(1000, $size[0]);
         $this->assertSame('image/png', $size['mime']);
     }
+
+    public function test_profile_update_stores_agent_signature(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('Tanda Tangan Agen', false);
+
+        $this->actingAs($admin)->put(route('profile.update'), [
+            'name' => $admin->name,
+            'username' => $admin->username,
+            'email' => $admin->email,
+            'phone' => '08123456789',
+            'signature' => \Illuminate\Http\UploadedFile::fake()->image('ttd.png', 300, 120),
+        ])->assertRedirect(route('profile.edit'));
+
+        $admin->refresh();
+        $path = agent_signature_path($admin);
+
+        $this->assertNotSame('', $path);
+        $this->assertTrue(\Illuminate\Support\Facades\Storage::disk('public')->exists($path));
+    }
+
+    public function test_kwitansi_page_shows_brand_logo_stamp_and_agent_signature(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $donation->load('agen');
+        \Illuminate\Support\Facades\Storage::disk('public')->put('signatures/ttd.png', 'x');
+        \App\Models\Setting::set('agent_profile_' . $donation->agen->slug, json_encode([
+            'photo' => '',
+            'signature' => 'signatures/ttd.png',
+            'intro' => '',
+            'api_ss' => '',
+            'api_cc' => '',
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        $response = $this->actingAs($admin)->get(route('donations.kwitansi', $donation));
+
+        $response->assertOk();
+        $response->assertSee('images/logo-bwa.png', false);
+        $response->assertSee('images/stamp-bwa.png', false);
+        $response->assertSee('/storage/signatures/ttd.png', false);
+    }
 }

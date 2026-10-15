@@ -34,6 +34,7 @@ class ProfileService
 
         Setting::set('agent_profile_' . $user->slug, json_encode([
             'photo' => $profile['photo'],
+            'signature' => $profile['signature'],
             'intro' => $profile['intro'],
             'api_ss' => trim((string) ($data['api_ss'] ?? '')),
             'api_cc' => trim((string) ($data['api_cc'] ?? '')),
@@ -54,6 +55,9 @@ class ProfileService
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'existing_photo' => ['nullable', 'string', 'max:255'],
             'photo_remove' => ['nullable', 'string', 'in:0,1'],
+            'signature' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'existing_signature' => ['nullable', 'string', 'max:255'],
+            'signature_remove' => ['nullable', 'string', 'in:0,1'],
             'intro' => ['nullable', 'string', 'max:500'],
             'api_ss' => ['nullable', 'string', 'max:255'],
             'api_cc' => ['nullable', 'string', 'max:255'],
@@ -93,12 +97,30 @@ class ProfileService
             $photo = '';
         }
 
+        // Tanda tangan agen (untuk kwitansi).
+        $existingSignature = (string) ($data['existing_signature'] ?? ($profile['signature'] ?? ''));
+        $signatureRemove = (string) ($data['signature_remove'] ?? '0');
+        $signature = $existingSignature;
+
+        $sigFile = $request->file('signature');
+        if ($sigFile !== null && $sigFile->isValid()) {
+            $newSigPath = $sigFile->store('signatures', 'public');
+            if ($newSigPath && $signature && $signature !== $newSigPath) {
+                $this->deleteStoredPhoto($signature);
+            }
+            $signature = $newSigPath ?: $signature;
+        } elseif ($signatureRemove === '1' && $signature) {
+            $this->deleteStoredPhoto($signature);
+            $signature = '';
+        }
+
         if ($slugChanged) {
             Setting::where('key', 'agent_profile_' . $oldSlug)->delete();
         }
 
         Setting::set('agent_profile_' . $newSlug, json_encode([
             'photo' => $photo,
+            'signature' => $signature,
             'intro' => trim((string) ($data['intro'] ?? '')),
             'api_ss' => trim((string) ($data['api_ss'] ?? '')),
             'api_cc' => trim((string) ($data['api_cc'] ?? '')),
@@ -154,6 +176,7 @@ class ProfileService
 
         Setting::set($newKey, json_encode([
             'photo' => $photo,
+            'signature' => $profile['signature'],
             'intro' => $profile['intro'],
             'api_ss' => $profile['api_ss'],
             'api_cc' => $profile['api_cc'],
@@ -165,11 +188,12 @@ class ProfileService
         $decoded = json_decode($json, true);
 
         if (! is_array($decoded)) {
-            return ['photo' => '', 'intro' => '', 'api_ss' => '', 'api_cc' => ''];
+            return ['photo' => '', 'signature' => '', 'intro' => '', 'api_ss' => '', 'api_cc' => ''];
         }
 
         return [
             'photo' => (string) ($decoded['photo'] ?? ''),
+            'signature' => (string) ($decoded['signature'] ?? ''),
             'intro' => (string) ($decoded['intro'] ?? ''),
             'api_ss' => (string) ($decoded['api_ss'] ?? ''),
             'api_cc' => (string) ($decoded['api_cc'] ?? ''),

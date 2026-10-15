@@ -616,6 +616,8 @@ class DonationController extends Controller
 
         $total = (float) $donation->amount;
 
+        $signaturePath = agent_signature_path($donation->agen);
+
         return [
             'wakifName' => $wakifName,
             'pendaftar' => (string) ($donation->donor_info ?: ''),
@@ -626,6 +628,7 @@ class DonationController extends Controller
             'paymentMethodLabel' => $this->paymentMethodLabel($donation->payment_method),
             'paymentDateFormatted' => $donation->payment_date ? $donation->payment_date->format('d F Y') : '-',
             'donationDateFormatted' => $donation->donation_date ? $donation->donation_date->format('d F Y') : '-',
+            'signatureUrl' => $signaturePath !== '' ? asset_photo_url($signaturePath) : '',
         ];
     }
 

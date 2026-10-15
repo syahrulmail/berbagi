@@ -74,11 +74,31 @@
                 @enderror
             </div>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group">
             <label for="phone">No. Handphone</label>
             <input type="text" id="phone" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="08xxxxxxxxxx">
             @error('phone')
                 <small style="color: var(--danger);">{{ $message }}</small>
+            @enderror
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>Tanda Tangan Agen (untuk kwitansi)</label>
+            @php
+                $sigPath = $profile['signature'] ?? '';
+                $sigUrl = asset_photo_url($sigPath);
+            @endphp
+            <div>
+                <img id="signaturePreview" src="{{ $sigUrl }}" alt="Tanda tangan {{ $user->name }}"
+                     style="max-width:220px;max-height:120px;border:1px solid var(--gray-200);border-radius:6px;background:#fff;padding:6px;{{ $sigUrl === '' ? 'display:none;' : '' }}">
+            </div>
+            <input type="file" id="signatureInput" name="signature" accept="image/jpeg,image/png,image/webp" style="margin-top:8px;">
+            <input type="hidden" name="existing_signature" value="{{ $sigPath }}">
+            <label class="inline-check" style="display:block;margin-top:6px;">
+                <input type="checkbox" id="signatureRemove" name="signature_remove" value="1"> Hapus tanda tangan
+            </label>
+            <small style="color: var(--gray-500); display:block; margin-top:4px;">Disarankan PNG transparan. JPG/PNG/WebP maks. 2MB.</small>
+            @error('signature')
+                <small style="color: var(--danger); display:block;">{{ $message }}</small>
             @enderror
         </div>
     </div>
@@ -143,4 +163,41 @@
 </form>
 
 @include('partials.photo-upload-script')
+
+@push('scripts')
+<script>
+(function () {
+    var input = document.getElementById('signatureInput');
+    if (!input) return;
+
+    var preview = document.getElementById('signaturePreview');
+    var removeCheck = document.getElementById('signatureRemove');
+
+    input.addEventListener('change', function () {
+        var file = input.files && input.files[0];
+        if (!file) return;
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+            preview.style.display = '';
+            if (removeCheck) removeCheck.checked = false;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    if (removeCheck) {
+        removeCheck.addEventListener('change', function () {
+            if (removeCheck.checked) {
+                preview.removeAttribute('src');
+                preview.style.display = 'none';
+                input.value = '';
+            } else {
+                preview.style.display = preview.src ? '' : 'none';
+            }
+        });
+    }
+})();
+</script>
+@endpush
 @endsection

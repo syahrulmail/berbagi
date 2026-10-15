@@ -35,6 +35,24 @@ if (! function_exists('asset_photo_url')) {
     }
 }
 
+if (! function_exists('agent_signature_path')) {
+    /**
+     * Path foto tanda tangan agen (relatif ke disk public) dari profilnya.
+     * Mengembalikan string kosong bila belum diunggah.
+     */
+    function agent_signature_path($user)
+    {
+        if (! $user instanceof \App\Models\User) {
+            return '';
+        }
+
+        $raw = \App\Models\Setting::get('agent_profile_' . $user->slug, '{}');
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? (string) ($decoded['signature'] ?? '') : '';
+    }
+}
+
 if (! function_exists('terbilang_id')) {
     /**
      * Ubah angka menjadi terbilang bahasa Indonesia (mis. 1500000 => "satu juta lima ratus ribu").
