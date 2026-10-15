@@ -548,7 +548,7 @@ class DonationController extends Controller
             'proof_url' => $donation->payment_proof ? asset_photo_url($donation->payment_proof) : null,
             'created_at_formatted' => $donation->created_at ? $donation->created_at->format('d M Y H:i') : '-',
             'creator' => $donation->creator->name ?? '-',
-            'wa_kwitansi_url' => kwitansi_wa_url($donation),
+            'wa_kwitansi_url' => kwitansi_link_wa_url($donation),
         ]);
     }
 
@@ -563,7 +563,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Kwitansi publik (tanpa login) yang hanya bisa dibuka via tautan bertanda tangan.
+     * Halaman kwitansi publik (tanpa login) melalui tautan bertanda tangan.
      */
     public function publicKwitansi(Request $request, Donation $donation)
     {
@@ -575,18 +575,6 @@ class DonationController extends Controller
         $data['kwitansiImageUrl'] = $this->kwitansiThumbnail($donation);
 
         return view('donations.kwitansi', $data);
-    }
-
-    /**
-     * Kirim gambar + tautan kwitansi ke WhatsApp donatur.
-     */
-    public function kirimKwitansi(Request $request, Donation $donation)
-    {
-        $this->authorizeAccess($donation);
-
-        $result = app(\App\Services\KwitansiDispatcher::class)->send($request->user(), $donation);
-
-        return response()->json($result);
     }
 
     /**

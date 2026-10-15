@@ -961,30 +961,10 @@ class MobileAppController extends Controller
             'can_edit' => true,
             'edit_url' => route('mo.donation.edit', $donation->id),
             'kwitansi_url' => route('donations.kwitansi', $donation->id),
-            'wa_kwitansi_url' => kwitansi_wa_url($donation),
+            'wa_kwitansi_url' => kwitansi_link_wa_url($donation),
             'can_delete' => auth()->user()->isAdmin() || auth()->user()->isSupervisor(),
             'delete_url' => route('mo.donation.destroy', $donation->id),
         ]);
-    }
-
-    /**
-     * Kirim gambar + tautan kwitansi ke WhatsApp donatur (mobile).
-     */
-    public function sendKwitansi(Request $request, $id)
-    {
-        $donation = Donation::with(['contact'])->find($id);
-
-        if (! $donation) {
-            return response()->json(['error' => 'Donasi tidak ditemukan.'], 404);
-        }
-
-        if (! $this->canAccessDonation($donation)) {
-            return response()->json(['error' => 'Anda tidak memiliki izin untuk mengirim kwitansi donasi ini.'], 403);
-        }
-
-        $result = app(\App\Services\KwitansiDispatcher::class)->send($request->user(), $donation);
-
-        return response()->json($result);
     }
 
     /**

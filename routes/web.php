@@ -153,7 +153,6 @@ Route::middleware('auth')->group(function () {
         Route::resource('donations', DonationController::class)->except('show');
         Route::get('donations/{donation}/detail', [DonationController::class, 'detail'])->name('donations.detail');
         Route::get('donations/{donation}/kwitansi', [DonationController::class, 'kwitansi'])->name('donations.kwitansi');
-        Route::post('donations/{donation}/kirim-kwitansi', [DonationController::class, 'kirimKwitansi'])->name('donations.kirim-kwitansi');
         Route::get('donations/{donation}/edit-fields', [DonationController::class, 'editFields'])->name('donations.edit-fields');
         Route::resource('programs', ProgramController::class)->except('show');
         Route::get('programs/{program}/donors', [ProgramController::class, 'donors'])->name('programs.donors');
@@ -194,7 +193,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/pengguna', [MobileAppController::class, 'users'])->name('users')->middleware('role:admin,supervisor');
 
         Route::get('/api/donasi/{donation}/detail', [MobileAppController::class, 'donationDetail'])->name('api.donation-detail');
-        Route::post('/api/donasi/{donation}/kirim-kwitansi', [MobileAppController::class, 'sendKwitansi'])->name('api.donation-kirim-kwitansi');
         Route::get('/api/kontak/{contact}/detail', [MobileAppController::class, 'contactDetail'])->name('api.contact-detail');
         Route::get('/api/pengguna/{user}/detail', [MobileAppController::class, 'userDetail'])->name('api.user-detail');
         Route::get('/api/kontak-cari', [MobileAppController::class, 'contactSearch'])->name('api.contact-search');

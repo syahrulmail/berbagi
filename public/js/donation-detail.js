@@ -26,7 +26,6 @@
     var urlUpdate = cfg.updateUrl || '';
     var urlDelete = cfg.deleteUrl || '';
     var urlKwitansi = cfg.kwitansiUrl || '';
-    var urlKirimKwitansi = cfg.kirimKwitansiUrl || '';
 
     function buildUrl(base, id) {
         return base.replace('__ID__', encodeURIComponent(id));
@@ -346,44 +345,11 @@
 
     if (waBtn) {
         waBtn.addEventListener('click', function () {
-            if (busy || !currentId || !urlKirimKwitansi) return;
-
-            busy = true;
-            waBtn.disabled = true;
-            var original = waBtn.innerHTML;
-            waBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
-            showMessage('Mengirim kwitansi ke WhatsApp donatur...', true);
-
-            var token = csrfToken();
-            var fd = new FormData();
-            fd.set('_token', token);
-
-            fetchJson(buildUrl(urlKirimKwitansi, currentId), {
-                method: 'POST',
-                body: fd,
-                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token }
-            })
-                .then(function (r) {
-                    var d = r.data || {};
-                    if (d.sent) {
-                        showMessage('Kwitansi berhasil dikirim ke WhatsApp donatur.', true);
-                        return;
-                    }
-                    if (d.wa_url) {
-                        window.open(d.wa_url, '_blank');
-                        showMessage('Gagal kirim otomatis' + (d.reason ? ' (' + d.reason + ')' : '') + '. Membuka WhatsApp berisi tautan kwitansi.', false);
-                    } else {
-                        showMessage(d.reason || d.error || 'Gagal mengirim kwitansi.', false);
-                    }
-                })
-                .catch(function () {
-                    showMessage('Terjadi kesalahan jaringan. Coba lagi.', false);
-                })
-                .finally(function () {
-                    busy = false;
-                    waBtn.disabled = false;
-                    waBtn.innerHTML = original;
-                });
+            if (!currentWaUrl) {
+                showMessage('Nomor WhatsApp donatur belum tersedia.', false);
+                return;
+            }
+            window.open(currentWaUrl, '_blank');
         });
     }
 

@@ -155,45 +155,6 @@ if (! function_exists('mask_phone')) {
     }
 }
 
-if (! function_exists('kwitansi_wa_url')) {
-    /**
-     * URL WhatsApp (wa.me) untuk mengirim ringkasan kwitansi donasi ke nomor
-     * donatur. Kosong bila donatur tidak memiliki nomor telepon.
-     */
-    function kwitansi_wa_url($donation)
-    {
-        $contact = $donation->contact;
-        $phone = $contact ? (string) $contact->phone : '';
-
-        $digits = preg_replace('/\D+/', '', $phone);
-
-        if ($digits !== '' && $digits[0] === '0') {
-            $digits = '62' . substr($digits, 1);
-        }
-
-        if ($digits === '') {
-            return '';
-        }
-
-        $wakif = $contact ? (string) $contact->name : (string) ($donation->donor_info ?: '');
-        $total = (float) $donation->amount;
-        $date = $donation->donation_date ? $donation->donation_date->format('d/m/Y') : '-';
-
-        $lines = [
-            '*Kwitansi Donasi - BWA*',
-            '',
-            'Nama : ' . ($wakif !== '' ? $wakif : '-'),
-            'Tanggal : ' . $date,
-            'Total : Rp ' . number_format($total, 0, ',', '.'),
-            'Terbilang : ' . ucfirst(trim(terbilang_id($total))) . ' Rupiah',
-            '',
-            'Terima kasih atas wakaf/sedekah Anda.',
-        ];
-
-        return 'https://wa.me/' . $digits . '?text=' . rawurlencode(implode("\n", $lines));
-    }
-}
-
 if (! function_exists('kwitansi_public_url')) {
     /**
      * URL publik (bertanda tangan, tanpa kedaluwarsa) untuk membuka kwitansi

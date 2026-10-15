@@ -9,7 +9,6 @@
         'updateUrl' => route('donations.update', ['donation' => '__ID__']),
         'deleteUrl' => route('donations.destroy', ['donation' => '__ID__']),
         'kwitansiUrl' => route('donations.kwitansi', ['donation' => '__ID__']),
-        'kirimKwitansiUrl' => route('donations.kirim-kwitansi', ['donation' => '__ID__']),
     ];
 @endphp
 <div class="modal-backdrop" id="donation-detail-modal" role="dialog" aria-modal="true">

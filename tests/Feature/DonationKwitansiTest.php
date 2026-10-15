@@ -145,7 +145,7 @@ class DonationKwitansiTest extends TestCase
         $contact->update(['phone' => '']);
         $donation->load('contact');
 
-        $this->assertSame('', kwitansi_wa_url($donation));
+        $this->assertSame('', kwitansi_link_wa_url($donation));
     }
 
     public function test_public_kwitansi_requires_valid_signature(): void
@@ -181,26 +181,24 @@ class DonationKwitansiTest extends TestCase
             ->assertSee('summary_large_image');
     }
 
-    public function test_kirim_kwitansi_falls_back_to_whatsapp_link_without_api(): void
+    public function test_donation_detail_exposes_kwitansi_whatsapp_link(): void
     {
         $admin = $this->makeUser('admin');
         [, , , , $donation] = $this->makeDonation($admin);
 
         $response = $this->actingAs($admin)
-            ->postJson(route('donations.kirim-kwitansi', $donation));
+            ->getJson(route('donations.detail', $donation));
 
         $response->assertOk();
-        $response->assertJsonPath('sent', false);
 
-        $link = $response->json('link');
-        $this->assertNotEmpty($link);
-
-        $waUrl = $response->json('wa_url');
+        $waUrl = $response->json('wa_kwitansi_url');
         $this->assertStringStartsWith('https://wa.me/6281234567890?text=', $waUrl);
+
+        $link = kwitansi_public_url($donation->fresh('contact'));
         $this->assertStringContainsString(rawurlencode($link), $waUrl);
     }
 
-    public function test_kirim_kwitansi_without_phone_reports_reason(): void
+    public function test_donation_detail_kwitansi_whatsapp_link_empty_without_phone(): void
     {
         $admin = $this->makeUser('admin');
         [, , $contact, , $donation] = $this->makeDonation($admin);
@@ -208,14 +206,13 @@ class DonationKwitansiTest extends TestCase
         $contact->update(['phone' => '']);
 
         $response = $this->actingAs($admin)
-            ->postJson(route('donations.kirim-kwitansi', $donation));
+            ->getJson(route('donations.detail', $donation));
 
         $response->assertOk();
-        $response->assertJsonPath('sent', false);
-        $this->assertSame('', $response->json('wa_url'));
+        $this->assertSame('', $response->json('wa_kwitansi_url'));
     }
 
-    public function test_kirim_kwitansi_is_forbidden_for_unrelated_agen(): void
+    public function test_donation_detail_is_forbidden_for_unrelated_agen(): void
     {
         $admin = $this->makeUser('admin');
         [, , , , $donation] = $this->makeDonation($admin);
@@ -224,7 +221,7 @@ class DonationKwitansiTest extends TestCase
         $otherAgen = $this->makeUser('agen', $otherBranch);
 
         $this->actingAs($otherAgen)
-            ->postJson(route('donations.kirim-kwitansi', $donation))
+            ->getJson(route('donations.detail', $donation))
             ->assertForbidden();
     }
 
