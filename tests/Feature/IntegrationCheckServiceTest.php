@@ -53,18 +53,20 @@ class IntegrationCheckServiceTest extends TestCase
         });
     }
 
-    public function test_starsender_falls_back_to_account_device_list(): void
+    public function test_starsender_check_number_failure_is_marked_failed(): void
     {
         Http::fake([
             'https://api.starsender.online/api/check-number' => Http::response(['success' => false], 200),
-            'https://api.starsender.online/api/devices' => Http::response(['success' => true], 200),
         ]);
 
         $result = (new IntegrationCheckService())->forUsers([
             1 => ['ss' => 'SS-' . uniqid(), 'cc' => ''],
         ]);
 
-        $this->assertSame(IntegrationCheckService::STATUS_OK, $result[1]['ss']);
+        $this->assertSame(IntegrationCheckService::STATUS_FAIL, $result[1]['ss']);
+        Http::assertNotSent(function ($request) {
+            return strpos($request->url(), '/api/devices') !== false;
+        });
     }
 
     public function test_invalid_keys_are_marked_failed(): void

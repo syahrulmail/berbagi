@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\FollowupWaService;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
 
@@ -9,17 +10,22 @@ class ProfileController extends Controller
 {
     protected $profiles;
 
-    public function __construct(ProfileService $profiles)
+    protected $followup;
+
+    public function __construct(ProfileService $profiles, FollowupWaService $followup)
     {
         $this->profiles = $profiles;
+        $this->followup = $followup;
     }
 
     public function edit()
     {
         $user = auth()->user();
         $profile = $this->profiles->data($user);
+        $webhookUrlSs = $this->followup->webhookUrl($user, 'starsender');
+        $webhookUrlCc = $this->followup->webhookUrl($user, 'cloudchat');
 
-        return view('profile.edit', compact('user', 'profile'));
+        return view('profile.edit', compact('user', 'profile', 'webhookUrlSs', 'webhookUrlCc'));
     }
 
     public function update(Request $request)

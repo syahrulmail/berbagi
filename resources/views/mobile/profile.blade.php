@@ -136,11 +136,15 @@
         <div class="mo-form-card">
             <h3 class="mo-form-card-title"><i class="fas fa-plug"></i> Integrasi</h3>
             <div class="mo-field">
-                <label for="api_ss">API SS</label>
+                <label for="api_ss">API SS (Device API Key)</label>
                 <input type="text" id="api_ss" name="api_ss" class="mo-input" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
                 @error('api_ss')
                     <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
                 @enderror
+                <label style="margin-top:10px;">URL Webhook Starsender</label>
+                <input type="text" readonly id="webhook-url-ss" class="mo-input" value="{{ $webhookUrlSs }}" onclick="this.select();" style="font-family:monospace;font-size:12px;">
+                <button type="button" class="mo-btn mo-btn-ghost" data-copy-target="webhook-url-ss" style="width:100%;justify-content:center;margin-top:6px;"><i class="fas fa-copy"></i> Salin URL Webhook</button>
+                <small style="color:var(--mo-muted);display:block;margin-top:6px;">Salin apa adanya ke webhook device Starsender.</small>
             </div>
             <div class="mo-field" style="margin-bottom:0;">
                 <label for="api_cc">API CC</label>
@@ -148,6 +152,10 @@
                 @error('api_cc')
                     <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
                 @enderror
+                <label style="margin-top:10px;">URL Webhook CloudChat</label>
+                <input type="text" readonly id="webhook-url-cc" class="mo-input" value="{{ $webhookUrlCc }}" onclick="this.select();" style="font-family:monospace;font-size:12px;">
+                <button type="button" class="mo-btn mo-btn-ghost" data-copy-target="webhook-url-cc" style="width:100%;justify-content:center;margin-top:6px;"><i class="fas fa-copy"></i> Salin URL Webhook</button>
+                <small style="color:var(--mo-muted);display:block;margin-top:6px;">Salin apa adanya ke webhook nomor CloudChat.</small>
             </div>
         </div>
 
@@ -245,5 +253,27 @@
             });
         }
     })();
+
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = document.getElementById(btn.dataset.copyTarget);
+            if (!input) return;
+
+            input.select();
+
+            function done() {
+                var original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> URL Tersalin';
+                setTimeout(function () { btn.innerHTML = original; }, 1500);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value).then(done, function () { document.execCommand('copy'); done(); });
+            } else {
+                document.execCommand('copy');
+                done();
+            }
+        });
+    });
 </script>
 @endpush

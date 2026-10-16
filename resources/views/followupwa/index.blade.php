@@ -82,7 +82,7 @@
                     <div class="form-group">
                         <label>Mekanisme</label>
                         <select name="mechanism" id="fuwa-mechanism">
-                            <option value="auto">Otomatis (lanjut 5 tiap balasan)</option>
+                            <option value="auto">Otomatis (tambah 5 setiap ada pesan masuk)</option>
                             <option value="limit">Terbatas (sesuai jumlah)</option>
                         </select>
                     </div>

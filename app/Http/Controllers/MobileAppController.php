@@ -8,6 +8,7 @@ use App\Models\Donation;
 use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\FollowupWaService;
 use App\Services\IntegrationCheckService;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
@@ -793,12 +794,14 @@ class MobileAppController extends Controller
     /**
      * Profil Saya (mobile): foto & sambutan halaman publik.
      */
-    public function profile(ProfileService $profiles)
+    public function profile(ProfileService $profiles, FollowupWaService $followup)
     {
         $user = auth()->user();
         $profile = $profiles->data($user);
+        $webhookUrlSs = $followup->webhookUrl($user, 'starsender');
+        $webhookUrlCc = $followup->webhookUrl($user, 'cloudchat');
 
-        return view('mobile.profile', compact('user', 'profile'));
+        return view('mobile.profile', compact('user', 'profile', 'webhookUrlSs', 'webhookUrlCc'));
     }
 
     /**

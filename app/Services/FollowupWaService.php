@@ -522,7 +522,8 @@ class FollowupWaService
     }
 
     /**
-     * Lanjutkan batch otomatis (dipanggil webhook saat ada balasan).
+     * Tambah 5 kontak berikutnya ke batch otomatis
+     * (dipanggil webhook setiap ada pesan masuk).
      */
     public function nextAutoBatch(Broadcast $broadcast, int $size = 5): void
     {
@@ -935,7 +936,7 @@ class FollowupWaService
             'from_user_id' => $from ? $from->id : null,
             'to_user_id' => $runner->id,
             'from_phone' => $fromPhone,
-            'to_phone' => $runner->phone,
+            'to_phone' => (string) ($runner->phone ?: ''),
             'message' => $message,
             'provider' => null,
             'direction' => WarmingLog::DIRECTION_IN,
@@ -997,15 +998,36 @@ class FollowupWaService
     }
 
     /**
-     * Token webhook milik pengguna (dibuat sekali, disimpan di settings).
+     * Nama provider webhook yang kanonik: starsender atau cloudchat.
      */
-    public function webhookToken(User $user): string
+    public function normalizeWebhookProvider(string $provider): string
     {
-        $key = 'wa_webhook_token_' . $user->id;
+        $provider = strtolower(trim($provider));
+
+        if ($provider === 'ss' || $provider === 'starsender') {
+            return 'starsender';
+        }
+
+        if ($provider === 'cc' || $provider === 'cloudchat') {
+            return 'cloudchat';
+        }
+
+        return $provider;
+    }
+
+    /**
+     * Token webhook milik pengguna, terpisah per provider
+     * (dibuat sekali, disimpan di settings).
+     */
+    public function webhookToken(User $user, string $provider = 'starsender'): string
+    {
+        $provider = $this->normalizeWebhookProvider($provider);
+        $key = 'wa_webhook_token_' . $user->id . '_' . $provider;
         $token = (string) Setting::get($key, '');
 
         if ($token === '') {
-            $token = bin2hex(random_bytes(16));
+            $legacy = (string) Setting::get('wa_webhook_token_' . $user->id, '');
+            $token = $legacy !== '' ? $legacy : bin2hex(random_bytes(16));
             Setting::set($key, $token, 'warming');
         }
 
@@ -1014,10 +1036,12 @@ class FollowupWaService
 
     public function webhookUrl(User $user, string $provider = 'starsender'): string
     {
+        $provider = $this->normalizeWebhookProvider($provider);
+
         return route('wa.webhook', [
             'provider' => $provider,
             'u' => $user->id,
-            't' => $this->webhookToken($user),
+            't' => $this->webhookToken($user, $provider),
         ]);
     }
 

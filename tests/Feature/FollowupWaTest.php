@@ -634,6 +634,35 @@ class FollowupWaTest extends TestCase
         $this->assertStringNotContainsString('}', $url);
     }
 
+    public function test_webhook_token_is_separate_per_provider(): void
+    {
+        $service = app(FollowupWaService::class);
+        $user = $this->makeUser('admin');
+
+        $ss = $service->webhookToken($user, 'starsender');
+        $cc = $service->webhookToken($user, 'cloudchat');
+
+        $this->assertNotSame($ss, $cc);
+        $this->assertSame($ss, $service->webhookToken($user, 'ss'));
+        $this->assertSame($cc, $service->webhookToken($user, 'cc'));
+
+        $ccUrl = $service->webhookUrl($user, 'cloudchat');
+        $this->assertStringContainsString('/wa/webhook/cloudchat?u=' . $user->id, $ccUrl);
+        $this->assertStringContainsString('&t=' . $cc, $ccUrl);
+    }
+
+    public function test_webhook_rejects_token_from_other_provider(): void
+    {
+        $service = app(FollowupWaService::class);
+        $user = $this->makeUser('admin');
+        $ssToken = $service->webhookToken($user, 'starsender');
+
+        $this->post(route('wa.webhook', ['provider' => 'cloudchat', 'u' => $user->id, 't' => $ssToken]), [
+            'from' => '628111',
+            'text' => 'halo',
+        ])->assertStatus(403);
+    }
+
     public function test_webhook_records_reply_and_warms(): void
     {
         $service = app(FollowupWaService::class);

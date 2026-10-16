@@ -10,10 +10,11 @@ use Illuminate\Support\Facades\Log;
 /**
  * Penerima webhook balasan WhatsApp (Starsender / CloudChat).
  *
- * URL webhook bersifat per pengguna dan dibangun oleh
+ * URL webhook bersifat per pengguna dan per provider, dibangun oleh
  * FollowupWaService::webhookUrl(). Identitas dikirim lewat query string:
- * parameter "u" berisi ID pengguna dan parameter "t" berisi token webhook.
- * Jangan menambahkan placeholder apa pun ke URL tersebut.
+ * parameter "u" berisi ID pengguna dan parameter "t" berisi token webhook
+ * (token terpisah untuk Starsender dan CloudChat). Jangan menambahkan
+ * placeholder apa pun ke URL tersebut.
  */
 class WaWebhookController extends Controller
 {
@@ -55,7 +56,7 @@ class WaWebhookController extends Controller
         $token = (string) $request->query('t');
         $user = $userId > 0 ? User::find($userId) : null;
 
-        if ($user === null || ! hash_equals($this->service->webhookToken($user), $token)) {
+        if ($user === null || ! hash_equals($this->service->webhookToken($user, $provider), $token)) {
             Log::warning('Webhook WA ditolak: identitas/token tidak valid.', ['user' => $userId]);
 
             return response()->json(['ok' => false, 'error' => 'invalid_identity'], 403);

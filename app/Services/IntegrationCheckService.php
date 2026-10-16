@@ -11,10 +11,8 @@ use Illuminate\Support\Facades\Http;
  * Memeriksa status koneksi kunci integrasi WhatsApp per pengguna.
  *
  * - API SS (Starsender):
- *     1) POST /api/check-number   -> memakai Device API key, sekaligus
- *        memastikan device benar-benar terhubung (aktif).
- *     2) Bila gagal, GET /api/devices -> memakai Account API key, sebagai
- *        fallback bila yang disimpan ternyata Account key.
+ *     POST /api/check-number -> memakai Device API key, sekaligus
+ *     memastikan device benar-benar terhubung (aktif).
  * - API CC (CloudChat):
  *     POST /check-number memakai Bearer key (sk_live_...).
  *
@@ -97,33 +95,12 @@ class IntegrationCheckService
             $result[$userId]['cc'] = $status;
         }
 
-        // Starsender: probe check-number; yang gagal dicoba ulang via devices.
-        $ssFallback = [];
+        // Starsender: cukup probe check-number memakai Device API key.
         foreach ($ssJobs as $id => $job) {
             list($userId) = explode('|', $id);
-            if ($this->isSuccess($responses[$id] ?? null)) {
-                Cache::put($job['cacheKey'], self::STATUS_OK, now()->addMinutes(self::TTL_MINUTES));
-                $result[$userId]['ss'] = self::STATUS_OK;
-            } else {
-                $ssFallback[$id] = $job;
-            }
-        }
-
-        if (! empty($ssFallback)) {
-            $fallbackResponses = Http::pool(function (Pool $pool) use ($ssFallback) {
-                foreach ($ssFallback as $id => $job) {
-                    $pool->as($id)->acceptJson()->timeout(self::TIMEOUT_SECONDS)
-                        ->withHeaders(['Authorization' => $job['key']])
-                        ->get($this->starsenderDevicesUrl());
-                }
-            });
-
-            foreach ($ssFallback as $id => $job) {
-                list($userId) = explode('|', $id);
-                $status = $this->isSuccess($fallbackResponses[$id] ?? null) ? self::STATUS_OK : self::STATUS_FAIL;
-                Cache::put($job['cacheKey'], $status, now()->addMinutes(self::TTL_MINUTES));
-                $result[$userId]['ss'] = $status;
-            }
+            $status = $this->isSuccess($responses[$id] ?? null) ? self::STATUS_OK : self::STATUS_FAIL;
+            Cache::put($job['cacheKey'], $status, now()->addMinutes(self::TTL_MINUTES));
+            $result[$userId]['ss'] = $status;
         }
 
         return $result;
@@ -164,11 +141,6 @@ class IntegrationCheckService
     protected function starsenderCheckUrl(): string
     {
         return $this->starsenderBase() . '/api/check-number';
-    }
-
-    protected function starsenderDevicesUrl(): string
-    {
-        return $this->starsenderBase() . '/api/devices';
     }
 
     protected function cloudchatUrl(): string

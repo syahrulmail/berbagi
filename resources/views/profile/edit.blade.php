@@ -124,11 +124,17 @@
     <div class="card" style="max-width: 720px;">
         <h2 class="card-title"><i class="fas fa-plug" style="color: var(--primary);"></i> Integrasi</h2>
         <div class="form-group">
-            <label for="api_ss">API SS</label>
+            <label for="api_ss">API SS (Device API Key)</label>
             <input type="text" id="api_ss" name="api_ss" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
             @error('api_ss')
                 <small style="color: var(--danger);">{{ $message }}</small>
             @enderror
+            <div class="input-group" style="margin-top:8px;">
+                <input type="text" readonly id="webhook-url-ss" value="{{ $webhookUrlSs }}" onclick="this.select();"
+                       style="flex:1;font-family:monospace;font-size:12.5px;background:var(--gray-100);word-break:break-all;">
+                <button type="button" class="btn btn-sm" data-copy-target="webhook-url-ss"><i class="fas fa-copy"></i> Salin</button>
+            </div>
+            <small style="color: var(--gray-500);">URL Webhook Starsender — salin apa adanya ke webhook device Starsender (tanpa tambahan teks).</small>
         </div>
         <div class="form-group" style="margin-bottom: 0;">
             <label for="api_cc">API CC</label>
@@ -136,6 +142,12 @@
             @error('api_cc')
                 <small style="color: var(--danger);">{{ $message }}</small>
             @enderror
+            <div class="input-group" style="margin-top:8px;">
+                <input type="text" readonly id="webhook-url-cc" value="{{ $webhookUrlCc }}" onclick="this.select();"
+                       style="flex:1;font-family:monospace;font-size:12.5px;background:var(--gray-100);word-break:break-all;">
+                <button type="button" class="btn btn-sm" data-copy-target="webhook-url-cc"><i class="fas fa-copy"></i> Salin</button>
+            </div>
+            <small style="color: var(--gray-500);">URL Webhook CloudChat — salin apa adanya ke webhook nomor CloudChat (tanpa tambahan teks).</small>
         </div>
     </div>
 
@@ -198,6 +210,28 @@
         });
     }
 })();
+
+document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.dataset.copyTarget);
+        if (!input) return;
+
+        input.select();
+
+        function done() {
+            var original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Tersalin';
+            setTimeout(function () { btn.innerHTML = original; }, 1500);
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(input.value).then(done, function () { document.execCommand('copy'); done(); });
+        } else {
+            document.execCommand('copy');
+            done();
+        }
+    });
+});
 </script>
 @endpush
 @endsection

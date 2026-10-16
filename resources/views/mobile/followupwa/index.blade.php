@@ -67,7 +67,7 @@
                 <div class="mo-field">
                     <label>Mekanisme</label>
                     <select name="mechanism" class="mo-select" id="mo-mechanism">
-                        <option value="auto">Otomatis (lanjut 5 tiap balasan)</option>
+                        <option value="auto">Otomatis (tambah 5 setiap ada pesan masuk)</option>
                         <option value="limit">Terbatas (jumlah)</option>
                     </select>
                 </div>
