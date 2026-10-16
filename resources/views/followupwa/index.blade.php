@@ -406,8 +406,15 @@
             </table>
         </div>
 
-        <div class="alert" style="background:#E9F0FA;border-color:var(--primary);color:var(--primary);margin-top:14px;word-break:break-all;">
-            <i class="fas fa-link"></i> URL Webhook: <code>{{ $webhookUrl }}</code>
+        <div class="alert" style="background:#E9F0FA;border-color:var(--primary);color:var(--primary);margin-top:14px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span><i class="fas fa-link"></i> URL Webhook:</span>
+                <input type="text" readonly id="fuwa-webhook-url" value="{{ $webhookUrl }}"
+                       onclick="this.select();"
+                       style="flex:1;min-width:240px;font-family:monospace;font-size:12.5px;padding:6px 8px;border:1px solid var(--primary);border-radius:8px;background:#fff;color:var(--gray-700);word-break:break-all;">
+                <button type="button" class="btn btn-sm" data-copy-target="fuwa-webhook-url"><i class="fas fa-copy"></i> Salin</button>
+            </div>
+            <div class="fuwa-hint" style="margin-top:6px;">Salin URL ini apa adanya ke pengaturan webhook device Starsender — tanpa tambahan teks atau placeholder lain.</div>
         </div>
 
         @if(auth()->user()->isAdmin())
@@ -473,6 +480,27 @@
             tab.classList.add('active');
             var panel = document.getElementById('fuwa-panel-' + tab.dataset.tab);
             if (panel) panel.classList.add('active');
+        });
+    });
+
+    // Copy URL webhook (salin utuh, tanpa teks lain)
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = document.getElementById(btn.dataset.copyTarget);
+            if (!input) return;
+            input.select();
+            var text = input.value;
+            function done() {
+                var original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Tersalin';
+                setTimeout(function () { btn.innerHTML = original; }, 1500);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, function () { document.execCommand('copy'); done(); });
+            } else {
+                document.execCommand('copy');
+                done();
+            }
         });
     });
 

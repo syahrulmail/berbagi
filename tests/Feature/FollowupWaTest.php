@@ -617,6 +617,23 @@ class FollowupWaTest extends TestCase
         ])->assertStatus(403);
     }
 
+    public function test_webhook_url_is_canonical_without_placeholders(): void
+    {
+        $service = app(FollowupWaService::class);
+        $user = $this->makeUser('admin');
+
+        $url = $service->webhookUrl($user);
+
+        $this->assertSame(
+            route('wa.webhook', ['provider' => 'starsender', 'u' => $user->id, 't' => $service->webhookToken($user)]),
+            $url
+        );
+        $this->assertStringContainsString('/wa/webhook/starsender?u=' . $user->id, $url);
+        $this->assertStringContainsString('&t=' . $service->webhookToken($user), $url);
+        $this->assertStringNotContainsString('{', $url);
+        $this->assertStringNotContainsString('}', $url);
+    }
+
     public function test_webhook_records_reply_and_warms(): void
     {
         $service = app(FollowupWaService::class);
