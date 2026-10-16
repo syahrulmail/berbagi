@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Log;
 /**
  * Penerima webhook balasan WhatsApp (Starsender / CloudChat).
  *
- * URL webhook per pengguna memuat identitas:
- *   /wa/webhook/{provider}?u={userId}&t={token}
+ * URL webhook bersifat per pengguna dan dibangun oleh
+ * FollowupWaService::webhookUrl(). Identitas dikirim lewat query string:
+ * parameter "u" berisi ID pengguna dan parameter "t" berisi token webhook.
+ * Jangan menambahkan placeholder apa pun ke URL tersebut.
  */
 class WaWebhookController extends Controller
 {

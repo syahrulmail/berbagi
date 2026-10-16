@@ -68,15 +68,30 @@ class PublicController extends Controller
                 'text'  => $text,
                 'name'  => $name,
             ];
-        }, json_decode(Setting::get('home_testimonials', '[]'), true) ?: [])));
+        }, $this->decodeJsonList(Setting::get('home_testimonials', '[]')))));
 
         $partnerLogos = array_values(array_filter(array_map(function ($item) {
             $path = trim(is_array($item) ? (string) ($item['photo'] ?? '') : (string) $item);
 
             return $path !== '' ? asset_photo_url($path) : null;
-        }, json_decode(Setting::get('home_partner_logos', '[]'), true) ?: [])));
+        }, $this->decodeJsonList(Setting::get('home_partner_logos', '[]')))));
 
         return compact('homeQuote', 'testimonials', 'partnerLogos');
+    }
+
+    /**
+     * Decode setelan JSON yang berupa daftar menjadi array.
+     * Nilai yang tidak valid / bukan array (mis. skalar atau string)
+     * dikembalikan sebagai array kosong agar tidak memicu TypeError.
+     *
+     * @param  mixed  $json
+     * @return array<int,mixed>
+     */
+    protected function decodeJsonList($json): array
+    {
+        $decoded = json_decode((string) $json, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     public function program(Program $program)

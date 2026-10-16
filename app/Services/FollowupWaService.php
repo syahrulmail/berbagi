@@ -1014,7 +1014,11 @@ class FollowupWaService
 
     public function webhookUrl(User $user, string $provider = 'starsender'): string
     {
-        return url('/wa/webhook/' . $provider) . '?u=' . $user->id . '&t=' . $this->webhookToken($user);
+        return route('wa.webhook', [
+            'provider' => $provider,
+            'u' => $user->id,
+            't' => $this->webhookToken($user),
+        ]);
     }
 
     /**
