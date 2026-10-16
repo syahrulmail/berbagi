@@ -5,7 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Berbagi.or.id · Badan Wakaf Al Qur\'an')</title>
+    @php
+        $ogTitle = html_entity_decode(trim($__env->yieldContent('og_title')) ?: trim($__env->yieldContent('title')), ENT_QUOTES, 'UTF-8');
+        $ogDesc = html_entity_decode(trim($__env->yieldContent('og_description')) ?: trim($__env->yieldContent('meta_description')), ENT_QUOTES, 'UTF-8');
+        $ogUrl = trim($__env->yieldContent('og_url')) ?: url()->current();
+        $ogImage = trim($__env->yieldContent('og_image'));
+        $toHttps = static function ($u) {
+            return $u !== '' ? preg_replace('#^http://#i', 'https://', $u) : $u;
+        };
+        $ogUrl = $toHttps($ogUrl);
+        $ogImage = $toHttps($ogImage);
+    @endphp
     <meta name="description" content="@yield('meta_description', 'Platform wakaf dan sedekah Badan Wakaf Al Qur\'an (BWA) — wakaf untuk ummat, dari Anda untuk kebaikan.')">
+    <link rel="canonical" href="{{ $ogUrl }}">
+    <meta property="og:locale" content="id_ID">
+    <meta property="og:site_name" content="Berbagi.or.id">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $ogUrl }}">
+    <meta property="og:title" content="{{ $ogTitle }}">
+    <meta property="og:description" content="{{ $ogDesc }}">
+    @if($ogImage !== '')
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:image:secure_url" content="{{ $ogImage }}">
+    <meta property="og:image:alt" content="{{ $ogTitle }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+    @else
+    <meta name="twitter:card" content="summary">
+    @endif
+    <meta name="twitter:title" content="{{ $ogTitle }}">
+    <meta name="twitter:description" content="{{ $ogDesc }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -83,7 +114,29 @@
             from { transform: translateX(0); }
             to { transform: translateX(-50%); }
         }
+        [data-reveal] {
+            animation: revealFailsafe 0.01s 2.2s forwards;
+        }
+        [data-reveal].reveal-visible {
+            animation: none;
+        }
+        @keyframes revealFailsafe {
+            to { opacity: 1; transform: none; }
+        }
     </style>
+
+    {{-- Pelacakan & Verifikasi (diatur di Pengaturan Sistem) --}}
+    @if(!empty($googleSiteVerification))
+    <meta name="google-site-verification" content="{{ $googleSiteVerification }}">
+    @endif
+    @if(!empty($gtmContainerId))
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','{{ $gtmContainerId }}');</script>
+    @endif
+    @if(!empty($gaMeasurementId))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaMeasurementId }}"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ $gaMeasurementId }}');</script>
+    @endif
+    {!! $headTrackingCode !!}
 </head>
 <body class="bg-white text-primary-950">
 
@@ -105,13 +158,13 @@
             </span>
         </a>
         <nav class="flex items-center gap-2">
-            <a href="{{ route('home') }}" aria-label="Beranda" class="grid h-9 w-9 place-items-center rounded-lg text-sm text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house"></i></a>
+            <a href="{{ !empty($agen) ? route('public.agent', $agen->slug) : route('home') }}" aria-label="Beranda" class="grid h-9 w-9 place-items-center rounded-lg text-sm text-gray-600 transition hover:bg-primary-50 hover:text-primary-700"><i class="fas fa-house"></i></a>
             @php
                 $headerWaNumber = (isset($agen) && $agen->phone)
                     ? preg_replace('/\D/', '', $agen->phone)
                     : preg_replace('/\D/', '', ($waFallback ?? $waNumber ?? '6281234567890'));
             @endphp
-            <a href="@yield('headerDonasiUrl', 'https://wa.me/' . $headerWaNumber)" target="_blank" rel="noopener" class="btn btn-gold btn-sm header-donate" data-wa-log data-wa-source="header"><i class="fas fa-heart"></i> Tanya kami?</a>
+            <a href="@yield('headerDonasiUrl', 'https://wa.me/' . $headerWaNumber)" target="_blank" rel="noopener" class="btn btn-gold btn-sm header-donate" data-wa-log data-wa-source="header"><i class="fas fa-heart"></i> Tanya {{ !empty($agen) ? $agen->name : 'kami' }}?</a>
             <a href="{{ route('login') }}" class="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-primary-50 hover:text-primary-700 sm:block"><i class="fas fa-right-to-bracket mr-1.5"></i>Masuk</a>
         </nav>
     </div>
@@ -121,6 +174,7 @@
 
 <footer class="mt-16 bg-primary-950 text-primary-100">
     <div class="container py-14">
+        @if(empty($agen))
         <div class="grid gap-10 md:grid-cols-3">
             <div>
                 <a href="{{ route('home') }}" class="mb-4 flex items-center gap-3">
@@ -148,7 +202,8 @@
                 </ul>
             </div>
         </div>
-        <div class="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm text-primary-400 sm:flex-row sm:items-center sm:justify-between">
+        @endif
+        <div class="{{ empty($agen) ? 'mt-12 border-t border-white/10 pt-6' : '' }} flex flex-col gap-2 text-sm text-primary-400 sm:flex-row sm:items-center sm:justify-between">
             <span>&copy; {{ date('Y') }} Badan Wakaf Al Qur'an (BWA) · berbagi.or.id</span>
             <span>Wakaf untuk ummat, dari Anda untuk kebaikan.</span>
         </div>
@@ -170,7 +225,7 @@
         <a href="@yield('donasiBarUrl', $siteWaNumber ? 'https://wa.me/' . $siteWaNumber . '?text=' . urlencode('Assalamualaikum, saya ingin berdonasi untuk program wakaf Berbagi.or.id. Mohon info selanjutnya.') : '#')"
            target="_blank" rel="noopener"
            class="btn btn-wa"
-           data-wa-log data-wa-source="@yield('donasiBarSource', 'home')" data-wa-program="@yield('donasiBarProgram', '')">
+            data-wa-log data-wa-source="@yield('donasiBarSource', 'home')" data-wa-program="@yield('donasiBarProgram', '')" @if(!empty($agen)) data-wa-agen="{{ $agen->id }}" @endif>
             <i class="fab fa-whatsapp"></i> @yield('donasiBarCta', 'Berbagi')
         </a>
     </div>
@@ -281,10 +336,21 @@
                 io.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.12 });
+    }, { threshold: 0, rootMargin: '80px 0px' });
     document.querySelectorAll('[data-reveal]').forEach(function (el) {
+        var rect = el.getBoundingClientRect();
+        var vh = window.innerHeight || document.documentElement.clientHeight;
+        if (rect.top < vh && rect.bottom > 0) {
+            el.classList.add('reveal-visible');
+            return;
+        }
         io.observe(el);
     });
+    setTimeout(function () {
+        document.querySelectorAll('[data-reveal]:not(.reveal-visible)').forEach(function (el) {
+            el.classList.add('reveal-visible');
+        });
+    }, 2500);
 
     var pio = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
@@ -317,5 +383,9 @@
 })();
 </script>
 @stack('scripts')
+    @if(!empty($gtmContainerId))
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ $gtmContainerId }}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    @endif
+    {!! $bodyTrackingCode !!}
 </body>
 </html>

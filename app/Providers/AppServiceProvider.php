@@ -28,6 +28,13 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\View::composer('layouts.public', function ($view) {
             $view->with('siteWaNumber', preg_replace('/\D/', '', \App\Models\Setting::get('wa_public_number', '6281234567890')));
             $view->with('trustbarText', \App\Models\Setting::get('trustbar_text', 'Badan Wakaf Al Qur\'an · Terdaftar & Berizin'));
+
+            // Verifikasi & pelacakan (diatur di Pengaturan Sistem).
+            $view->with('googleSiteVerification', \App\Models\Setting::get('google_site_verification', ''));
+            $view->with('gtmContainerId', \App\Models\Setting::get('gtm_container_id', ''));
+            $view->with('gaMeasurementId', \App\Models\Setting::get('ga_measurement_id', ''));
+            $view->with('headTrackingCode', \App\Models\Setting::get('head_tracking_code', ''));
+            $view->with('bodyTrackingCode', \App\Models\Setting::get('body_tracking_code', ''));
         });
 
         if (! $this->app->runningInConsole()) {
