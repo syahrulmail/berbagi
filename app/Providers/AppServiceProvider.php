@@ -46,6 +46,13 @@ class AppServiceProvider extends ServiceProvider
      * Hasilnya: routing, fullUrl() untuk redirect-back, dan URL generation
      * seluruhnya konsisten.
      *
+     * PENTING: host & skema root URL diambil dari permintaan yang sedang
+     * berjalan, bukan dari host statis APP_URL. Sebab cookie sesi bersifat
+     * host-only; bila form POST mengarah ke host yang berbeda dari host saat
+     * halaman dimuat (mis. pengguna membuka lewat "www" tapi aksi form
+     * mengarah ke domain tanpa "www"), browser tidak mengirim cookie sesi
+     * sehingga validasi CSRF gagal dengan error 419 Page Expired.
+     *
      * @return void
      */
     protected function configureSubDirectory()
@@ -59,6 +66,12 @@ class AppServiceProvider extends ServiceProvider
             $server->set('PHP_SELF', $prefix . '/index.php');
         }
 
-        \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
+        $root = request()->getSchemeAndHttpHost();
+
+        if (! empty($prefix) && $prefix !== '/') {
+            $root .= $prefix;
+        }
+
+        \Illuminate\Support\Facades\URL::forceRootUrl($root);
     }
 }

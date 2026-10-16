@@ -143,4 +143,44 @@ class ContactIndexTest extends TestCase
             ->assertDontSee('data-branch="' . $branchB->id . '"', false)
             ->assertDontSee($branchB->name);
     }
+
+    public function test_index_shows_followup_badge_and_last_donation_date()
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $agen = $this->makeUser('agen', $branch);
+
+        $followupAt = now()->subDays(3);
+
+        $contact = Contact::create([
+            'name' => 'Kontak FU ' . uniqid(),
+            'phone' => '6281299990001',
+            'status' => 'donated',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+            'followup_count' => 2,
+            'last_messaged_at' => $followupAt,
+        ]);
+
+        $this->makeDonation($contact, $branch, $agen, 10000);
+
+        $this->actingAs($admin)
+            ->get(route('contacts.index', ['search' => $contact->name]))
+            ->assertOk()
+            ->assertSee('FU 2x')
+            ->assertSee($followupAt->format('d/m/Y'))
+            ->assertSee(now()->format('d/m/Y'))
+            ->assertSee('Rp 10.000');
+    }
+
+    public function test_followup_badge_caps_at_three_plus()
+    {
+        $this->assertSame('0x', followup_badge(0));
+        $this->assertSame('1x', followup_badge(1));
+        $this->assertSame('2x', followup_badge(2));
+        $this->assertSame('3x', followup_badge(3));
+        $this->assertSame('3+x', followup_badge(4));
+        $this->assertSame('3+x', followup_badge(12));
+        $this->assertSame('0x', followup_badge(null));
+    }
 }

@@ -704,6 +704,10 @@ class DonationController extends Controller
             ]);
         }
 
+        if ($donation->contact_id) {
+            $donation->contact()->update(['status' => Contact::STATUS_DONATED]);
+        }
+
         ActivityLog::record('donation.update', 'Memperbarui donasi #' . $donation->id);
 
         if ($request->expectsJson()) {

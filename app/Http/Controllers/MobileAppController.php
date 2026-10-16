@@ -658,6 +658,10 @@ class MobileAppController extends Controller
             $c->last_donation_date_formatted = $c->last_donation_date
                 ? \Illuminate\Support\Carbon::parse($c->last_donation_date)->format('d M Y')
                 : null;
+            $c->followup_badge = followup_badge($c->followup_count);
+            $c->last_followup_formatted = $c->last_messaged_at
+                ? $c->last_messaged_at->format('d/m/y')
+                : null;
         });
 
         $statusCounts = [

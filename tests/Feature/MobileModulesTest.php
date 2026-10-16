@@ -391,6 +391,30 @@ class MobileModulesTest extends TestCase
         $response->assertSee('628123456789');
     }
 
+    public function test_contact_list_shows_followup_badge_beside_phone(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $followupAt = now()->subDays(2);
+
+        Contact::create([
+            'name' => 'Kontak FU Mobile ' . uniqid(),
+            'phone' => '6281299990002',
+            'status' => 'contacted',
+            'agen_id' => $agen->id,
+            'branch_id' => $branch->id,
+            'followup_count' => 5,
+            'last_messaged_at' => $followupAt,
+        ]);
+
+        $response = $this->actingAs($agen)->get(route('mo.contacts'));
+
+        $response->assertOk();
+        $response->assertSee('FU 3+x');
+        $response->assertSee($followupAt->format('d/m/y'));
+    }
+
     public function test_contact_form_footer_is_not_sticky_and_uses_short_save_label(): void
     {
         $branch = $this->makeBranch();

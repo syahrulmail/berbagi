@@ -155,6 +155,18 @@ if (! function_exists('mask_phone')) {
     }
 }
 
+if (! function_exists('followup_badge')) {
+    /**
+     * Label ringkas jumlah followup kontak: 0x, 1x, 2x, 3x, lalu 3+x untuk 4 kali atau lebih.
+     */
+    function followup_badge($count)
+    {
+        $count = (int) $count;
+
+        return $count >= 4 ? '3+x' : $count . 'x';
+    }
+}
+
 if (! function_exists('kwitansi_public_url')) {
     /**
      * URL publik (bertanda tangan, tanpa kedaluwarsa) untuk membuka kwitansi

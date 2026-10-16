@@ -131,7 +131,12 @@
                 <div class="mo-row-icon {{ $rowIcon }}">{{ strtoupper(substr($c->name, 0, 1)) }}</div>
                 <div class="mo-row-body">
                     <div class="mo-row-title">{{ $c->name }}</div>
-                    <div class="mo-row-sub">{{ $c->phone }}</div>
+                    <div class="mo-row-sub" style="display:flex;align-items:center;gap:8px;">
+                        <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">{{ $c->phone }}</span>
+                        <span style="margin-left:auto;flex-shrink:0;white-space:nowrap;font-weight:600;color:var(--mo-primary);">
+                            FU {{ $c->followup_badge }}@if($c->last_followup_formatted)<span style="font-weight:400;color:var(--mo-muted);"> · {{ $c->last_followup_formatted }}</span>@endif
+                        </span>
+                    </div>
                     <div style="margin-top:5px;">
                         <span class="mo-badge {{ $statusCls }}">{{ $c->statusLabel() }}</span>
                     </div>

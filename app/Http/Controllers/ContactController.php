@@ -61,7 +61,8 @@ class ContactController extends Controller
     protected function filteredQuery(Request $request)
     {
         $query = Contact::with(['agen', 'branch'])
-            ->withSum('donations as total_donation', 'amount');
+            ->withSum('donations as total_donation', 'amount')
+            ->withMax('donations as last_donation_date', 'donation_date');
 
         if (auth()->user()->isAgen()) {
             $query->where('agen_id', auth()->id());

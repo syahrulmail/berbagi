@@ -91,6 +91,9 @@
                         <td>
                             <strong>{{ $contact->name }}</strong>
                             <small style="display:block; color: var(--gray-500);">{{ $contact->phone }}</small>
+                            <small style="display:block; color: var(--gray-500);">
+                                FU {{ followup_badge($contact->followup_count) }}@if($contact->last_messaged_at) · {{ $contact->last_messaged_at->format('d/m/Y') }}@endif
+                            </small>
                         </td>
                         <td>
                             @php
@@ -109,7 +112,12 @@
                                 <small style="display:block; color: var(--gray-500);">{{ $contact->branch->name }}</small>
                             @endif
                         </td>
-                        <td>Rp {{ number_format((float) ($contact->total_donation ?? 0), 0, ',', '.') }}</td>
+                        <td>
+                            Rp {{ number_format((float) ($contact->total_donation ?? 0), 0, ',', '.') }}
+                            @if($contact->last_donation_date)
+                                <small style="display:block; color: var(--gray-500);">{{ \Illuminate\Support\Carbon::parse($contact->last_donation_date)->format('d/m/Y') }}</small>
+                            @endif
+                        </td>
                         <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             {{ $contact->notes ?? '-' }}
                         </td>
