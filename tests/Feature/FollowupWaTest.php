@@ -634,6 +634,20 @@ class FollowupWaTest extends TestCase
         $this->assertStringNotContainsString('}', $url);
     }
 
+    public function test_legacy_token_is_reused_for_starsender_only(): void
+    {
+        $service = app(FollowupWaService::class);
+        $user = $this->makeUser('admin');
+        \App\Models\Setting::set('wa_webhook_token_' . $user->id, 'legacytoken123', 'warming');
+
+        $ss = $service->webhookToken($user, 'starsender');
+        $cc = $service->webhookToken($user, 'cloudchat');
+
+        $this->assertSame('legacytoken123', $ss);
+        $this->assertNotSame('legacytoken123', $cc);
+        $this->assertNotSame($ss, $cc);
+    }
+
     public function test_webhook_token_is_separate_per_provider(): void
     {
         $service = app(FollowupWaService::class);

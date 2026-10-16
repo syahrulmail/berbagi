@@ -1018,16 +1018,27 @@ class FollowupWaService
     /**
      * Token webhook milik pengguna, terpisah per provider
      * (dibuat sekali, disimpan di settings).
+     *
+     * Token lama (tanpa sufiks provider) hanya dipakai ulang untuk Starsender
+     * agar URL yang sudah terpasang tetap valid. Provider lain memakai token
+     * acak sendiri; token yang masih sama dengan token lama otomatis
+     * di-regenerate supaya tiap provider benar-benar berbeda.
      */
     public function webhookToken(User $user, string $provider = 'starsender'): string
     {
         $provider = $this->normalizeWebhookProvider($provider);
-        $key = 'wa_webhook_token_' . $user->id . '_' . $provider;
+        $legacyKey = 'wa_webhook_token_' . $user->id;
+        $key = $legacyKey . '_' . $provider;
         $token = (string) Setting::get($key, '');
+        $legacy = (string) Setting::get($legacyKey, '');
 
-        if ($token === '') {
-            $legacy = (string) Setting::get('wa_webhook_token_' . $user->id, '');
-            $token = $legacy !== '' ? $legacy : bin2hex(random_bytes(16));
+        $needsReset = $token === ''
+            || ($provider !== 'starsender' && $legacy !== '' && $token === $legacy);
+
+        if ($needsReset) {
+            $token = ($provider === 'starsender' && $legacy !== '')
+                ? $legacy
+                : bin2hex(random_bytes(16));
             Setting::set($key, $token, 'warming');
         }
 
