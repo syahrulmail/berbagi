@@ -144,6 +144,25 @@ class FollowupWaTest extends TestCase
         $this->assertSame(0, Broadcast::count());
     }
 
+    public function test_broadcast_accepts_empty_status_and_followup_filters(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin);
+        $this->makeContact('Kontak Satu', '628111000111');
+
+        $response = $this->actingAs($admin)->post(route('followupwa.broadcast.store'), [
+            'message' => 'Halo [nama]',
+            'mechanism' => 'auto',
+            'schedule_type' => 'now',
+            'statuses' => [''],
+            'followups' => [''],
+        ]);
+
+        $response->assertRedirect(route('whatsapp.index'));
+        $response->assertSessionHasNoErrors();
+        $this->assertSame(1, Broadcast::count());
+    }
+
     public function test_manual_log_records_followup(): void
     {
         $agen = $this->makeUser('agen');
