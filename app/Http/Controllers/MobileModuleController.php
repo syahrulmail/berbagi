@@ -471,7 +471,7 @@ class MobileModuleController extends MobileAppController
             return back()->withErrors(['import' => 'Tidak ada data yang dapat diproses.'])->withInput();
         }
 
-        $result = $service->processRows($rows);
+        $result = $service->processRows($rows, auth()->user());
 
         if (! empty($result['errors'])) {
             return back()->withErrors([

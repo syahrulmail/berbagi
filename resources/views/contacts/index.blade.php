@@ -40,7 +40,7 @@
 <div class="card">
     <form method="GET" action="{{ route('contacts.index') }}" class="filter-bar">
         <div class="form-group">
-            <input type="search" name="search" placeholder="Cari nama / no. HP..." value="{{ request('search') }}">
+            <input type="search" name="search" placeholder="Cari nama / no. HP / catatan..." value="{{ request('search') }}">
         </div>
         <div class="form-group">
             <select name="status">

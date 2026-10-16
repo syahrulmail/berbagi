@@ -640,6 +640,7 @@ class MobileAppController extends Controller
                 if ($digits !== '') {
                     $inner->orWhere('phone', 'like', "%{$digits}%");
                 }
+                $inner->orWhere('notes', 'like', "%{$search}%");
             });
         })
         ->when($request->status, fn ($q, $status) => $q->where('status', $status));

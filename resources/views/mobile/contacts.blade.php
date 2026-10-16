@@ -34,7 +34,7 @@
             <div class="mo-search-flex">
                 <div class="mo-search">
                     <i class="fas fa-magnifying-glass"></i>
-                    <input type="search" name="search" placeholder="Cari nama / nomor WA..." value="{{ request('search') }}">
+                    <input type="search" name="search" placeholder="Cari nama / nomor WA / catatan..." value="{{ request('search') }}">
                 </div>
                 <button type="button" class="mo-filter-toggle {{ $hasActiveFilter ? 'has-filter' : '' }}" id="mo-contact-filter-toggle" data-filter-toggle="mo-contact-filters" aria-label="Filter status" aria-expanded="false">
                     <i class="fas fa-sliders"></i>

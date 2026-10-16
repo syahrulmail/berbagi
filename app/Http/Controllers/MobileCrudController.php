@@ -373,7 +373,8 @@ class MobileCrudController extends MobileAppController
 
         $data['phone'] = $normalized;
 
-        $map = $service->normalizedPhoneMap();
+        $scope = auth()->user()->isAgen() ? (int) auth()->id() : ($data['agen_id'] ?? null);
+        $map = $service->normalizedPhoneMap($scope);
         if (isset($map[$normalized]) && (int) $map[$normalized]['id'] !== (int) $ignoreId) {
             throw ValidationException::withMessages([
                 'phone' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'.",

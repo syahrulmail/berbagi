@@ -88,7 +88,8 @@ class ContactController extends Controller
         ->when($request->search, function ($q, $search) {
             return $q->where(function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%");
             });
         });
 
@@ -180,11 +181,6 @@ class ContactController extends Controller
         }
         $data['phone'] = $normalized;
 
-        $map = $this->importService->normalizedPhoneMap();
-        if (isset($map[$normalized])) {
-            return back()->withErrors(['phone' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'."])->withInput();
-        }
-
         if (auth()->user()->isSupervisor()) {
             $data['branch_id'] = auth()->user()->branch_id;
         }
@@ -204,6 +200,11 @@ class ContactController extends Controller
         if (auth()->user()->isAgen()) {
             $data['agen_id'] = auth()->id();
             $data['branch_id'] = auth()->user()->branch_id;
+        }
+
+        $map = $this->importService->normalizedPhoneMap($data['agen_id'] ?? null);
+        if (isset($map[$normalized])) {
+            return back()->withErrors(['phone' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'."])->withInput();
         }
 
         $contact = Contact::create($data);
@@ -232,14 +233,6 @@ class ContactController extends Controller
         }
         $data['phone'] = $normalized;
 
-        $map = $this->importService->normalizedPhoneMap();
-        if (isset($map[$normalized])) {
-            return response()->json([
-                'success' => false,
-                'message' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'.",
-            ], 422);
-        }
-
         if (!auth()->user()->isAgen() && !empty($data['agen_id'])) {
             $agent = User::find($data['agen_id']);
             if ($agent) {
@@ -258,6 +251,14 @@ class ContactController extends Controller
         if (auth()->user()->isAgen()) {
             $data['agen_id'] = auth()->id();
             $data['branch_id'] = auth()->user()->branch_id;
+        }
+
+        $map = $this->importService->normalizedPhoneMap($data['agen_id'] ?? null);
+        if (isset($map[$normalized])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'.",
+            ], 422);
         }
 
         $contact = Contact::create($data);
@@ -302,11 +303,6 @@ class ContactController extends Controller
         }
         $data['phone'] = $normalized;
 
-        $map = $this->importService->normalizedPhoneMap();
-        if (isset($map[$normalized]) && (int) $map[$normalized]['id'] !== (int) $contact->id) {
-            return back()->withErrors(['phone' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'."])->withInput();
-        }
-
         if (!auth()->user()->isAgen() && !empty($data['agen_id'])) {
             $agent = User::find($data['agen_id']);
             if ($agent) {
@@ -322,6 +318,11 @@ class ContactController extends Controller
         if (auth()->user()->isAgen()) {
             $data['agen_id'] = auth()->id();
             $data['branch_id'] = auth()->user()->branch_id;
+        }
+
+        $map = $this->importService->normalizedPhoneMap($data['agen_id'] ?? null);
+        if (isset($map[$normalized]) && (int) $map[$normalized]['id'] !== (int) $contact->id) {
+            return back()->withErrors(['phone' => "Nomor WhatsApp sudah terdaftar atas nama '{$map[$normalized]['name']}'."])->withInput();
         }
 
         $contact->update($data);
@@ -447,7 +448,7 @@ class ContactController extends Controller
             return back()->withErrors(['import' => 'Tidak ada baris data yang dapat diproses.'])->withInput();
         }
 
-        $result = $this->importService->processRows($rows);
+        $result = $this->importService->processRows($rows, auth()->user());
 
         if (!empty($result['errors'])) {
             $errors = array_merge(
@@ -487,7 +488,7 @@ class ContactController extends Controller
             return back()->withErrors(['import' => 'File tidak berisi data yang dapat diproses.'])->withInput();
         }
 
-        $result = $this->importService->processRows($rows);
+        $result = $this->importService->processRows($rows, auth()->user());
 
         if (!empty($result['errors'])) {
             $errors = array_merge(

@@ -41,7 +41,7 @@ class ContactImportService
         }
     }
 
-    public function processRows(array $rows): array
+    public function processRows(array $rows, ?User $user = null): array
     {
         $branches = Branch::all();
         $agents = User::where('role', 'agen')->get();
@@ -55,7 +55,7 @@ class ContactImportService
             array_shift($rows);
         }
 
-        $existingPhones = $this->normalizedPhoneMap();
+        $existingPhones = $this->existingPhoneIndex();
         $seenPhones = [];
 
         foreach ($rows as $idx => $cells) {
@@ -98,17 +98,6 @@ class ContactImportService
                 continue;
             }
 
-            if (isset($seenPhones[$normalizedPhone])) {
-                $errors[] = "Baris {$lineNo}: No. WhatsApp {$normalizedPhone} sama dengan baris {$seenPhones[$normalizedPhone]} pada tempelan/file ini.";
-                continue;
-            }
-            $seenPhones[$normalizedPhone] = $lineNo;
-
-            if (isset($existingPhones[$normalizedPhone])) {
-                $errors[] = "Baris {$lineNo}: No. WhatsApp {$normalizedPhone} sudah terdaftar atas nama '{$existingPhones[$normalizedPhone]['name']}'.";
-                continue;
-            }
-
             $status = $this->mapStatus($statusLabel);
             if ($status === null) {
                 $errors[] = "Baris {$lineNo}: Status '{$statusLabel}' tidak dikenali. Gunakan Prospek, Simpan, Wakif, atau Stop.";
@@ -136,6 +125,22 @@ class ContactImportService
                     continue;
                 }
                 $agentId = $matches[0];
+            }
+
+            $scope = ($user && $user->isAgen())
+                ? (int) $user->id
+                : (int) ($agentId ?? 0);
+
+            $seenKey = $scope . '|' . $normalizedPhone;
+            if (isset($seenPhones[$seenKey])) {
+                $errors[] = "Baris {$lineNo}: No. WhatsApp {$normalizedPhone} sama dengan baris {$seenPhones[$seenKey]} pada tempelan/file ini.";
+                continue;
+            }
+            $seenPhones[$seenKey] = $lineNo;
+
+            if (isset($existingPhones[$scope][$normalizedPhone])) {
+                $errors[] = "Baris {$lineNo}: No. WhatsApp {$normalizedPhone} sudah terdaftar atas nama '{$existingPhones[$scope][$normalizedPhone]['name']}'.";
+                continue;
             }
 
             $contacts[] = [
@@ -759,16 +764,27 @@ class ContactImportService
         return $digits;
     }
 
-    public function normalizedPhoneMap(): array
+    public function normalizedPhoneMap(?int $agenId = null): array
     {
-        $map = [];
-        foreach (Contact::all(['id', 'phone', 'name']) as $contact) {
+        $index = $this->existingPhoneIndex();
+
+        return $index[(int) ($agenId ?? 0)] ?? [];
+    }
+
+    public function existingPhoneIndex(): array
+    {
+        $index = [];
+        foreach (Contact::all(['id', 'phone', 'name', 'agen_id']) as $contact) {
             $norm = $this->normalizePhone($contact->phone);
-            if ($norm !== null && !isset($map[$norm])) {
-                $map[$norm] = ['id' => (int) $contact->id, 'name' => $contact->name];
+            if ($norm === null) {
+                continue;
+            }
+            $scope = (int) ($contact->agen_id ?? 0);
+            if (!isset($index[$scope][$norm])) {
+                $index[$scope][$norm] = ['id' => (int) $contact->id, 'name' => $contact->name];
             }
         }
-        return $map;
+        return $index;
     }
 
     protected function findBranchId(string $name, $branches)
