@@ -79,7 +79,7 @@
     </div>
 
     @if($user->isAdmin() || $user->isSupervisor())
-        <div class="mo-section-title">Manajemen</div>
+        <div class="mo-section-title">Cabang dan Pengguna</div>
         <div class="mo-menu">
             @if($user->isAdmin())
                 <a href="{{ route('mo.branches') }}" class="mo-menu-item">
@@ -93,33 +93,37 @@
                 <div class="txt">Pengguna</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
-            @if($user->isAdmin())
-                <a href="{{ route('mo.settings.target') }}" class="mo-menu-item">
-                    <i class="fas fa-bullseye mi blue"></i>
-                    <div class="txt">Target &amp; Informasi</div>
-                    <i class="fas fa-chevron-right chev"></i>
-                </a>
-                <a href="{{ route('mo.settings.testimonials') }}" class="mo-menu-item">
-                    <i class="fas fa-quote-right mi gold"></i>
-                    <div class="txt">Testimoni</div>
-                    <i class="fas fa-chevron-right chev"></i>
-                </a>
-                <a href="{{ route('mo.settings.partners') }}" class="mo-menu-item">
-                    <i class="fas fa-handshake mi"></i>
-                    <div class="txt">Mitra</div>
-                    <i class="fas fa-chevron-right chev"></i>
-                </a>
-                <a href="{{ route('mo.campaign-tags') }}" class="mo-menu-item">
-                    <i class="fas fa-tags mi gold"></i>
-                    <div class="txt">Label Kampanye</div>
-                    <i class="fas fa-chevron-right chev"></i>
-                </a>
-                <a href="{{ route('mo.achievements') }}" class="mo-menu-item">
-                    <i class="fas fa-trophy mi gold"></i>
-                    <div class="txt">Pencapaian</div>
-                    <i class="fas fa-chevron-right chev"></i>
-                </a>
-            @endif
+        </div>
+    @endif
+
+    @if($user->isAdmin())
+        <div class="mo-section-title">Manajemen</div>
+        <div class="mo-menu">
+            <a href="{{ route('mo.settings.target') }}" class="mo-menu-item">
+                <i class="fas fa-bullseye mi blue"></i>
+                <div class="txt">Target &amp; Informasi</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+            <a href="{{ route('mo.settings.testimonials') }}" class="mo-menu-item">
+                <i class="fas fa-quote-right mi gold"></i>
+                <div class="txt">Testimoni</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+            <a href="{{ route('mo.settings.partners') }}" class="mo-menu-item">
+                <i class="fas fa-handshake mi"></i>
+                <div class="txt">Mitra</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+            <a href="{{ route('mo.campaign-tags') }}" class="mo-menu-item">
+                <i class="fas fa-tags mi gold"></i>
+                <div class="txt">Label Kampanye</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+            <a href="{{ route('mo.achievements') }}" class="mo-menu-item">
+                <i class="fas fa-trophy mi gold"></i>
+                <div class="txt">Pencapaian</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
         </div>
     @endif
 

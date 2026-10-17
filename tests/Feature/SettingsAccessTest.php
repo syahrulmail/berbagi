@@ -66,7 +66,19 @@ class SettingsAccessTest extends TestCase
         $this->actingAs($this->makeUser('admin'))
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Pengaturan');
+            ->assertSee('Pengaturan')
+            ->assertSee('Cabang dan Pengguna')
+            ->assertSee('Manajemen');
+    }
+
+    public function test_branch_and_user_category_is_shown_for_supervisor(): void
+    {
+        $this->actingAs($this->makeUser('supervisor', $this->makeBranch()))
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Cabang dan Pengguna')
+            ->assertSee('Pengguna')
+            ->assertDontSee('Manajemen');
     }
 
     public function test_settings_page_shows_tracking_inputs(): void
@@ -205,6 +217,17 @@ class SettingsAccessTest extends TestCase
             ->assertSee('Target &amp; Informasi', false)
             ->assertSee('Testimoni')
             ->assertSee('Mitra')
-            ->assertSee('Pengaturan Sistem');
+            ->assertSee('Pengaturan Sistem')
+            ->assertSee('Cabang dan Pengguna');
+    }
+
+    public function test_mobile_branch_and_user_category_visible_for_supervisor(): void
+    {
+        $this->actingAs($this->makeUser('supervisor', $this->makeBranch()))
+            ->get(route('mo.more'))
+            ->assertOk()
+            ->assertSee('Cabang dan Pengguna')
+            ->assertSee('Pengguna')
+            ->assertDontSee('Manajemen');
     }
 }
