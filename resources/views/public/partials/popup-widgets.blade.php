@@ -13,7 +13,7 @@
         display: flex;
         gap: 12px;
         max-width: 350px;
-        padding: 14px 30px 14px 14px;
+        padding: 14px 16px 14px 14px;
         background: #fff;
         border-radius: 16px;
         box-shadow: 0 20px 48px -20px rgba(2, 35, 33, .45), 0 0 0 1px rgba(8, 168, 153, .08);
@@ -78,25 +78,6 @@
     }
     .bp-stats-cta[hidden] {
         display: none;
-    }
-    .bp-stats-close {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        display: grid;
-        place-items: center;
-        width: 22px;
-        height: 22px;
-        border: none;
-        border-radius: 999px;
-        background: #f1f5f9;
-        color: #64748b;
-        font-size: 14px;
-        line-height: 1;
-        cursor: pointer;
-    }
-    .bp-stats-close:hover {
-        background: #e2e8f0;
     }
     .bp-modal-root {
         position: fixed;
@@ -182,7 +163,6 @@
 
 @if(!empty($statsPopup))
 <div id="bpStats" class="bp-stats" role="dialog" aria-live="polite" aria-label="Statistik donasi">
-    <button type="button" class="bp-stats-close" id="bpStatsClose" aria-label="Tutup statistik">&times;</button>
     <span class="bp-stats-icon" id="bpStatsIcon"><i class="fas fa-hand-holding-heart"></i></span>
     <div>
         <div class="bp-stats-text" id="bpStatsText"></div>
@@ -233,18 +213,17 @@ window.BerbagiPopupConfig = {!! json_encode([
 
     var statsController = null;
 
-    if (stats && stats.patterns && stats.patterns.length && !readFlag('bp_stats_closed')) {
+    if (stats && stats.patterns && stats.patterns.length) {
         (function () {
             var box = document.getElementById('bpStats');
             var text = document.getElementById('bpStatsText');
             var cta = document.getElementById('bpStatsCta');
             var iconBox = document.getElementById('bpStatsIcon');
-            var close = document.getElementById('bpStatsClose');
             var patterns = stats.patterns;
             var currentIndex = -1;
+            var cycles = 0;
             var isVisible = false;
             var isPaused = false;
-            var isStopped = false;
             var showTimer = null;
             var hideTimer = null;
             var nextTimer = null;
@@ -309,12 +288,18 @@ window.BerbagiPopupConfig = {!! json_encode([
 
             function scheduleNext() {
                 window.clearTimeout(nextTimer);
+
+                if (cycles > 0 && cycles < 3) {
+                    nextTimer = window.setTimeout(show, 2000);
+                    return;
+                }
+
                 var gap = 2000 + Math.floor(Math.random() * 58001);
                 nextTimer = window.setTimeout(show, gap);
             }
 
             function show() {
-                if (isStopped || isPaused) return;
+                if (isPaused) return;
 
                 currentIndex = nextIndex();
                 renderPattern(patterns[currentIndex]);
@@ -327,15 +312,14 @@ window.BerbagiPopupConfig = {!! json_encode([
                 window.clearTimeout(hideTimer);
                 box.classList.remove('is-visible');
                 isVisible = false;
+                cycles++;
 
-                if (!isStopped && !isPaused) {
+                if (!isPaused) {
                     scheduleNext();
                 }
             }
 
             function pause() {
-                if (isStopped) return;
-
                 isPaused = true;
                 clearTimers();
                 box.classList.remove('is-visible');
@@ -343,22 +327,11 @@ window.BerbagiPopupConfig = {!! json_encode([
             }
 
             function resume() {
-                if (isStopped || !isPaused) return;
+                if (!isPaused) return;
 
                 isPaused = false;
                 scheduleNext();
             }
-
-            function stop() {
-                isStopped = true;
-                isPaused = false;
-                clearTimers();
-                box.classList.remove('is-visible');
-                isVisible = false;
-                setFlag('bp_stats_closed');
-            }
-
-            close.addEventListener('click', stop);
 
             var initialDelay = Math.max(0, parseInt(stats.delay_seconds || 0, 10)) * 1000;
             showTimer = window.setTimeout(show, initialDelay);
@@ -366,7 +339,6 @@ window.BerbagiPopupConfig = {!! json_encode([
             statsController = {
                 pause: pause,
                 resume: resume,
-                stop: stop,
                 isVisible: function () { return isVisible; }
             };
         })();
