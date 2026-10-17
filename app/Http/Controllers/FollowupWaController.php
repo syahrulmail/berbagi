@@ -49,6 +49,7 @@ class FollowupWaController extends Controller
 
         $branches = $this->visibleBranches();
         $agens = $this->visibleAgents();
+        $this->service->decorateApiStatuses($agens);
         $warmingConfig = $this->service->warmingConfig();
         $warmingRecipients = $this->service->warmingRecipients($user);
 
@@ -96,15 +97,18 @@ class FollowupWaController extends Controller
         $limit = (int) $request->input('limit', 100);
         $limit = max(1, min(200, $limit));
 
-        $contacts = $this->service->previewContacts($user, [
+        $ownerResult = $this->service->resolveBroadcastOwner($user, $request->input('agen_id'));
+        $owner = $ownerResult['owner'] ?? $user;
+
+        $contacts = $this->service->previewContacts($owner, [
             'branch_id' => $request->input('branch_id'),
             'agen_id' => $request->input('agen_id'),
             'statuses' => $request->input('statuses', []),
             'followups' => $request->input('followups', []),
         ], $limit);
 
-        $items = $contacts->map(function (Contact $contact) use ($user, $message) {
-            $rendered = $message !== '' ? $this->service->renderTemplate($message, $contact, $user) : '';
+        $items = $contacts->map(function (Contact $contact) use ($owner, $message) {
+            $rendered = $message !== '' ? $this->service->renderTemplate($message, $contact, $owner) : '';
 
             return [
                 'id' => $contact->id,

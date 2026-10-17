@@ -102,6 +102,7 @@ class FollowupWaTest extends TestCase
         $this->setApi($admin);
 
         $agen = $this->makeUser('agen');
+        $this->setApi($agen);
         $c1 = $this->makeContact('Kontak Satu', '628111111111', ['agen_id' => $agen->id]);
         $c2 = $this->makeContact('Kontak Dua', '628222222222', ['agen_id' => $agen->id]);
 
@@ -119,7 +120,7 @@ class FollowupWaTest extends TestCase
 
         $response->assertRedirect(route('whatsapp.index'));
 
-        $broadcast = Broadcast::where('user_id', $admin->id)->first();
+        $broadcast = Broadcast::where('user_id', $agen->id)->first();
         $this->assertNotNull($broadcast);
         $this->assertSame(2, $broadcast->sent);
         $this->assertSame(2, $broadcast->targets()->where('status', BroadcastTarget::STATUS_SENT)->count());
@@ -128,6 +129,94 @@ class FollowupWaTest extends TestCase
         $this->assertSame(Contact::STATUS_CONTACTED, $c1->fresh()->status);
         $this->assertSame(1, $c2->fresh()->followup_count);
         $this->assertSame(2, WhatsappMessage::whereIn('contact_id', [$c1->id, $c2->id])->count());
+    }
+
+    public function test_admin_broadcast_for_agent_uses_agent_api_key(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin, 'SS-ADMIN-KEY');
+
+        $agen = $this->makeUser('agen');
+        $this->setApi($agen, 'SS-AGEN-KEY');
+
+        $this->makeContact('Kontak Agen', '628123456701', ['agen_id' => $agen->id]);
+
+        $this->actingAs($admin)->post(route('followupwa.broadcast.store'), [
+            'message' => 'Halo [nama_agen]',
+            'mechanism' => 'limit',
+            'limit_count' => 1,
+            'schedule_type' => 'now',
+            'interval_min' => 5,
+            'interval_max' => 5,
+            'agen_id' => $agen->id,
+        ])->assertRedirect(route('whatsapp.index'));
+
+        $broadcast = Broadcast::where('user_id', $agen->id)->first();
+        $this->assertNotNull($broadcast);
+        $this->assertSame(1, $broadcast->sent);
+
+        Http::assertSent(function ($request) {
+            return strpos($request->url(), '/api/send') !== false
+                && $request->hasHeader('Authorization', 'SS-AGEN-KEY');
+        });
+    }
+
+    public function test_supervisor_cannot_broadcast_for_agent_from_other_branch(): void
+    {
+        $branchA = Branch::create(['code' => 'BA-' . uniqid(), 'name' => 'BranA ' . uniqid(), 'is_active' => true]);
+        $branchB = Branch::create(['code' => 'BB-' . uniqid(), 'name' => 'BranB ' . uniqid(), 'is_active' => true]);
+
+        $supervisor = $this->makeUser('supervisor', $branchA);
+        $this->setApi($supervisor);
+
+        $agen = $this->makeUser('agen', $branchB);
+        $this->setApi($agen);
+
+        $this->makeContact('Kontak Agen Lain', '628123456702', ['agen_id' => $agen->id, 'branch_id' => $branchB->id]);
+
+        $this->actingAs($supervisor)->post(route('followupwa.broadcast.store'), [
+            'message' => 'Halo',
+            'mechanism' => 'limit',
+            'limit_count' => 1,
+            'schedule_type' => 'now',
+            'interval_min' => 5,
+            'interval_max' => 5,
+            'agen_id' => $agen->id,
+        ])->assertRedirect(route('whatsapp.index'))->assertSessionHas('error');
+
+        $this->assertSame(0, Broadcast::count());
+    }
+
+    public function test_followup_page_shows_agent_api_indicator(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin);
+
+        $agenWithApi = $this->makeUser('agen');
+        $this->setApi($agenWithApi, 'SS-KEY-DOT');
+
+        $agenWithoutApi = $this->makeUser('agen');
+        $this->setApi($agenWithoutApi, '', '');
+
+        $this->actingAs($admin)->get(route('whatsapp.index'))
+            ->assertOk()
+            ->assertSee('id="fuwa-broadcast-agen-api"', false)
+            ->assertSee('data-ss-status="ok"', false)
+            ->assertSee('data-ss-status="empty"', false);
+    }
+
+    public function test_mobile_followup_page_shows_agent_api_indicator(): void
+    {
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin);
+
+        $agen = $this->makeUser('agen');
+        $this->setApi($agen, 'SS-KEY-MOBILE');
+
+        $this->actingAs($admin)->get(route('mo.whatsapp'))
+            ->assertOk()
+            ->assertSee('id="mo-otomatis-agen-api"', false)
+            ->assertSee('data-ss-status="ok"', false);
     }
 
     public function test_broadcast_rejected_without_api_key(): void

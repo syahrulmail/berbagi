@@ -111,12 +111,19 @@
                 </div>
                 <div class="mo-field">
                     <label>Agen (opsional)</label>
-                    <select name="agen_id" class="mo-select">
+                    <select name="agen_id" class="mo-select" id="mo-otomatis-agen">
                         <option value="">Semua Agen</option>
                     @foreach($agens as $agen)
-                        <option value="{{ $agen->id }}" data-branch="{{ $agen->branch_id }}">{{ $agen->name }}</option>
+                        @php $api = $agen->api_status ?? ['ss' => 'empty', 'cc' => 'empty']; @endphp
+                        <option value="{{ $agen->id }}" data-branch="{{ $agen->branch_id }}" data-ss-status="{{ $api['ss'] }}" data-cc-status="{{ $api['cc'] }}">{{ $agen->name }}</option>
                     @endforeach
                     </select>
+                    <div id="mo-otomatis-agen-api" class="mo-form-help" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px;">
+                        <span>Pilih agen untuk melihat status API SS/CC.</span>
+                    </div>
+                    @if(! auth()->user()->isAgen())
+                        <div class="mo-form-help">Jika Agen dipilih, broadcast memakai API SS/CC dan webhook agen tersebut.</div>
+                    @endif
                 </div>
                 <div class="mo-field">
                     <label>Status Kontak</label>
@@ -488,7 +495,10 @@
                 opt.disabled = hide;
             });
             var sel = agenEl.options[agenEl.selectedIndex];
-            if (sel && sel.hidden) agenEl.value = '';
+            if (sel && sel.hidden) {
+                agenEl.value = '';
+                agenEl.dispatchEvent(new Event('change'));
+            }
         }
         branchEl.addEventListener('change', apply);
         apply();
@@ -500,6 +510,43 @@
     bindBranchAgen(
         document.getElementById('mo-manual-branch'),
         document.getElementById('mo-manual-agen')
+    );
+
+    // Lampu indikator koneksi API SS/CC agen pada tab Otomatis
+    function renderAgenApiStatus(selectEl, boxEl) {
+        if (!selectEl || !boxEl) return;
+        var colors = { ok: '#22c55e', fail: '#ef4444', empty: '#cbd5e1' };
+        var glow = {
+            ok: '0 0 0 2px rgba(34,197,94,.25), 0 0 6px rgba(34,197,94,.9)',
+            fail: '0 0 0 2px rgba(239,68,68,.25), 0 0 6px rgba(239,68,68,.9)',
+            empty: 'none'
+        };
+        var labels = { ok: 'Terkoneksi', fail: 'Tidak terkoneksi', empty: 'Belum diisi' };
+        function dot(status) {
+            var color = colors[status] || colors.empty;
+            var shadow = glow[status] || glow.empty;
+            var label = labels[status] || labels.empty;
+            return '<span style="display:inline-flex;align-items:center;gap:5px;">'
+                + '<span style="width:10px;height:10px;border-radius:50%;display:inline-block;background:' + color + ';box-shadow:' + shadow + ';"></span>'
+                + '<span>' + label + '</span></span>';
+        }
+        function apply() {
+            var opt = selectEl.options[selectEl.selectedIndex];
+            if (!opt || opt.value === '') {
+                boxEl.innerHTML = '<span>Pilih agen untuk melihat status API SS/CC.</span>';
+                return;
+            }
+            var ss = opt.dataset.ssStatus || 'empty';
+            var cc = opt.dataset.ccStatus || 'empty';
+            boxEl.innerHTML = '<span><strong>API SS</strong>&nbsp;' + dot(ss) + '</span>'
+                + '<span><strong>API CC</strong>&nbsp;' + dot(cc) + '</span>';
+        }
+        selectEl.addEventListener('change', apply);
+        apply();
+    }
+    renderAgenApiStatus(
+        document.getElementById('mo-otomatis-agen'),
+        document.getElementById('mo-otomatis-agen-api')
     );
 
     function esc(value) {

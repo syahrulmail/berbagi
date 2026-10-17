@@ -112,6 +112,66 @@ class FollowupWaService
         ];
     }
 
+    /**
+     * Tentukan pemilik efektif broadcast.
+     *
+     * Admin/Supervisor yang memilih agen akan memakai API SS/CC agen tsb;
+     * selain itu memakai user yang sedang bertindak.
+     *
+     * @return array{ok:bool,owner:?User,error:?string}
+     */
+    public function resolveBroadcastOwner(User $actor, $agenId): array
+    {
+        if ($actor->isAgen()) {
+            return ['ok' => true, 'owner' => $actor, 'error' => null];
+        }
+
+        $agenId = (int) $agenId;
+
+        if ($agenId <= 0) {
+            return ['ok' => true, 'owner' => $actor, 'error' => null];
+        }
+
+        $agent = User::where('id', $agenId)->where('role', User::ROLE_AGEN)->first();
+
+        if ($agent === null) {
+            return ['ok' => false, 'owner' => null, 'error' => 'Agen yang dipilih tidak ditemukan.'];
+        }
+
+        if ($actor->isSupervisor()) {
+            if (! $actor->branch_id || (int) $agent->branch_id !== (int) $actor->branch_id) {
+                return ['ok' => false, 'owner' => null, 'error' => 'Agen yang dipilih bukan bagian dari cabang yang Anda kelola.'];
+            }
+        }
+
+        return ['ok' => true, 'owner' => $agent, 'error' => null];
+    }
+
+    /**
+     * Lampirkan status koneksi API SS/CC ke tiap user (properti api_status).
+     */
+    public function decorateApiStatuses(Collection $users): void
+    {
+        if ($users->isEmpty()) {
+            return;
+        }
+
+        $profiles = [];
+        foreach ($users as $user) {
+            $profile = $this->profiles->data($user);
+            $profiles[$user->id] = ['ss' => $profile['api_ss'], 'cc' => $profile['api_cc']];
+        }
+
+        $statuses = $this->integration->forUsers($profiles);
+
+        foreach ($users as $user) {
+            $user->api_status = $statuses[$user->id] ?? [
+                'ss' => IntegrationCheckService::STATUS_EMPTY,
+                'cc' => IntegrationCheckService::STATUS_EMPTY,
+            ];
+        }
+    }
+
     protected function keyFor(User $user, ?string $provider): string
     {
         $profile = $this->profiles->data($user);
@@ -272,12 +332,22 @@ class FollowupWaService
      */
     public function createBroadcast(User $user, array $data): array
     {
-        if ($this->activeBroadcast($user) !== null) {
-            return ['ok' => false, 'broadcast' => null, 'error' => 'Masih ada broadcast aktif. Hentikan dulu sebelum memulai yang baru.'];
+        $ownerResult = $this->resolveBroadcastOwner($user, $data['agen_id'] ?? null);
+
+        if (! $ownerResult['ok']) {
+            return ['ok' => false, 'broadcast' => null, 'error' => $ownerResult['error']];
+        }
+
+        $owner = $ownerResult['owner'];
+
+        if ($this->activeBroadcast($owner) !== null) {
+            $who = (int) $owner->id === (int) $user->id ? 'Anda' : 'agen ' . $owner->name;
+
+            return ['ok' => false, 'broadcast' => null, 'error' => 'Masih ada broadcast aktif untuk ' . $who . '. Hentikan dulu sebelum memulai yang baru.'];
         }
 
         $scheduled = ($data['schedule_type'] ?? 'now') === 'scheduled';
-        $provider = $this->resolveProvider($user, $scheduled);
+        $provider = $this->resolveProvider($owner, $scheduled);
 
         if (! $provider['ok']) {
             return ['ok' => false, 'broadcast' => null, 'error' => $provider['reason']];
@@ -287,7 +357,7 @@ class FollowupWaService
             ? Broadcast::MECHANISM_LIMIT
             : Broadcast::MECHANISM_AUTO;
 
-        $query = $this->filterContacts($user, $data);
+        $query = $this->filterContacts($owner, $data);
         $total = (clone $query)->count();
 
         if ($total === 0) {
@@ -306,7 +376,7 @@ class FollowupWaService
         $intervalMax = max($intervalMin, (int) ($data['interval_max'] ?? 60));
 
         $broadcast = Broadcast::create([
-            'user_id' => $user->id,
+            'user_id' => $owner->id,
             'name' => $data['name'] ?? ('Broadcast ' . now()->format('d M Y H:i')),
             'message_template' => $data['message'] ?? '',
             'media_path' => $data['media_path'] ?? null,
@@ -328,7 +398,7 @@ class FollowupWaService
         ]);
 
         $contacts = $query->limit($batchSize)->get();
-        $this->createTargets($broadcast, $user, $contacts);
+        $this->createTargets($broadcast, $owner, $contacts);
         $this->runPendingTargets($broadcast);
 
         return ['ok' => true, 'broadcast' => $broadcast, 'error' => null];

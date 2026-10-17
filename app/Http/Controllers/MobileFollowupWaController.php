@@ -35,6 +35,7 @@ class MobileFollowupWaController extends MobileModuleController
             ->get();
 
         $agens = $this->formAgents($user);
+        $this->service->decorateApiStatuses($agens);
         $branches = $this->visibleBranches();
         $warmingConfig = $this->service->warmingConfig();
         $warmingRecipients = $this->service->warmingRecipients($user);
@@ -74,15 +75,18 @@ class MobileFollowupWaController extends MobileModuleController
         $limit = (int) $request->input('limit', 50);
         $limit = max(1, min(200, $limit));
 
-        $contacts = $this->service->previewContacts($user, [
+        $ownerResult = $this->service->resolveBroadcastOwner($user, $request->input('agen_id'));
+        $owner = $ownerResult['owner'] ?? $user;
+
+        $contacts = $this->service->previewContacts($owner, [
             'branch_id' => $request->input('branch_id'),
             'agen_id' => $request->input('agen_id'),
             'statuses' => $request->input('statuses', []),
             'followups' => $request->input('followups', []),
         ], $limit);
 
-        $items = $contacts->map(function (Contact $contact) use ($user, $message) {
-            $rendered = $message !== '' ? $this->service->renderTemplate($message, $contact, $user) : '';
+        $items = $contacts->map(function (Contact $contact) use ($owner, $message) {
+            $rendered = $message !== '' ? $this->service->renderTemplate($message, $contact, $owner) : '';
 
             return [
                 'id' => $contact->id,
