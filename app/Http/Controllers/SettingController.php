@@ -22,6 +22,11 @@ class SettingController extends Controller
             'wa_public_number' => Setting::get('wa_public_number', '6281234567890'),
             'wa_public_template' => Setting::get('wa_public_template', 'Assalamualaikum, saya ingin berdonasi untuk program {program}. Mohon info selanjutnya.'),
             'wa_agent_template' => Setting::get('wa_agent_template', 'Assalamualaikum {agen}, saya ingin berdonasi untuk program {program} melalui Anda.'),
+            'google_site_verification' => Setting::get('google_site_verification', ''),
+            'gtm_container_id' => Setting::get('gtm_container_id', ''),
+            'ga_measurement_id' => Setting::get('ga_measurement_id', ''),
+            'head_tracking_code' => Setting::get('head_tracking_code', ''),
+            'body_tracking_code' => Setting::get('body_tracking_code', ''),
             'lapdfbwa_password_set' => (bool) Setting::get('lapdfbwa_password'),
         ];
 
@@ -40,6 +45,11 @@ class SettingController extends Controller
             'wa_public_number' => ['required', 'string', 'max:30'],
             'wa_public_template' => ['nullable', 'string'],
             'wa_agent_template' => ['nullable', 'string'],
+            'google_site_verification' => ['nullable', 'string', 'max:255'],
+            'gtm_container_id' => ['nullable', 'string', 'max:50'],
+            'ga_measurement_id' => ['nullable', 'string', 'max:50'],
+            'head_tracking_code' => ['nullable', 'string', 'max:20000'],
+            'body_tracking_code' => ['nullable', 'string', 'max:20000'],
             'lapdfbwa_password' => ['nullable', 'string', 'min:4', 'max:60'],
             'testimonials' => ['nullable', 'array'],
             'testimonials.*.photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
@@ -62,6 +72,12 @@ class SettingController extends Controller
         Setting::set('wa_public_number', $data['wa_public_number']);
         Setting::set('wa_public_template', $data['wa_public_template'] ?? '');
         Setting::set('wa_agent_template', $data['wa_agent_template'] ?? '');
+
+        Setting::set('google_site_verification', trim($data['google_site_verification'] ?? ''));
+        Setting::set('gtm_container_id', trim($data['gtm_container_id'] ?? ''));
+        Setting::set('ga_measurement_id', trim($data['ga_measurement_id'] ?? ''));
+        Setting::set('head_tracking_code', trim($data['head_tracking_code'] ?? ''));
+        Setting::set('body_tracking_code', trim($data['body_tracking_code'] ?? ''));
 
         if ($request->filled('lapdfbwa_password')) {
             Setting::set('lapdfbwa_password', Hash::make($request->input('lapdfbwa_password')));

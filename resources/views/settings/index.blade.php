@@ -203,6 +203,38 @@
             <small style="color: var(--gray-500);">Dijalankan oleh cron job melalui <code>php artisan schedule:run</code>.</small>
         </div>
 
+        <hr style="border: none; border-top: 1px solid var(--gray-200); margin: 20px 0;">
+
+        <h3 style="font-size: 15px; margin-bottom: 14px;">Pelacakan &amp; Verifikasi</h3>
+
+        <div class="form-group">
+            <label for="google_site_verification">Google Site Verification</label>
+            <input type="text" id="google_site_verification" name="google_site_verification" value="{{ old('google_site_verification', $settings['google_site_verification']) }}" maxlength="255" placeholder="nilai content dari Google Search Console">
+            <small style="color: var(--gray-500);">Isi nilai <code>content</code> pada tag <code>google-site-verification</code>.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="gtm_container_id">Google Tag Manager ID</label>
+            <input type="text" id="gtm_container_id" name="gtm_container_id" value="{{ old('gtm_container_id', $settings['gtm_container_id']) }}" maxlength="50" placeholder="GTM-XXXXXXX">
+        </div>
+
+        <div class="form-group">
+            <label for="ga_measurement_id">Google Analytics Measurement ID</label>
+            <input type="text" id="ga_measurement_id" name="ga_measurement_id" value="{{ old('ga_measurement_id', $settings['ga_measurement_id']) }}" maxlength="50" placeholder="G-XXXXXXXXXX">
+        </div>
+
+        <div class="form-group">
+            <label for="head_tracking_code">Kode &lt;head&gt; (Google Analytics, Meta Pixel, dan lainnya)</label>
+            <textarea id="head_tracking_code" name="head_tracking_code" rows="5" maxlength="20000" placeholder="<!-- Tempel script pelacakan di sini -->" style="font-family: monospace; font-size: 12.5px;">{{ old('head_tracking_code', $settings['head_tracking_code']) }}</textarea>
+            <small style="color: var(--gray-500);">Kode dimuat apa adanya di dalam <code>&lt;head&gt;</code> seluruh halaman publik. Gunakan untuk Meta Pixel, Google Analytics, atau tag lain.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="body_tracking_code">Kode Sebelum &lt;/body&gt;</label>
+            <textarea id="body_tracking_code" name="body_tracking_code" rows="4" maxlength="20000" placeholder="<!-- Tempel script yang perlu dimuat sebelum &lt;/body&gt; -->" style="font-family: monospace; font-size: 12.5px;">{{ old('body_tracking_code', $settings['body_tracking_code']) }}</textarea>
+            <small style="color: var(--gray-500);">Kode dimuat apa adanya sebelum <code>&lt;/body&gt;</code>, mis. <code>&lt;noscript&gt;</code> Meta Pixel.</small>
+        </div>
+
         <h3 style="font-size: 15px; margin: 24px 0 14px;">Laporan Publik (DFBWA)</h3>
 
         <div class="form-group">
