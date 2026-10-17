@@ -244,6 +244,8 @@
 <script src="{{ assetv('js/components/DonutChart.js') }}"></script>
 <script src="{{ assetv('js/app.js') }}"></script>
 
+@include('public.partials.popup-widgets')
+
 <script>
 (function () {
     'use strict';

@@ -35,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
             $view->with('gaMeasurementId', \App\Models\Setting::get('ga_measurement_id', ''));
             $view->with('headTrackingCode', \App\Models\Setting::get('head_tracking_code', ''));
             $view->with('bodyTrackingCode', \App\Models\Setting::get('body_tracking_code', ''));
+
+            // Banner popup & widget statistik halaman publik.
+            $popupService = $this->app->make(\App\Services\PopupService::class);
+            $agen = $view->getData()['agen'] ?? null;
+            $view->with('popupBanners', $popupService->banners($agen));
+            $view->with('statsPopup', $popupService->statsWidget($agen));
         });
 
         if (! $this->app->runningInConsole()) {

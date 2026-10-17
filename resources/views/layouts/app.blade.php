@@ -78,6 +78,9 @@
                 <a href="{{ route('banners.index') }}" class="nav-item {{ request()->routeIs('banners.*') ? 'active' : '' }}">
                     <i class="fas fa-images"></i><span class="nav-text">Banner &amp; Label</span>
                 </a>
+                <a href="{{ route('popup-banners.index') }}" class="nav-item {{ request()->routeIs('popup-banners.*') ? 'active' : '' }}">
+                    <i class="fas fa-window-restore"></i><span class="nav-text">Banner</span>
+                </a>
                 <a href="{{ route('achievements.index') }}" class="nav-item {{ request()->routeIs('achievements.*') ? 'active' : '' }}">
                     <i class="fas fa-medal"></i><span class="nav-text">Pencapaian</span>
                 </a>

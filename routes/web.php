@@ -17,6 +17,7 @@ use App\Http\Controllers\MobileFollowupWaController;
 use App\Http\Controllers\MobileModuleController;
 use App\Http\Controllers\MobileSettingController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\PopupBannerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SettingController;
@@ -126,6 +127,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('branches', BranchController::class)->except('show');
         Route::resource('campaign-tags', CampaignTagController::class)->except('show');
         Route::resource('achievements', AchievementController::class)->except('show');
+        Route::put('popup-banners/settings', [PopupBannerController::class, 'updateSettings'])->name('popup-banners.settings');
+        Route::resource('popup-banners', PopupBannerController::class)->except('show');
     });
 
     Route::middleware('role:admin,supervisor')->group(function () {
