@@ -54,6 +54,15 @@
                     <a href="{{ route('branches.index') }}" class="nav-item {{ request()->routeIs('branches.*') ? 'active' : '' }}">
                         <i class="fas fa-building"></i><span class="nav-text">Cabang</span>
                     </a>
+                    <a href="{{ route('settings.target') }}" class="nav-item {{ request()->routeIs('settings.target*') ? 'active' : '' }}">
+                        <i class="fas fa-bullseye"></i><span class="nav-text">Target &amp; Informasi</span>
+                    </a>
+                    <a href="{{ route('settings.testimonials') }}" class="nav-item {{ request()->routeIs('settings.testimonials*') ? 'active' : '' }}">
+                        <i class="fas fa-quote-right"></i><span class="nav-text">Testimoni</span>
+                    </a>
+                    <a href="{{ route('settings.partners') }}" class="nav-item {{ request()->routeIs('settings.partners*') ? 'active' : '' }}">
+                        <i class="fas fa-handshake"></i><span class="nav-text">Mitra</span>
+                    </a>
                 @endif
                 <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
                     <i class="fas fa-users"></i><span class="nav-text">Pengguna</span>

@@ -102,4 +102,109 @@ class SettingsAccessTest extends TestCase
         $this->assertSame('<script>console.log("head")</script>', Setting::get('head_tracking_code'));
         $this->assertSame('<noscript>pixel</noscript>', Setting::get('body_tracking_code'));
     }
+
+    public function test_settings_page_excludes_moved_sections(): void
+    {
+        $this->actingAs($this->makeUser('admin'))
+            ->get(route('settings.index'))
+            ->assertOk()
+            ->assertDontSee('Target Global BWA Bulanan')
+            ->assertDontSee('Teks Bar Atas (Trustbar)')
+            ->assertDontSee('Quote di Bawah Hero')
+            ->assertDontSee('Testimoni Tokoh')
+            ->assertDontSee('Logo Mitra (Perusahaan/Lembaga)')
+            ->assertDontSee('Otomasi WhatsApp');
+    }
+
+    public function test_admin_can_access_new_management_pages(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)->get(route('settings.target'))->assertOk()->assertSee('Target &amp; Informasi', false);
+        $this->actingAs($admin)->get(route('settings.testimonials'))->assertOk()->assertSee('Tambah Testimoni');
+        $this->actingAs($admin)->get(route('settings.partners'))->assertOk()->assertSee('Tambah Logo');
+    }
+
+    public function test_supervisor_cannot_access_new_management_pages(): void
+    {
+        $supervisor = $this->makeUser('supervisor', $this->makeBranch());
+
+        $this->actingAs($supervisor)->get(route('settings.target'))->assertForbidden();
+        $this->actingAs($supervisor)->get(route('settings.testimonials'))->assertForbidden();
+        $this->actingAs($supervisor)->get(route('settings.partners'))->assertForbidden();
+    }
+
+    public function test_target_info_update_saves_values(): void
+    {
+        $this->actingAs($this->makeUser('admin'))->put(route('settings.target.update'), [
+            'trustbar_text' => 'Trustbar Baru',
+            'home_quote' => '<p>Quote baru</p><script>alert(1)</script>',
+        ])->assertRedirect(route('settings.target'));
+
+        $this->assertSame('Trustbar Baru', Setting::get('trustbar_text'));
+        $this->assertStringContainsString('Quote baru', Setting::get('home_quote'));
+        $this->assertStringNotContainsString('<script', Setting::get('home_quote'));
+    }
+
+    public function test_testimonials_update_saves_values(): void
+    {
+        $this->actingAs($this->makeUser('admin'))->put(route('settings.testimonials.update'), [
+            'testimonials' => [
+                ['text' => 'Testi pertama', 'name' => 'Tokoh Satu', 'existing_photo' => '', 'photo_remove' => '0'],
+            ],
+        ])->assertRedirect(route('settings.testimonials'));
+
+        $items = json_decode(Setting::get('home_testimonials'), true);
+        $this->assertSame('Testi pertama', $items[0]['text']);
+        $this->assertSame('Tokoh Satu', $items[0]['name']);
+    }
+
+    public function test_partners_update_saves_values(): void
+    {
+        $this->actingAs($this->makeUser('admin'))->put(route('settings.partners.update'), [
+            'logos' => [
+                ['existing_photo' => 'partner-logos/a.png', 'photo_remove' => '0'],
+            ],
+        ])->assertRedirect(route('settings.partners'));
+
+        $items = json_decode(Setting::get('home_partner_logos'), true);
+        $this->assertContains('partner-logos/a.png', $items);
+    }
+
+    public function test_admin_can_access_mobile_settings_pages(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        foreach ([
+            'mo.settings',
+            'mo.settings.target',
+            'mo.settings.testimonials',
+            'mo.settings.partners',
+        ] as $name) {
+            $this->actingAs($admin)->get(route($name))->assertOk();
+        }
+    }
+
+    public function test_admin_can_save_mobile_general_settings(): void
+    {
+        $this->actingAs($this->makeUser('admin'))->put(route('mo.settings.update'), [
+            'wa_public_number' => '628111222333',
+            'wa_public_template' => 'Halo {program}',
+            'wa_agent_template' => 'Halo {agen}',
+        ])->assertRedirect(route('mo.settings'));
+
+        $this->assertSame('628111222333', Setting::get('wa_public_number'));
+        $this->assertSame('Halo {program}', Setting::get('wa_public_template'));
+    }
+
+    public function test_mobile_pengaturan_menu_visible_for_admin(): void
+    {
+        $this->actingAs($this->makeUser('admin'))
+            ->get(route('mo.more'))
+            ->assertOk()
+            ->assertSee('Target &amp; Informasi', false)
+            ->assertSee('Testimoni')
+            ->assertSee('Mitra')
+            ->assertSee('Pengaturan Sistem');
+    }
 }

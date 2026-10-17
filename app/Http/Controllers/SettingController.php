@@ -12,13 +12,76 @@ class SettingController extends Controller
 {
     public function index()
     {
+        $settings = $this->generalSettings();
+
+        return view('settings.index', compact('settings'));
+    }
+
+    public function update(Request $request)
+    {
+        $this->saveGeneralSettings($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui pengaturan sistem');
+
+        return redirect()->route('settings.index')->with('success', 'Pengaturan berhasil disimpan.');
+    }
+
+    public function targetInfo()
+    {
+        $settings = $this->targetInfoSettings();
+        $totalGlobalTarget = Branch::where('is_active', true)->sum('target_amount');
+
+        return view('settings.target', compact('settings', 'totalGlobalTarget'));
+    }
+
+    public function targetInfoUpdate(Request $request)
+    {
+        $this->saveTargetInfo($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui target & informasi');
+
+        return redirect()->route('settings.target')->with('success', 'Target & informasi berhasil disimpan.');
+    }
+
+    public function testimonials()
+    {
         $settings = [
-            'trustbar_text' => Setting::get('trustbar_text', 'Badan Wakaf Al Qur\'an · Terdaftar & Berizin'),
-            'home_quote' => Setting::get('home_quote', '<p>&quot;Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.&quot; — <strong>HR. Ahmad &amp; Thabrani</strong></p>'),
             'home_testimonials' => $this->decodeTestimonials(Setting::get('home_testimonials', '[]')),
+        ];
+
+        return view('settings.testimonials', compact('settings'));
+    }
+
+    public function testimonialsUpdate(Request $request)
+    {
+        $this->saveTestimonialsData($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui testimoni tokoh');
+
+        return redirect()->route('settings.testimonials')->with('success', 'Testimoni berhasil disimpan.');
+    }
+
+    public function partners()
+    {
+        $settings = [
             'home_partner_logos' => $this->decodeLogos(Setting::get('home_partner_logos', '[]')),
-            'wa_reminder_enabled' => Setting::get('wa_reminder_enabled', '0'),
-            'wa_reminder_hour' => Setting::get('wa_reminder_hour', '09'),
+        ];
+
+        return view('settings.partners', compact('settings'));
+    }
+
+    public function partnersUpdate(Request $request)
+    {
+        $this->savePartnerLogosData($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui logo mitra');
+
+        return redirect()->route('settings.partners')->with('success', 'Logo mitra berhasil disimpan.');
+    }
+
+    protected function generalSettings(): array
+    {
+        return [
             'wa_public_number' => Setting::get('wa_public_number', '6281234567890'),
             'wa_public_template' => Setting::get('wa_public_template', 'Assalamualaikum, saya ingin berdonasi untuk program {program}. Mohon info selanjutnya.'),
             'wa_agent_template' => Setting::get('wa_agent_template', 'Assalamualaikum {agen}, saya ingin berdonasi untuk program {program} melalui Anda.'),
@@ -29,19 +92,19 @@ class SettingController extends Controller
             'body_tracking_code' => Setting::get('body_tracking_code', ''),
             'lapdfbwa_password_set' => (bool) Setting::get('lapdfbwa_password'),
         ];
-
-        $totalGlobalTarget = Branch::where('is_active', true)->sum('target_amount');
-
-        return view('settings.index', compact('settings', 'totalGlobalTarget'));
     }
 
-    public function update(Request $request)
+    protected function targetInfoSettings(): array
+    {
+        return [
+            'trustbar_text' => Setting::get('trustbar_text', 'Badan Wakaf Al Qur\'an · Terdaftar & Berizin'),
+            'home_quote' => Setting::get('home_quote', '<p>&quot;Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya.&quot; — <strong>HR. Ahmad &amp; Thabrani</strong></p>'),
+        ];
+    }
+
+    protected function saveGeneralSettings(Request $request): void
     {
         $data = $request->validate([
-            'trustbar_text' => ['nullable', 'string', 'max:160'],
-            'home_quote' => ['nullable', 'string', 'max:2000'],
-            'wa_reminder_enabled' => ['nullable'],
-            'wa_reminder_hour' => ['required', 'numeric', 'between:0,23'],
             'wa_public_number' => ['required', 'string', 'max:30'],
             'wa_public_template' => ['nullable', 'string'],
             'wa_agent_template' => ['nullable', 'string'],
@@ -51,24 +114,8 @@ class SettingController extends Controller
             'head_tracking_code' => ['nullable', 'string', 'max:20000'],
             'body_tracking_code' => ['nullable', 'string', 'max:20000'],
             'lapdfbwa_password' => ['nullable', 'string', 'min:4', 'max:60'],
-            'testimonials' => ['nullable', 'array'],
-            'testimonials.*.photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'testimonials.*.existing_photo' => ['nullable', 'string', 'max:255'],
-            'testimonials.*.photo_remove' => ['nullable', 'string', 'in:0,1'],
-            'testimonials.*.text' => ['nullable', 'string', 'max:500'],
-            'testimonials.*.name' => ['nullable', 'string', 'max:100'],
-            'logos' => ['nullable', 'array'],
-            'logos.*.photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'logos.*.existing_photo' => ['nullable', 'string', 'max:255'],
-            'logos.*.photo_remove' => ['nullable', 'string', 'in:0,1'],
         ]);
 
-        Setting::where('key', 'global_target')->delete();
-
-        Setting::set('trustbar_text', trim($data['trustbar_text'] ?? ''));
-        Setting::set('home_quote', $this->sanitizeRichText($data['home_quote'] ?? ''));
-        Setting::set('wa_reminder_enabled', $request->boolean('wa_reminder_enabled') ? '1' : '0');
-        Setting::set('wa_reminder_hour', (string) (int) $data['wa_reminder_hour']);
         Setting::set('wa_public_number', $data['wa_public_number']);
         Setting::set('wa_public_template', $data['wa_public_template'] ?? '');
         Setting::set('wa_agent_template', $data['wa_agent_template'] ?? '');
@@ -84,13 +131,43 @@ class SettingController extends Controller
         } elseif ($request->boolean('lapdfbwa_password_clear')) {
             Setting::set('lapdfbwa_password', '');
         }
+    }
+
+    protected function saveTargetInfo(Request $request): void
+    {
+        $data = $request->validate([
+            'trustbar_text' => ['nullable', 'string', 'max:160'],
+            'home_quote' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        Setting::set('trustbar_text', trim($data['trustbar_text'] ?? ''));
+        Setting::set('home_quote', $this->sanitizeRichText($data['home_quote'] ?? ''));
+    }
+
+    protected function saveTestimonialsData(Request $request): void
+    {
+        $request->validate([
+            'testimonials' => ['nullable', 'array'],
+            'testimonials.*.photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'testimonials.*.existing_photo' => ['nullable', 'string', 'max:255'],
+            'testimonials.*.photo_remove' => ['nullable', 'string', 'in:0,1'],
+            'testimonials.*.text' => ['nullable', 'string', 'max:500'],
+            'testimonials.*.name' => ['nullable', 'string', 'max:100'],
+        ]);
 
         $this->saveTestimonials($request);
+    }
+
+    protected function savePartnerLogosData(Request $request): void
+    {
+        $request->validate([
+            'logos' => ['nullable', 'array'],
+            'logos.*.photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'logos.*.existing_photo' => ['nullable', 'string', 'max:255'],
+            'logos.*.photo_remove' => ['nullable', 'string', 'in:0,1'],
+        ]);
+
         $this->savePartnerLogos($request);
-
-        ActivityLog::record('settings.update', 'Memperbarui pengaturan sistem');
-
-        return redirect()->route('settings.index')->with('success', 'Pengaturan berhasil disimpan.');
     }
 
     protected function sanitizeRichText(string $html): string

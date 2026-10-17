@@ -94,6 +94,21 @@
                 <i class="fas fa-chevron-right chev"></i>
             </a>
             @if($user->isAdmin())
+                <a href="{{ route('mo.settings.target') }}" class="mo-menu-item">
+                    <i class="fas fa-bullseye mi blue"></i>
+                    <div class="txt">Target &amp; Informasi</div>
+                    <i class="fas fa-chevron-right chev"></i>
+                </a>
+                <a href="{{ route('mo.settings.testimonials') }}" class="mo-menu-item">
+                    <i class="fas fa-quote-right mi gold"></i>
+                    <div class="txt">Testimoni</div>
+                    <i class="fas fa-chevron-right chev"></i>
+                </a>
+                <a href="{{ route('mo.settings.partners') }}" class="mo-menu-item">
+                    <i class="fas fa-handshake mi"></i>
+                    <div class="txt">Mitra</div>
+                    <i class="fas fa-chevron-right chev"></i>
+                </a>
                 <a href="{{ route('mo.campaign-tags') }}" class="mo-menu-item">
                     <i class="fas fa-tags mi gold"></i>
                     <div class="txt">Label Kampanye</div>
@@ -121,6 +136,17 @@
             <a href="{{ route('mo.activity-logs') }}" class="mo-menu-item">
                 <i class="fas fa-clock-rotate-left mi blue"></i>
                 <div class="txt">Log Aktivitas</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
+        </div>
+    @endif
+
+    @if($user->isAdmin())
+        <div class="mo-section-title">Sistem</div>
+        <div class="mo-menu">
+            <a href="{{ route('mo.settings') }}" class="mo-menu-item">
+                <i class="fas fa-gear mi"></i>
+                <div class="txt">Pengaturan Sistem</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
         </div>

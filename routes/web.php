@@ -15,6 +15,7 @@ use App\Http\Controllers\MobileAuthController;
 use App\Http\Controllers\MobileCrudController;
 use App\Http\Controllers\MobileFollowupWaController;
 use App\Http\Controllers\MobileModuleController;
+use App\Http\Controllers\MobileSettingController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
@@ -134,6 +135,13 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+        Route::get('/settings/target', [SettingController::class, 'targetInfo'])->name('settings.target');
+        Route::put('/settings/target', [SettingController::class, 'targetInfoUpdate'])->name('settings.target.update');
+        Route::get('/settings/testimoni', [SettingController::class, 'testimonials'])->name('settings.testimonials');
+        Route::put('/settings/testimoni', [SettingController::class, 'testimonialsUpdate'])->name('settings.testimonials.update');
+        Route::get('/settings/mitra', [SettingController::class, 'partners'])->name('settings.partners');
+        Route::put('/settings/mitra', [SettingController::class, 'partnersUpdate'])->name('settings.partners.update');
     });
 
     Route::middleware('role:admin,supervisor')->group(function () {
@@ -281,6 +289,19 @@ Route::middleware('auth')->group(function () {
         // Log Aktivitas (admin, supervisor)
         Route::middleware('role:admin,supervisor')->group(function () {
             Route::get('/log', [MobileModuleController::class, 'activityLogIndex'])->name('activity-logs');
+        });
+
+        // Pengaturan Sistem (admin)
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/pengaturan', [MobileSettingController::class, 'index'])->name('settings');
+            Route::put('/pengaturan', [MobileSettingController::class, 'update'])->name('settings.update');
+
+            Route::get('/pengaturan/target', [MobileSettingController::class, 'targetInfo'])->name('settings.target');
+            Route::put('/pengaturan/target', [MobileSettingController::class, 'targetInfoUpdate'])->name('settings.target.update');
+            Route::get('/pengaturan/testimoni', [MobileSettingController::class, 'testimonials'])->name('settings.testimonials');
+            Route::put('/pengaturan/testimoni', [MobileSettingController::class, 'testimonialsUpdate'])->name('settings.testimonials.update');
+            Route::get('/pengaturan/mitra', [MobileSettingController::class, 'partners'])->name('settings.partners');
+            Route::put('/pengaturan/mitra', [MobileSettingController::class, 'partnersUpdate'])->name('settings.partners.update');
         });
 
         // Import / Tempel Kontak (semua role)
