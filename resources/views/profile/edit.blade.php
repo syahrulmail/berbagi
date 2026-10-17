@@ -134,7 +134,6 @@
                        style="flex:1;font-family:monospace;font-size:12.5px;background:var(--gray-100);word-break:break-all;">
                 <button type="button" class="btn btn-sm" data-copy-target="webhook-url-ss"><i class="fas fa-copy"></i> Salin</button>
             </div>
-            <small style="color: var(--gray-500);">URL Webhook Starsender — salin apa adanya ke webhook device Starsender (tanpa tambahan teks).</small>
         </div>
         <div class="form-group" style="margin-bottom: 0;">
             <label for="api_cc">API CC</label>
@@ -147,7 +146,6 @@
                        style="flex:1;font-family:monospace;font-size:12.5px;background:var(--gray-100);word-break:break-all;">
                 <button type="button" class="btn btn-sm" data-copy-target="webhook-url-cc"><i class="fas fa-copy"></i> Salin</button>
             </div>
-            <small style="color: var(--gray-500);">URL Webhook CloudChat — salin apa adanya ke webhook nomor CloudChat (tanpa tambahan teks).</small>
         </div>
     </div>
 

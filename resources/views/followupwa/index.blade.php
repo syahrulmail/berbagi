@@ -137,9 +137,6 @@
                         <div id="fuwa-broadcast-agen-api" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--gray-600);">
                             <span style="color:var(--gray-400);">Pilih agen untuk melihat status API SS/CC.</span>
                         </div>
-                        @if(! auth()->user()->isAgen())
-                            <div class="fuwa-hint">Jika Agen dipilih, broadcast memakai API SS/CC dan webhook agen tersebut.</div>
-                        @endif
                     </div>
                 </div>
 
@@ -171,7 +168,6 @@
                         <span data-media-name style="font-size:12.5px;color:var(--gray-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;"></span>
                         <button type="button" data-media-clear title="Hapus media" style="border:none;background:#fee2e2;color:#b91c1c;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;">&times;</button>
                     </div>
-                    <div class="fuwa-hint">Jenis media dikenali otomatis (gambar, video, audio, dokumen). Biarkan kosong untuk pesan teks.</div>
                 </div>
 
                 <div class="form-group">
@@ -411,17 +407,6 @@
                     @endforelse
                 </tbody>
             </table>
-        </div>
-
-        <div class="alert" style="background:#E9F0FA;border-color:var(--primary);color:var(--primary);margin-top:14px;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <span><i class="fas fa-link"></i> URL Webhook:</span>
-                <input type="text" readonly id="fuwa-webhook-url" value="{{ $webhookUrl }}"
-                       onclick="this.select();"
-                       style="flex:1;min-width:240px;font-family:monospace;font-size:12.5px;padding:6px 8px;border:1px solid var(--primary);border-radius:8px;background:#fff;color:var(--gray-700);word-break:break-all;">
-                <button type="button" class="btn btn-sm" data-copy-target="fuwa-webhook-url"><i class="fas fa-copy"></i> Salin</button>
-            </div>
-            <div class="fuwa-hint" style="margin-top:6px;">Salin URL ini apa adanya ke pengaturan webhook device Starsender — tanpa tambahan teks atau placeholder lain.</div>
         </div>
 
         @if(auth()->user()->isAdmin())

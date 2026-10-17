@@ -121,9 +121,6 @@
                     <div id="mo-otomatis-agen-api" class="mo-form-help" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px;">
                         <span>Pilih agen untuk melihat status API SS/CC.</span>
                     </div>
-                    @if(! auth()->user()->isAgen())
-                        <div class="mo-form-help">Jika Agen dipilih, broadcast memakai API SS/CC dan webhook agen tersebut.</div>
-                    @endif
                 </div>
                 <div class="mo-field">
                     <label>Status Kontak</label>
@@ -150,7 +147,6 @@
                         <span data-media-name style="font-size:12px;color:var(--mo-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;"></span>
                         <button type="button" data-media-clear title="Hapus media" style="border:none;background:#fee2e2;color:#b91c1c;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;">&times;</button>
                     </div>
-                    <div class="mo-form-help">Jenis media dikenali otomatis. Biarkan kosong untuk pesan teks.</div>
                 </div>
                 <div class="mo-field">
                     <label>Template Pesan <span class="req">*</span></label>
