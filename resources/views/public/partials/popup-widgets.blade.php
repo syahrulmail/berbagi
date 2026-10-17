@@ -231,78 +231,145 @@ window.BerbagiPopupConfig = {!! json_encode([
         } catch (e) {}
     }
 
-    function openWindow(url, external) {
-        if (!url) return;
-        if (external) {
-            window.open(url, '_blank', 'noopener');
-        } else {
-            window.location.href = url;
-        }
-    }
+    var statsController = null;
 
     if (stats && stats.patterns && stats.patterns.length && !readFlag('bp_stats_closed')) {
-        var statsBox = document.getElementById('bpStats');
-        var statsText = document.getElementById('bpStatsText');
-        var statsCta = document.getElementById('bpStatsCta');
-        var statsIcon = document.getElementById('bpStatsIcon');
-        var statsClose = document.getElementById('bpStatsClose');
+        (function () {
+            var box = document.getElementById('bpStats');
+            var text = document.getElementById('bpStatsText');
+            var cta = document.getElementById('bpStatsCta');
+            var iconBox = document.getElementById('bpStatsIcon');
+            var close = document.getElementById('bpStatsClose');
+            var patterns = stats.patterns;
+            var currentIndex = -1;
+            var isVisible = false;
+            var isPaused = false;
+            var isStopped = false;
+            var showTimer = null;
+            var hideTimer = null;
+            var nextTimer = null;
 
-        var renderStats = function () {
-            var pattern = stats.patterns[Math.floor(Math.random() * stats.patterns.length)];
-            statsText.innerHTML = '';
-            statsIcon.innerHTML = '';
+            function clearTimers() {
+                window.clearTimeout(showTimer);
+                window.clearTimeout(hideTimer);
+                window.clearTimeout(nextTimer);
+            }
 
-            var icon = document.createElement('i');
-            icon.className = 'fas ' + (pattern.type === 'achievement' ? (pattern.icon || 'fa-trophy') : 'fa-hand-holding-heart');
-            statsIcon.appendChild(icon);
-
-            var strong = function (text) {
+            function strong(value) {
                 var el = document.createElement('strong');
-                el.textContent = text;
+                el.textContent = value;
                 return el;
+            }
+
+            function renderPattern(pattern) {
+                text.innerHTML = '';
+                iconBox.innerHTML = '';
+
+                var icon = document.createElement('i');
+                icon.className = 'fas ' + (pattern.type === 'achievement' ? (pattern.icon || 'fa-trophy') : 'fa-hand-holding-heart');
+                iconBox.appendChild(icon);
+
+                if (pattern.type === 'category') {
+                    text.appendChild(document.createTextNode('Alhamdulillah, ' + (pattern.period || 'hari ini') + ' '));
+                    text.appendChild(strong(pattern.count + ' orang'));
+                    text.appendChild(document.createTextNode(' donasi '));
+                    text.appendChild(strong(pattern.category || ''));
+                } else {
+                    text.appendChild(document.createTextNode('Alhamdulillah'));
+
+                    var value = document.createElement('span');
+                    value.className = 'bp-value';
+                    value.textContent = pattern.value || '';
+                    text.appendChild(value);
+
+                    var label = document.createElement('span');
+                    label.className = 'bp-value-label';
+                    label.textContent = pattern.label || '';
+                    text.appendChild(label);
+                }
+
+                if (pattern.url) {
+                    cta.href = pattern.url;
+                    cta.textContent = pattern.cta || 'Berbagi sekarang';
+                    cta.target = pattern.external ? '_blank' : '_self';
+                    cta.rel = pattern.external ? 'noopener' : '';
+                    cta.hidden = false;
+                } else {
+                    cta.hidden = true;
+                }
+            }
+
+            function nextIndex() {
+                if (patterns.length <= 1) return 0;
+
+                var index = Math.floor(Math.random() * patterns.length);
+
+                return index === currentIndex ? (index + 1) % patterns.length : index;
+            }
+
+            function scheduleNext() {
+                window.clearTimeout(nextTimer);
+                var gap = 2000 + Math.floor(Math.random() * 58001);
+                nextTimer = window.setTimeout(show, gap);
+            }
+
+            function show() {
+                if (isStopped || isPaused) return;
+
+                currentIndex = nextIndex();
+                renderPattern(patterns[currentIndex]);
+                isVisible = true;
+                box.classList.add('is-visible');
+                hideTimer = window.setTimeout(hide, 3000);
+            }
+
+            function hide() {
+                window.clearTimeout(hideTimer);
+                box.classList.remove('is-visible');
+                isVisible = false;
+
+                if (!isStopped && !isPaused) {
+                    scheduleNext();
+                }
+            }
+
+            function pause() {
+                if (isStopped) return;
+
+                isPaused = true;
+                clearTimers();
+                box.classList.remove('is-visible');
+                isVisible = false;
+            }
+
+            function resume() {
+                if (isStopped || !isPaused) return;
+
+                isPaused = false;
+                scheduleNext();
+            }
+
+            function stop() {
+                isStopped = true;
+                isPaused = false;
+                clearTimers();
+                box.classList.remove('is-visible');
+                isVisible = false;
+                setFlag('bp_stats_closed');
+            }
+
+            close.addEventListener('click', stop);
+
+            var initialDelay = Math.max(0, parseInt(stats.delay_seconds || 0, 10)) * 1000;
+            showTimer = window.setTimeout(show, initialDelay);
+
+            statsController = {
+                pause: pause,
+                resume: resume,
+                stop: stop,
+                isVisible: function () { return isVisible; }
             };
-
-            if (pattern.type === 'category') {
-                statsText.appendChild(document.createTextNode('Alhamdulillah, hari ini '));
-                statsText.appendChild(strong(pattern.count + ' orang'));
-                statsText.appendChild(document.createTextNode(' donasi '));
-                statsText.appendChild(strong(pattern.category || ''));
-            } else if (pattern.type === 'period') {
-                statsText.appendChild(document.createTextNode('Alhamdulillah, ' + (pattern.period || 'hari ini') + ' '));
-                statsText.appendChild(strong(pattern.count + ' orang'));
-                statsText.appendChild(document.createTextNode(' telah berdonasi.'));
-            } else {
-                var value = document.createElement('span');
-                value.className = 'bp-value';
-                value.textContent = pattern.value || '';
-                statsText.appendChild(value);
-
-                var label = document.createElement('span');
-                label.className = 'bp-value-label';
-                label.textContent = pattern.label || '';
-                statsText.appendChild(label);
-            }
-
-            if (pattern.url) {
-                statsCta.href = pattern.url;
-                statsCta.textContent = pattern.cta || 'Berbagi sekarang';
-                statsCta.target = pattern.external ? '_blank' : '_self';
-                statsCta.rel = pattern.external ? 'noopener' : '';
-                statsCta.hidden = false;
-            } else {
-                statsCta.hidden = true;
-            }
-
-            statsBox.classList.add('is-visible');
-        };
-
-        var delay = Math.max(0, parseInt(stats.delay_seconds || 0, 10)) * 1000;
-        window.setTimeout(renderStats, delay);
-
-        statsClose.addEventListener('click', function () {
-            statsBox.classList.remove('is-visible');
-            setFlag('bp_stats_closed');
-        });
+        })();
     }
 
     if (!banners.length) return;
@@ -331,6 +398,8 @@ window.BerbagiPopupConfig = {!! json_encode([
         }
 
         if (!banner.image) return;
+
+        if (statsController) statsController.pause();
 
         current = banner;
         isOpen = true;
@@ -369,6 +438,8 @@ window.BerbagiPopupConfig = {!! json_encode([
         window.setTimeout(function () {
             if (pending.length) {
                 showBanner(pending.shift());
+            } else if (statsController) {
+                statsController.resume();
             }
         }, 320);
     }

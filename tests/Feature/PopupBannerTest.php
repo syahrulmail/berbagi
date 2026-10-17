@@ -252,10 +252,15 @@ class PopupBannerTest extends TestCase
 
         $response->assertSee('bpStats');
         $response->assertSee('"type":"category"', false);
+        $response->assertSee('"period":"hari ini"', false);
+        $response->assertSee('"period":"pekan ini"', false);
+        $response->assertSee('"period":"bulan ini"', false);
+        $response->assertDontSee('"period":"kemarin"', false);
         $response->assertSee('"category":"Quran"', false);
         $response->assertSee('"type":"achievement"', false);
         $response->assertSee('"value":"12.345"', false);
         $response->assertSee('"label":"Penerima Manfaat"', false);
+        $response->assertSee('"cta":"Berbagi sekarang"', false);
     }
 
     public function test_stats_widget_can_be_disabled(): void

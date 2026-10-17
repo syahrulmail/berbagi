@@ -16,8 +16,9 @@
         <div>
             <h2 style="font-size:16px; font-weight:700; margin:0 0 4px;">Popup Statistik Otomatis</h2>
             <p style="margin:0; color:var(--gray-500); font-size:13px; max-width:640px;">
-                Kartu kecil di kiri bawah halaman publik. Isinya dipilih acak dari data donasi dan pencapaian:
-                jumlah orang hari ini per kategori program, rekap hari/kemarin/pekan/bulan, atau data pencapaian.
+                Kartu kecil di kiri bawah halaman publik. Tampil 3 detik lalu menutup sendiri, kemudian muncul lagi
+                bergantian setiap 2–60 detik. Isinya dipilih acak dari data donasi per kategori program
+                (hari ini, kemarin, pekan ini, bulan ini) atau data pencapaian.
             </p>
         </div>
         <span class="badge {{ $statsSettings['enabled'] ? 'badge-green' : 'badge-gray' }}">
@@ -35,7 +36,7 @@
             </label>
         </div>
         <div class="form-group" style="margin:0; max-width:200px;">
-            <label for="popup_stats_delay_seconds">Muncul setelah (detik)</label>
+            <label for="popup_stats_delay_seconds">Tampil pertama setelah (detik)</label>
             <input type="number" id="popup_stats_delay_seconds" name="popup_stats_delay_seconds"
                    value="{{ old('popup_stats_delay_seconds', $statsSettings['delay_seconds']) }}" min="0" max="300">
         </div>

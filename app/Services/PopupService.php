@@ -147,7 +147,7 @@ class PopupService
             return null;
         }
 
-        $data = Cache::remember('public_popup_stats_v1', 300, function () {
+        $data = Cache::remember('public_popup_stats_v2', 300, function () {
             return $this->buildStatsData();
         });
 
@@ -156,20 +156,11 @@ class PopupService
         }
 
         $waUrl = $this->whatsappUrl($agent);
-        $programUrl = $agent
-            ? route('public.agent', $agent->slug) . '#program'
-            : route('home') . '#program';
 
-        $patterns = array_map(function ($pattern) use ($waUrl, $programUrl) {
-            if ($pattern['type'] === 'achievement') {
-                $pattern['url'] = $programUrl;
-                $pattern['cta'] = 'Lihat program';
-                $pattern['external'] = false;
-            } else {
-                $pattern['url'] = $waUrl;
-                $pattern['cta'] = 'Berbagi sekarang';
-                $pattern['external'] = true;
-            }
+        $patterns = array_map(function ($pattern) use ($waUrl) {
+            $pattern['url'] = $waUrl;
+            $pattern['cta'] = 'Berbagi sekarang';
+            $pattern['external'] = true;
 
             return $pattern;
         }, $data['patterns']);
@@ -188,17 +179,6 @@ class PopupService
         $patterns = [];
         $now = now();
 
-        $todayCount = $this->peopleCount($now->copy()->startOfDay(), $now->copy()->endOfDay());
-        $category = $this->todayCategory();
-
-        if ($todayCount > 0 && $category !== '') {
-            $patterns[] = [
-                'type'     => 'category',
-                'count'    => $todayCount,
-                'category' => $category,
-            ];
-        }
-
         $periods = [
             ['label' => 'hari ini', 'start' => $now->copy()->startOfDay(), 'end' => $now->copy()->endOfDay()],
             ['label' => 'kemarin', 'start' => $now->copy()->subDay()->startOfDay(), 'end' => $now->copy()->subDay()->endOfDay()],
@@ -209,13 +189,22 @@ class PopupService
         foreach ($periods as $period) {
             $count = $this->peopleCount($period['start'], $period['end']);
 
-            if ($count > 0) {
-                $patterns[] = [
-                    'type'   => 'period',
-                    'period' => $period['label'],
-                    'count'  => $count,
-                ];
+            if ($count <= 0) {
+                continue;
             }
+
+            $category = $this->periodCategory($period['start'], $period['end']);
+
+            if ($category === '') {
+                continue;
+            }
+
+            $patterns[] = [
+                'type'     => 'category',
+                'period'   => $period['label'],
+                'count'    => $count,
+                'category' => $category,
+            ];
         }
 
         $achievements = Achievement::where('is_active', true)
@@ -247,11 +236,12 @@ class PopupService
         return (int) ($withContact + $withoutContact);
     }
 
-    protected function todayCategory(): string
+    protected function periodCategory(Carbon $start, Carbon $end): string
     {
         $rows = Donation::query()
             ->join('programs', 'programs.id', '=', 'donations.program_id')
-            ->whereDate('donations.donation_date', now()->toDateString())
+            ->whereDate('donations.donation_date', '>=', $start->toDateString())
+            ->whereDate('donations.donation_date', '<=', $end->toDateString())
             ->select('programs.program_category as category', DB::raw('COUNT(*) as total'))
             ->groupBy('programs.program_category')
             ->orderByDesc('total')
