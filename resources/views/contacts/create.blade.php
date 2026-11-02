@@ -129,6 +129,15 @@ Bandung,Agen Citra,Ibu Sari,6289876543210,Wakif,Kontak dari pameran</pre>
             </ol>
             <p>Status yang diterima: <strong>Prospek</strong>, <strong>Simpan</strong>, <strong>Wakif</strong>, <strong>Stop</strong>.</p>
             <p class="text-muted"><i class="fas fa-triangle-exclamation"></i> Cabang dan Agent harus sesuai data yang sudah ada, dan nama Agent harus unik di cabangnya. No. WhatsApp harus berupa angka 10-15 digit (boleh diawali 0, 62, atau +62; tidak boleh duplikat dengan kontak lain atau dalam satu file). Jika ada yang bermasalah, import dibatalkan dan diberi tahu baris yang salah.</p>
+            <div class="import-template">
+                <span class="import-template-label"><i class="fas fa-download"></i> Contoh format yang benar:</span>
+                <div class="import-template-actions">
+                    <a href="{{ asset('downloads/template-import-kontak.xlsx') }}" class="btn btn-outline btn-sm" download><i class="fas fa-file-excel"></i> Template .xlsx</a>
+                    <a href="{{ asset('downloads/template-import-kontak.xls') }}" class="btn btn-outline btn-sm" download><i class="fas fa-file-excel"></i> Template .xls</a>
+                    <a href="{{ asset('downloads/template-import-kontak.csv') }}" class="btn btn-outline btn-sm" download><i class="fas fa-file-csv"></i> Template .csv</a>
+                </div>
+                <p class="text-muted">Unduh salah satu template, isi baris sesuai data Anda (baris judul boleh dibiarkan), lalu unggah kembali di bawah.</p>
+            </div>
         </div>
         <form method="POST" action="{{ route('contacts.import') }}" enctype="multipart/form-data">
             @csrf

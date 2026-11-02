@@ -21,6 +21,24 @@
     </div>
 
     <div class="mo-form-card">
+        <h3 class="mo-form-card-title"><i class="fas fa-download"></i> Contoh Format</h3>
+        <p style="margin:0 0 10px;font-size:12.5px;color:var(--mo-muted);line-height:1.55;">
+            Unduh template, isi datanya, lalu unggah kembali pada form di bawah.
+        </p>
+        <div class="mo-template-actions">
+            <a href="{{ asset('downloads/template-import-kontak.xlsx') }}" class="mo-template-btn" download>
+                <i class="fas fa-file-excel"></i> .xlsx
+            </a>
+            <a href="{{ asset('downloads/template-import-kontak.xls') }}" class="mo-template-btn" download>
+                <i class="fas fa-file-excel"></i> .xls
+            </a>
+            <a href="{{ asset('downloads/template-import-kontak.csv') }}" class="mo-template-btn" download>
+                <i class="fas fa-file-csv"></i> .csv
+            </a>
+        </div>
+    </div>
+
+    <div class="mo-form-card">
         <h3 class="mo-form-card-title"><i class="fas fa-file-arrow-up"></i> Unggah File</h3>
         <form method="POST" action="{{ route('mo.contact.import') }}" enctype="multipart/form-data">
             @csrf

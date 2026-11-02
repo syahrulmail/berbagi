@@ -188,6 +188,7 @@ class ContactImportService
 
     protected function parseDelimitedText(string $content): array
     {
+        $content = $this->stripBom($content);
         $content = str_replace(["\r\n", "\r"], "\n", $content);
         $lines = explode("\n", $content);
         $rows = [];
@@ -200,6 +201,23 @@ class ContactImportService
         }
 
         return $rows;
+    }
+
+    /**
+     * Buang BOM UTF-8/UTF-16 di awal berkas agar sel pertama
+     * (mis. judul "Cabang") tidak ikut tercemar karakter tak terlihat.
+     */
+    protected function stripBom(string $content): string
+    {
+        if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
+            return substr($content, 3);
+        }
+
+        if (substr($content, 0, 2) === "\xFF\xFE" || substr($content, 0, 2) === "\xFE\xFF") {
+            return (string) substr($content, 2);
+        }
+
+        return $content;
     }
 
     protected function parseXlsx(string $path): array
