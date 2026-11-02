@@ -87,7 +87,8 @@ class ContactImportTemplateTest extends TestCase
 
     public function test_template_rows_pass_import_validation_with_matching_branches_and_agents()
     {
-        // Mengikuti data seeder: 5 cabang pertama, agen Andi/Budi/Citra/Dewi/Eko.
+        // Selaraskan dengan baris contoh pada template. Pakai firstOrCreate agar
+        // tetap valid walau database uji sudah berisi data seeder.
         $setup = [
             'Jakarta Pusat' => 'Agen Andi',
             'Jakarta Selatan' => 'Agen Budi',
@@ -98,15 +99,26 @@ class ContactImportTemplateTest extends TestCase
 
         $branches = [];
         foreach ($setup as $city => $agentName) {
-            $branch = Branch::create([
-                'code' => 'BWA-' . strtoupper(substr(md5($city), 0, 4)),
-                'name' => 'Cabang ' . $city,
-                'city' => $city,
-                'is_active' => true,
-            ]);
+            $branch = Branch::firstOrCreate(
+                ['name' => 'Cabang ' . $city],
+                [
+                    'code' => 'BWA-T' . strtoupper(substr(md5($city), 0, 3)),
+                    'city' => $city,
+                    'is_active' => true,
+                ]
+            );
 
-            $agent = $this->makeUser('agen', $branch);
-            $agent->update(['name' => $agentName]);
+            User::firstOrCreate(
+                ['name' => $agentName, 'branch_id' => $branch->id],
+                [
+                    'username' => 'user_' . uniqid(),
+                    'slug' => 'user_' . uniqid(),
+                    'email' => uniqid() . '@test.local',
+                    'phone' => '628' . uniqid(),
+                    'password' => bcrypt('password'),
+                    'role' => 'agen',
+                ]
+            );
 
             $branches[$city] = $branch;
         }
