@@ -41,8 +41,8 @@
     .media-slider { position: relative; overflow: hidden; }
     .media-slides-track { display: flex; transition: transform .5s ease; }
     .media-slide { flex: 0 0 100%; min-width: 0; }
-    .media-slide-img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; }
-    .media-slide-video .media-slide-inner { position: relative; width: 100%; aspect-ratio: 4/3; background: #022321; }
+    .media-slide-img { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+    .media-slide-video .media-slide-inner { position: relative; width: 100%; aspect-ratio: 16/9; background: #022321; }
     .media-slide-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
     .media-arrow {
         position: absolute;
@@ -115,6 +115,48 @@
         font-size: 20px;
         background: rgba(2, 35, 33, .35);
     }
+    .agen-program-bar {
+        position: sticky;
+        top: 64px;
+        z-index: 30;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 16px;
+        margin: 0 0 24px;
+        padding: 12px 14px;
+        border: 1px solid #d5f2ef;
+        border-radius: 16px;
+        background: rgba(238, 250, 248, .96);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 24px -16px rgba(2, 35, 33, .18);
+    }
+    .agen-program-bar-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 1 1 180px;
+    }
+    .agen-program-bar-text {
+        min-width: 0;
+        flex: 1;
+    }
+    .agen-program-bar-text p:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .agen-program-bar .btn {
+        flex: none;
+        width: 100%;
+        justify-content: center;
+        white-space: nowrap;
+    }
+    @media (min-width: 640px) {
+        .agen-program-bar .btn { width: auto; }
+    }
+    #siteHeader.header-scrolled ~ main .agen-program-bar { top: 56px; }
     /* Donasi Cepat sticky/melayang saat discroll — hanya mode desktop (layar tinggi) */
     @media (min-width: 1024px) and (min-height: 640px) {
         .donasi-cepat-aside {
@@ -168,11 +210,30 @@
     }
 
     $waUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($waMsg);
-    $shareUrl = route('public.program', $program->slug);
-    $shareTitle = urlencode('Bantu wakaf & sedekah: ' . $program->name);
-    $shareText = urlencode('Bantu wakaf & sedekah: ' . $program->name . ' — ' . $shareUrl);
+    $shareUrl = $agen
+        ? route('public.agent-program', ['agentSlug' => $agen->slug, 'program' => $program->slug])
+        : route('public.program', $program->slug);
+    $shareUrl = preg_replace('#^http://#i', 'https://', $shareUrl);
+    $plainDesc = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $program->description)));
+    $shareLead = $program->name;
+    $shareDesc = $plainDesc !== '' ? \Illuminate\Support\Str::limit($plainDesc, 500, '…') : '';
+    $shareMessage = $shareLead . ($shareDesc !== '' ? "\n\n" . $shareDesc : '') . "\n\n" . $shareUrl;
+    $shareCaption = $shareLead . ($shareDesc !== '' ? "\n\n" . $shareDesc : '');
+    $shareTitle = urlencode($shareCaption);
+    $shareText = urlencode($shareMessage);
+    $ogDesc = $plainDesc !== '' ? \Illuminate\Support\Str::limit($plainDesc, 200, '…') : $shareLead;
+    $ogImage = $program->image_url;
+    if ($ogImage === '' && $program->video_id) {
+        $ogImage = 'https://i.ytimg.com/vi/' . $program->video_id . '/hqdefault.jpg';
+    }
+    $ogImage = $ogImage !== '' ? preg_replace('#^http://#i', 'https://', $ogImage) : '';
     $ctaHelpName = $agen ? $agen->name : 'Tim BWA';
 @endphp
+
+@section('og_title', $program->name . ' · Berbagi.or.id')
+@section('og_description', $ogDesc)
+@section('og_url', $shareUrl)
+@section('og_image', $ogImage)
 
 @section('donasiBarTitle', $program->name)
 @section('donasiBarSub', $showGoal ? ($isComplete ? 'Target tercapai · Terima kasih' : 'Progress ' . $progress . '% · ' . ($remaining !== null ? 'Dibutuhkan Rp ' . number_format($remaining, 0, ',', '.') : 'Target tercapai')) : 'Bantu wujudkan program kebaikan ini bersama BWA')
@@ -185,7 +246,7 @@
 <main class="section">
     <div class="container">
         <nav class="mb-8 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-            <a href="{{ route('home') }}" class="font-medium text-primary-600 transition hover:text-primary-700"><i class="fas fa-arrow-left"></i> Beranda</a>
+            <a href="{{ $agen ? route('public.agent', $agen->slug) : route('home') }}" class="font-medium text-primary-600 transition hover:text-primary-700"><i class="fas fa-arrow-left"></i> Beranda</a>
             <span>/</span>
             @if($agen)
                 <a href="{{ route('public.agent', $agen->slug) }}" class="font-medium text-primary-600 transition hover:text-primary-700">{{ $agen->name }}</a>
@@ -195,15 +256,17 @@
         </nav>
 
         @if($agen)
-            <div class="mb-8 flex flex-wrap items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50/60 p-4" data-reveal>
-                @if(!empty($agenPhoto))
-                <img src="{{ $agenPhoto }}" alt="{{ $agen->name }}" class="h-12 w-12 flex-shrink-0 rounded-xl object-cover">
-                @else
-                <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-lg font-bold text-white">{{ strtoupper(mb_substr($agen->name, 0, 1)) }}</div>
-                @endif
-                <div class="flex-1">
-                    <p class="text-sm text-gray-500">CS Badan Wakaf Al Quran</p>
-                    <p class="font-semibold text-primary-900">{{ $agen->name }}</p>
+            <div class="agen-program-bar">
+                <div class="agen-program-bar-main">
+                    @if(!empty($agenPhoto))
+                    <img src="{{ $agenPhoto }}" alt="{{ $agen->name }}" class="h-12 w-12 flex-shrink-0 rounded-xl object-cover">
+                    @else
+                    <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-lg font-bold text-white">{{ strtoupper(mb_substr($agen->name, 0, 1)) }}</div>
+                    @endif
+                    <div class="agen-program-bar-text">
+                        <p class="text-sm text-gray-500">CS Badan Wakaf Al Quran</p>
+                        <p class="font-semibold text-primary-900">{{ $agen->name }}</p>
+                    </div>
                 </div>
                 <a href="{{ route('public.agent', $agen->slug) }}" class="btn btn-outline btn-sm">Lihat Program Lainnya</a>
             </div>
@@ -246,7 +309,7 @@
                         @endif
                     </div>
                     @else
-                        <div class="grid aspect-[4/3] w-full place-items-center bg-gradient-to-br from-primary-100 to-primary-50 text-primary-400">
+                        <div class="grid aspect-[16/9] w-full place-items-center bg-gradient-to-br from-primary-100 to-primary-50 text-primary-400">
                             <i class="fas fa-book-quran" style="font-size:72px;"></i>
                         </div>
                     @endif
@@ -255,7 +318,7 @@
                     <div class="mt-4 grid grid-cols-4 gap-3" id="mediaSliderThumbs" data-reveal>
                         @foreach($slides as $idx => $slide)
                             <button type="button"
-                                    class="gallery-thumb media-thumb {{ $idx === 0 ? 'gallery-thumb-active' : '' }} aspect-[4/3] overflow-hidden rounded-xl border transition"
+                                    class="gallery-thumb media-thumb {{ $idx === 0 ? 'gallery-thumb-active' : '' }} aspect-[16/9] overflow-hidden rounded-xl border transition"
                                     data-media-thumb="{{ $idx }}"
                                     aria-label="Tampilkan media {{ $idx + 1 }}">
                                 @if($slide['type'] === 'video')
@@ -304,7 +367,7 @@
                 @endif
 
                 <section class="mt-14 rounded-3xl bg-gradient-to-br from-primary-700 to-primary-950 p-8 text-center text-white md:p-10" data-reveal>
-                    <h2 class="text-2xl font-extrabold md:text-3xl">Wujudkan kebaikan, mulai dari {{ $program->name }}</h2>
+                    <h2 class="text-2xl font-extrabold md:text-3xl">{{ $agen ? $agen->name . ' mengajak mari wujudkan kebaikan, mulai dari ' . $program->name : 'Wujudkan kebaikan, mulai dari ' . $program->name }}</h2>
                     <p class="mx-auto mt-3 max-w-xl text-sm text-primary-100/90">Setiap rupiah sangat berarti. {{ $ctaHelpName }} siap membantu sepenuh hati.</p>
                     <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-wa mt-7 !px-8 !py-3.5 !text-base"
                        data-wa-log data-wa-source="{{ $waSource }}" data-wa-program="{{ $program->id }}" @if($agen) data-wa-agen="{{ $agen->id }}" @endif>
@@ -326,7 +389,7 @@
 (function () {
     'use strict';
     function copyUrl(done) {
-        var url = window.location.href;
+        var url = @json($shareUrl);
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(url).then(done, done);
         } else {

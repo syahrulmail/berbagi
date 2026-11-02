@@ -46,17 +46,29 @@
         font-weight: 700;
         color: #0f172a;
     }
+    /* Area sentuh 24x24 (standar target-size) dengan titik visual 9px di
+       dalamnya, supaya titik tetap kecil tetapi mudah ditekan. */
     #testimonialDots button {
-        width: 9px;
-        height: 9px;
+        position: relative;
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
         border-radius: 9999px;
         border: none;
         padding: 0;
         cursor: pointer;
+        background: transparent;
+    }
+    #testimonialDots button::after {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 9999px;
         background: #cbe4e0;
         transition: background .2s, transform .2s;
     }
-    #testimonialDots button.active {
+    #testimonialDots button.active::after {
         background: #08A899;
         transform: scale(1.25);
     }
@@ -242,12 +254,12 @@
     }
     .pdetail-media {
         position: relative;
-        height: 210px;
+        aspect-ratio: 16 / 9;
+        height: auto;
         flex: none;
         background: linear-gradient(135deg, #08574f, #022321);
     }
     @media (max-width: 480px) {
-        .pdetail-media { height: 160px; }
         .pdetail-body { padding: 16px 16px 18px; }
         .pdetail-title { font-size: 17px; }
         .pdetail-desc { font-size: 12.5px; }

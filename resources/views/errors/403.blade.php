@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('layouts.partials.favicon')
     <title>403 · Tidak Diizinkan</title>
     <link rel="stylesheet" href="{{ assetv('css/app.css') }}">
     <style>

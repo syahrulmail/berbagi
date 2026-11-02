@@ -28,6 +28,11 @@ class Kernel extends ConsoleKernel
             Artisan::call('warming:run');
         })->name('wa-warming')->everyMinute()->withoutOverlapping();
 
+        // Antrean broadcast Follow-up WA (jeda acak antar pesan).
+        $schedule->call(function () {
+            Artisan::call('followup:starsender', ['--seconds' => 50]);
+        })->name('wa-broadcast')->everyMinute()->withoutOverlapping();
+
         // Contoh otomasi lain: cek status kontak berulang kali dihubungi
         // $schedule->command('contacts:status-check')->daily();
     }

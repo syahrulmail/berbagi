@@ -16,8 +16,9 @@
         <div>
             <h2 style="font-size:16px; font-weight:700; margin:0 0 4px;">Popup Statistik Otomatis</h2>
             <p style="margin:0; color:var(--gray-500); font-size:13px; max-width:640px;">
-                Kartu kecil di kiri bawah halaman publik. Tampil 3 detik lalu menutup sendiri, kemudian muncul lagi
-                bergantian setiap 2–60 detik. Isinya dipilih acak dari data donasi per kategori program
+                Kartu kecil di kiri bawah halaman publik. Tampil 4 detik lalu menutup sendiri; tetap tayang
+                saat kursor diarahkan atau banner disentuh/ditahan. Setelah itu muncul lagi bergantian
+                dengan jeda acak 2–15 detik. Isinya dipilih acak dari data donasi per kategori program
                 (hari ini, kemarin, pekan ini, bulan ini) atau data pencapaian.
             </p>
         </div>

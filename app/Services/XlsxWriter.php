@@ -38,6 +38,9 @@ class XlsxWriter
     /** @var array<int, float> Tinggi baris dalam poin, key = nomor baris (1-based). */
     protected $rowHeights = [];
 
+    /** @var array<int, int> Nomor baris tempat pemisah halaman manual ditambahkan. */
+    protected $rowBreaks = [];
+
     /** @var array<int, float>|null Urutan: left, right, top, bottom, header, footer (inci). */
     protected $pageMargins = null;
 
@@ -105,6 +108,20 @@ class XlsxWriter
     public function rowCount(): int
     {
         return count($this->rows);
+    }
+
+    /**
+     * Tambahkan pemisah halaman manual setelah baris tertentu.
+     *
+     * @return $this
+     */
+    public function addRowBreak(int $afterRowNumber): self
+    {
+        if ($afterRowNumber >= 1) {
+            $this->rowBreaks[$afterRowNumber] = $afterRowNumber;
+        }
+
+        return $this;
     }
 
     /**
@@ -398,6 +415,19 @@ class XlsxWriter
             $xml .= $pageSetup . '/>';
         }
 
+        if (!empty($this->rowBreaks)) {
+            $breaks = array_values($this->rowBreaks);
+            sort($breaks);
+
+            $xml .= '<rowBreaks count="' . count($breaks) . '" manualBreakCount="' . count($breaks) . '">';
+
+            foreach ($breaks as $break) {
+                $xml .= '<brk id="' . (int) $break . '" max="16383" man="1"/>';
+            }
+
+            $xml .= '</rowBreaks>';
+        }
+
         if (!empty($this->images)) {
             $xml .= '<drawing r:id="rId1"/>';
         }
@@ -483,6 +513,7 @@ class XlsxWriter
             . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>'
             . '</Relationships>';
     }
+
 
     /**
      * Ubah byte WebP menjadi PNG agar kompatibel dengan Excel.

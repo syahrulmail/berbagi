@@ -74,6 +74,7 @@
                 <div class="mo-field" id="mo-limit-group">
                     <label>Jumlah Kontak</label>
                     <input type="number" name="limit_count" class="mo-input" min="1" value="20">
+                    <div class="mo-form-help">Kuota awal. Mekanisme otomatis menambah 5 kontak setiap balasan selama broadcast berjalan.</div>
                 </div>
                 <div class="mo-field">
                     <label>Jadwal</label>
@@ -168,10 +169,32 @@
                     <div class="mo-row">
                         <div class="mo-row-body">
                             <div class="mo-row-title">{{ $b->name }}</div>
-                            <div class="mo-row-sub">{{ $b->sent }}/{{ $b->total }} terkirim · {{ $b->failed }} gagal</div>
+                            <div class="mo-row-sub">{{ $b->sent }}/{{ $b->total }} terkirim · {{ $b->failed }} gagal · {{ $b->replies }} balasan</div>
                             <div style="margin-top:5px;">
-                                @php $cls = ['completed'=>'green','running'=>'gold','stopped'=>'gray','failed'=>'red'][$b->status] ?? 'gray'; @endphp
+                                @php $cls = ['completed'=>'green','running'=>'gold','paused'=>'gold','queued'=>'gold','stopped'=>'gray','failed'=>'red'][$b->status] ?? 'gray'; @endphp
                                 <span class="mo-badge {{ $cls }}">{{ $b->statusLabel() }}</span>
+                            </div>
+                            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                                @if($b->status === 'running')
+                                    <form method="POST" action="{{ route('mo.whatsapp.broadcast.pause', $b) }}" style="margin:0;">
+                                        @csrf
+                                        <button type="submit" class="mo-icon-btn" style="width:32px;height:32px;" title="Pause" aria-label="Pause"><i class="fas fa-pause"></i></button>
+                                    </form>
+                                    <form method="POST" action="{{ route('mo.whatsapp.broadcast.stop', $b) }}" style="margin:0;" onsubmit="return confirm('Hentikan broadcast ini?');">
+                                        @csrf
+                                        <button type="submit" class="mo-icon-btn" style="width:32px;height:32px;background:#fdeeec;color:var(--mo-danger);box-shadow:none;" title="Stop" aria-label="Stop"><i class="fas fa-stop"></i></button>
+                                    </form>
+                                @elseif($b->status === 'paused')
+                                    <form method="POST" action="{{ route('mo.whatsapp.broadcast.resume', $b) }}" style="margin:0;">
+                                        @csrf
+                                        <button type="submit" class="mo-icon-btn" style="width:32px;height:32px;" title="Lanjutkan" aria-label="Lanjutkan"><i class="fas fa-play"></i></button>
+                                    </form>
+                                @endif
+                                <form method="POST" action="{{ route('mo.whatsapp.broadcast.destroy', $b) }}" style="margin:0;" onsubmit="return confirm('Hapus riwayat broadcast ini? Log pesan tidak ikut terhapus.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="mo-icon-btn" style="width:32px;height:32px;background:#fdeeec;color:var(--mo-danger);box-shadow:none;" title="Delete" aria-label="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -278,7 +301,13 @@
     <div id="mo-fuwa-warming" hidden>
         @if(auth()->user()->isAdmin())
         <div class="mo-form-card">
-            <div class="mo-form-card-title"><i class="fas fa-fire"></i> Warming Nomor</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div class="mo-form-card-title" style="margin:0;"><i class="fas fa-fire"></i> Warming Nomor</div>
+                <button type="button" class="mo-collapse-btn" data-filter-toggle="mo-warming-config" aria-expanded="false" aria-label="Tampilkan konfigurasi">
+                    <i class="fas fa-chevron-down mo-collapse-chevron"></i>
+                </button>
+            </div>
+            <div id="mo-warming-config" hidden style="margin-top:10px;">
             <form method="POST" action="{{ route('mo.whatsapp.warming') }}">
                 @csrf
                 <div style="display:flex;gap:10px;">
@@ -335,6 +364,7 @@
                 @csrf
                 <button type="submit" class="mo-btn mo-btn-ghost" style="width:100%;"><i class="fas fa-fire"></i> Jalankan Warming Sekarang</button>
             </form>
+            </div>
         </div>
         @endif
 
@@ -385,24 +415,35 @@
             @endphp
             <div class="mo-list">
                 @forelse($logs as $log)
-                    <div class="mo-row" style="align-items:flex-start;">
-                        <div class="mo-row-body">
-                            <div class="mo-row-title">{{ $log->contact->name ?? '-' }}</div>
-                            <div class="mo-row-sub">{{ $log->phone }}</div>
-                            <div style="margin-top:4px;font-size:12px;color:var(--mo-text);">{{ $log->message }}</div>
-                            <div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                <span class="mo-badge" style="{{ $logStatusStyle[$log->status] ?? 'background:#eef3f2;color:#64748b;' }}">{{ ucfirst($log->status) }}</span>
-                                <span style="font-size:11px;color:var(--mo-muted);">{{ $log->created_at ? $log->created_at->format('d M Y H:i') : '-' }}</span>
+                    <div class="mo-row" style="align-items:flex-start;gap:10px;">
+                        <div class="mo-row-body" style="min-width:0;">
+                            <div class="mo-row-title" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $log['contact_name'] }}</div>
+                            <div class="mo-row-sub">{{ $log['phone'] }}</div>
+                            <div style="margin-top:6px;font-size:11px;color:var(--mo-muted);line-height:1.5;">
+                                <div><span style="font-weight:600;color:var(--mo-text);">Pengirim:</span> {{ $log['sender_name'] }} &middot; {{ $log['sender_branch'] }}</div>
+                                <div>{{ $log['sender_phone'] }}</div>
+                            </div>
+                            <div style="margin-top:5px;font-size:12px;color:var(--mo-text);line-height:1.4;word-break:break-word;">
+                                {{ \Illuminate\Support\Str::limit($log['message'], 70) }}
+                            </div>
+                            <div style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                @php $methodStyle = ['Otomatis'=>'background:#e8f1fd;color:#1d4ed8;','Manual'=>'background:#e7f6ec;color:#15803d;','Warming'=>'background:#fef3e2;color:#b45309;'][$log['method']] ?? 'background:#eef3f2;color:#64748b;'; @endphp
+                                <span style="font-size:10px;color:var(--mo-muted);">Metode</span>
+                                <span class="mo-badge" style="{{ $methodStyle }}">{{ $log['method'] }}</span>
+                                <span class="mo-badge" style="{{ $logStatusStyle[$log['status']] ?? 'background:#eef3f2;color:#64748b;' }}">{{ ucfirst($log['status']) }}</span>
+                                <span style="font-size:11px;color:var(--mo-muted);">{{ $log['created_at'] ? $log['created_at']->format('d M Y H:i') : '-' }}</span>
                             </div>
                         </div>
                         <div class="mo-row-end">
-                            <form method="POST" action="{{ route('mo.whatsapp.log.destroy', $log) }}" onsubmit="return confirm('Hapus log ini?');" style="margin:0;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="mo-icon-btn" style="width:36px;height:36px;background:#fdeeec;color:var(--mo-danger);box-shadow:none;" aria-label="Hapus">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($log['source'] === 'whatsapp')
+                                <form method="POST" action="{{ route('mo.whatsapp.log.destroy', $log['id']) }}" onsubmit="return confirm('Hapus log ini?');" style="margin:0;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="mo-icon-btn" style="width:36px;height:36px;background:#fdeeec;color:var(--mo-danger);box-shadow:none;" aria-label="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </div>
                 @empty

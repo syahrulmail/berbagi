@@ -33,7 +33,9 @@
     </div>
     <div class="header-actions">
         <a href="{{ route('contacts.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Kontak</a>
-        <a href="{{ route('contacts.download', request()->query()) }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Download Kontak</a>
+        @if(!auth()->user()->isAgen())
+            <button type="button" class="btn btn-outline" data-contact-download-open="contact-download-modal"><i class="fas fa-file-excel"></i> Download Kontak</button>
+        @endif
     </div>
 </div>
 
@@ -156,12 +158,16 @@
 
 @include('partials.contact-detail-modal')
 @include('partials.donation-detail-modal')
+@if(!auth()->user()->isAgen())
+    @include('partials.contact-download-modal')
+@endif
 @endsection
 
 @push('scripts')
 <script src="{{ assetv('js/donation-form.js') }}"></script>
 <script src="{{ assetv('js/contact-detail.js') }}"></script>
 <script src="{{ assetv('js/donation-detail.js') }}"></script>
+<script src="{{ assetv('js/contact-download.js') }}"></script>
 <script>
     (function () {
         var branchEl = document.getElementById('contact-branch-filter');

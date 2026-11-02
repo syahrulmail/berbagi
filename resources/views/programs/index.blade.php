@@ -31,7 +31,9 @@
         <h1><i class="fas fa-file-invoice-dollar"></i> Manajemen Program Wakaf</h1>
         <p class="subtitle">Kelola program wakaf dan goal keuangan.</p>
     </div>
-    <a href="{{ route('programs.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Program</a>
+    @if(auth()->user()->isAdmin())
+        <a href="{{ route('programs.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Program</a>
+    @endif
 </div>
 
 <div class="card">

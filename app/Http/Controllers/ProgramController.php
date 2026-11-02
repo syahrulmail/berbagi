@@ -100,6 +100,8 @@ class ProgramController extends Controller
 
     public function create()
     {
+        $this->ensureAdmin();
+
         $defaultTags = CampaignTag::whereIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
         $extraTags = CampaignTag::whereNotIn('slug', CampaignTag::DEFAULT_TAG_SLUGS)->orderBy('name')->get();
         $defaultTagValue = old('default_tag', '');
@@ -110,6 +112,8 @@ class ProgramController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureAdmin();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:programs,slug'],
@@ -389,12 +393,12 @@ class ProgramController extends Controller
     }
 
     /**
-     * Batasi aksi ubah/hapus program hanya untuk admin.
+     * Batasi aksi tambah/ubah/hapus program hanya untuk admin.
      */
     protected function ensureAdmin(): void
     {
         if (! auth()->user()->isAdmin()) {
-            abort(403, 'Hanya admin yang dapat mengubah atau menghapus program.');
+            abort(403, 'Hanya admin yang dapat menambah, mengubah, atau menghapus program.');
         }
     }
 }

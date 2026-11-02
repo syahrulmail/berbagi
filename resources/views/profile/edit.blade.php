@@ -61,7 +61,12 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="username">Username *</label>
-                <input type="text" id="username" name="username" value="{{ old('username', $user->username) }}" required>
+                @php $usernameLocked = $user->isSupervisor() || $user->isAgen(); @endphp
+                <input type="text" id="username" name="username" value="{{ old('username', $user->username) }}" required
+                       @if($usernameLocked) readonly style="background:var(--gray-100);" @endif>
+                @if($usernameLocked)
+                    <small style="color: var(--gray-500);">Username tidak dapat diubah untuk akun Supervisor dan Agen.</small>
+                @endif
                 @error('username')
                     <small style="color: var(--danger);">{{ $message }}</small>
                 @enderror

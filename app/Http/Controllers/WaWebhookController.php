@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\FollowupWaService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -67,12 +68,12 @@ class WaWebhookController extends Controller
         $text = $this->extractText($payload);
 
         if ($from !== '') {
-            $broadcast = $this->service->activeBroadcast($user);
-
-            if ($broadcast !== null && $broadcast->mechanism === 'auto') {
-                $this->service->recordReply($broadcast);
-                $this->service->nextAutoBatch($broadcast, 5);
-            }
+            $this->service->handleIncomingBroadcastReply(
+                $user,
+                $from,
+                $this->extractTimestamp($payload),
+                $this->extractMessageId($payload)
+            );
 
             $this->service->recordWarmingIncoming($user, $from, $text);
         }
@@ -134,5 +135,72 @@ class WaWebhookController extends Controller
         }
 
         return '';
+    }
+
+    /**
+     * Waktu pesan masuk menurut provider. Null berarti pakai waktu sekarang.
+     *
+     * @param  array<string,mixed>  $payload
+     */
+    protected function extractTimestamp(array $payload): ?Carbon
+    {
+        $candidates = [
+            $payload['timestamp'] ?? null,
+            $payload['time'] ?? null,
+            $payload['created_at'] ?? null,
+            $payload['date'] ?? null,
+            $payload['data']['timestamp'] ?? null,
+            $payload['data']['time'] ?? null,
+            $payload['data']['created_at'] ?? null,
+            $payload['message']['timestamp'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate === null || $candidate === '') {
+                continue;
+            }
+
+            try {
+                if (is_numeric($candidate)) {
+                    $value = (float) $candidate;
+
+                    if ($value >= 1000000000000) {
+                        $value = $value / 1000;
+                    }
+
+                    if ($value > 0) {
+                        return Carbon::createFromTimestamp((int) $value);
+                    }
+                } else {
+                    return Carbon::parse((string) $candidate);
+                }
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string,mixed>  $payload
+     */
+    protected function extractMessageId(array $payload): ?string
+    {
+        $candidates = [
+            $payload['message_id'] ?? null,
+            $payload['id'] ?? null,
+            $payload['data']['message_id'] ?? null,
+            $payload['data']['id'] ?? null,
+            $payload['message']['id'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_scalar($candidate) && trim((string) $candidate) !== '') {
+                return trim((string) $candidate);
+            }
+        }
+
+        return null;
     }
 }

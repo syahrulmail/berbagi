@@ -19,6 +19,14 @@
     .fuwa-preview-box { max-height:420px; overflow:auto; }
     .fuwa-hint { font-size:12px; color:var(--gray-500); margin-top:4px; }
     .fuwa-collapse-toggle { background:transparent; border:none; color:var(--primary); font-weight:600; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+    .fuwa-actions { display:flex; align-items:center; gap:6px; }
+    .fuwa-actions form { margin:0; }
+    .fuwa-icon-btn { width:30px; height:30px; border-radius:8px; border:1px solid #e2e8e6; background:#fff; color:var(--gray-600); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; transition:all .15s; }
+    .fuwa-icon-btn:hover { background:#f3f7f6; color:var(--primary); }
+    .fuwa-icon-btn.is-pause { color:#b45309; border-color:#fcd34d; }
+    .fuwa-icon-btn.is-stop { color:#b91c1c; border-color:#fca5a5; }
+    .fuwa-icon-btn.is-play { color:#166534; border-color:#86efac; }
+    .fuwa-icon-btn.is-delete { color:#991b1b; border-color:#fecaca; }
 </style>
 @endpush
 
@@ -89,6 +97,7 @@
                     <div class="form-group" id="fuwa-limit-group">
                         <label>Jumlah Kontak</label>
                         <input type="number" name="limit_count" min="1" value="20">
+                        <div class="fuwa-hint">Kuota awal pengiriman. Pada mekanisme otomatis, setiap balasan menambah 5 kontak selama broadcast masih berjalan.</div>
                     </div>
                     <div class="form-group">
                         <label>Jadwal</label>
@@ -191,7 +200,7 @@
         <div class="table-responsive">
             <table class="table">
                 <thead>
-                    <tr><th>Nama</th><th>Pengguna</th><th>Mekanisme</th><th>Status</th><th>Progress</th><th>Waktu</th></tr>
+                    <tr><th>Nama</th><th>Pengguna</th><th>Mekanisme</th><th>Status</th><th>Progress</th><th>Waktu</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
                     @forelse($broadcasts as $b)
@@ -200,14 +209,38 @@
                             <td>{{ $b->user->name ?? '-' }}</td>
                             <td>{{ $b->mechanism === 'auto' ? 'Otomatis' : 'Terbatas' }}</td>
                             <td>
-                                @php $cls = ['completed'=>'badge-green','running'=>'badge-orange','stopped'=>'badge-gray','failed'=>'badge-red'][$b->status] ?? 'badge-gray'; @endphp
+                                @php $cls = ['completed'=>'badge-green','running'=>'badge-orange','paused'=>'badge-blue','queued'=>'badge-blue','stopped'=>'badge-gray','failed'=>'badge-red'][$b->status] ?? 'badge-gray'; @endphp
                                 <span class="badge {{ $cls }}">{{ $b->statusLabel() }}</span>
                             </td>
                             <td>{{ $b->sent }}/{{ $b->total }} terkirim · {{ $b->failed }} gagal · {{ $b->replies }} balasan</td>
                             <td>{{ $b->created_at ? $b->created_at->format('d M Y H:i') : '-' }}</td>
+                            <td>
+                                <div class="fuwa-actions">
+                                    @if($b->status === 'running')
+                                        <form method="POST" action="{{ route('followupwa.broadcast.pause', $b) }}">
+                                            @csrf
+                                            <button type="submit" class="fuwa-icon-btn is-pause" title="Pause" aria-label="Pause"><i class="fas fa-pause"></i></button>
+                                        </form>
+                                        <form method="POST" action="{{ route('followupwa.broadcast.stop', $b) }}" onsubmit="return confirm('Hentikan broadcast ini?');">
+                                            @csrf
+                                            <button type="submit" class="fuwa-icon-btn is-stop" title="Stop" aria-label="Stop"><i class="fas fa-stop"></i></button>
+                                        </form>
+                                    @elseif($b->status === 'paused')
+                                        <form method="POST" action="{{ route('followupwa.broadcast.resume', $b) }}">
+                                            @csrf
+                                            <button type="submit" class="fuwa-icon-btn is-play" title="Lanjutkan" aria-label="Lanjutkan"><i class="fas fa-play"></i></button>
+                                        </form>
+                                    @endif
+                                    <form method="POST" action="{{ route('followupwa.broadcast.destroy', $b) }}" onsubmit="return confirm('Hapus riwayat broadcast ini? Log pesan tidak ikut terhapus.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="fuwa-icon-btn is-delete" title="Delete" aria-label="Delete"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada broadcast.</p></td></tr>
+                        <tr><td colspan="7" class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada broadcast.</p></td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -425,27 +458,42 @@
         <h2 style="margin:0 0 12px;font-size:16px;"><i class="fas fa-clock-rotate-left" style="color:var(--primary);"></i> Log Pesan</h2>
         <div class="table-responsive">
             <table class="table">
-                <thead><tr><th>Kontak</th><th>No. Tujuan</th><th>Pesan</th><th>Status</th><th>Waktu</th><th class="text-right">Aksi</th></tr></thead>
+                <thead><tr><th>Pengirim</th><th>Kontak</th><th>Metode</th><th>Pesan</th><th>Status</th><th>Waktu</th><th class="text-right">Aksi</th></tr></thead>
                 <tbody>
                     @forelse($logs as $log)
                         <tr>
-                            <td>{{ $log->contact->name ?? '-' }}</td>
-                            <td>{{ $log->phone }}</td>
-                            <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $log->message }}</td>
-                            <td>
-                                @php $cls = ['sent'=>'badge-green','pending'=>'badge-orange','failed'=>'badge-red'][$log->status] ?? 'badge-gray'; @endphp
-                                <span class="badge {{ $cls }}">{{ ucfirst($log->status) }}</span>
+                            <td style="min-width:150px;">
+                                <div style="font-weight:600;">{{ $log['sender_name'] }}</div>
+                                <small style="color:var(--gray-500);">{{ $log['sender_branch'] }}</small>
+                                <div><small style="color:var(--gray-500);">{{ $log['sender_phone'] }}</small></div>
                             </td>
-                            <td>{{ $log->created_at ? $log->created_at->format('d M Y H:i') : '-' }}</td>
+                            <td>
+                                <div>{{ $log['contact_name'] }}</div>
+                                <small style="color:var(--gray-500);">{{ $log['phone'] }}</small>
+                            </td>
+                            <td>
+                                @php $methodCls = ['Otomatis'=>'badge-blue','Manual'=>'badge-green','Warming'=>'badge-orange'][$log['method']] ?? 'badge-gray'; @endphp
+                                <span class="badge {{ $methodCls }}">{{ $log['method'] }}</span>
+                            </td>
+                            <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ $log['message'] }}">{{ \Illuminate\Support\Str::limit($log['message'], 55) }}</td>
+                            <td>
+                                @php $cls = ['sent'=>'badge-green','pending'=>'badge-orange','failed'=>'badge-red'][$log['status']] ?? 'badge-gray'; @endphp
+                                <span class="badge {{ $cls }}">{{ ucfirst($log['status']) }}</span>
+                            </td>
+                            <td style="white-space:nowrap;">{{ $log['created_at'] ? $log['created_at']->format('d M Y H:i') : '-' }}</td>
                             <td class="text-right">
-                                <form method="POST" action="{{ route('followupwa.log.destroy', $log) }}" onsubmit="return confirm('Hapus log ini?');" style="margin:0;">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-icon btn-danger"><i class="fas fa-trash"></i></button>
-                                </form>
+                                @if($log['source'] === 'whatsapp')
+                                    <form method="POST" action="{{ route('followupwa.log.destroy', $log['id']) }}" onsubmit="return confirm('Hapus log ini?');" style="margin:0;">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-icon btn-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                @else
+                                    <span style="color:var(--gray-400);">-</span>
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada log pengiriman.</p></td></tr>
+                        <tr><td colspan="7" class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada log pengiriman.</p></td></tr>
                     @endforelse
                 </tbody>
             </table>

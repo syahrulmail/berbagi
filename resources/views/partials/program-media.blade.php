@@ -17,7 +17,8 @@
     }
     .program-media-thumb {
         width: 64px;
-        height: 48px;
+        height: 36px;
+        aspect-ratio: 16 / 9;
         object-fit: cover;
         border-radius: 8px;
         border: 1px solid var(--gray-200);

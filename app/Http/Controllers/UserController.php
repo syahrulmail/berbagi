@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Branch;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\FollowupWaService;
 use App\Services\IntegrationCheckService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -174,15 +175,17 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'Pengguna berhasil dibuat.');
     }
 
-    public function edit(User $user)
+    public function edit(User $user, FollowupWaService $followup)
     {
         $actor = auth()->user();
         $this->authorizeUserManage($user);
         $branches = $this->selectableBranches($actor);
 
         $profile = $this->decodeProfile(Setting::get('agent_profile_' . $user->slug, '{}'));
+        $webhookUrlSs = $followup->webhookUrl($user, 'starsender');
+        $webhookUrlCc = $followup->webhookUrl($user, 'cloudchat');
 
-        return view('users.edit', compact('user', 'branches', 'profile'));
+        return view('users.edit', compact('user', 'branches', 'profile', 'webhookUrlSs', 'webhookUrlCc'));
     }
 
     /**
@@ -200,9 +203,10 @@ class UserController extends Controller
         $actor = auth()->user();
         $this->authorizeUserManage($user);
 
-        $data = $request->validate([
+        $usernameLocked = $user->isSupervisor() || $user->isAgen();
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $user->id],
             'email' => ['required', 'email', 'unique:users,email,' . $user->id],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
@@ -214,7 +218,13 @@ class UserController extends Controller
             'intro' => ['nullable', 'string', 'max:500'],
             'api_ss' => ['nullable', 'string', 'max:255'],
             'api_cc' => ['nullable', 'string', 'max:255'],
-        ]);
+        ];
+
+        if (! $usernameLocked) {
+            $rules['username'] = ['required', 'string', 'max:50', 'unique:users,username,' . $user->id];
+        }
+
+        $data = $request->validate($rules);
 
         if (! $actor->isAdmin()) {
             $data['role'] = User::ROLE_AGEN;
@@ -230,7 +240,7 @@ class UserController extends Controller
         $data['is_active'] = $request->boolean('is_active');
 
         $oldSlug = $user->slug;
-        $data['slug'] = User::uniqueSlug($data['username'], $user->id);
+        $data['slug'] = $usernameLocked ? $user->slug : User::uniqueSlug($data['username'], $user->id);
 
         unset($data['api_ss'], $data['api_cc']);
 

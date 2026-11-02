@@ -48,7 +48,7 @@
     <div class="h-scroll mt-5" data-drag-scroll>
         @foreach($partnerLogos as $logo)
         <div class="swipe-item grid h-28 w-44 place-items-center rounded-2xl border border-black/5 bg-white p-4 shadow-card md:w-48">
-            <img src="{{ $logo }}" alt="Logo mitra" class="max-h-full max-w-full object-contain" loading="lazy">
+            <img src="{{ is_array($logo) ? $logo['url'] : $logo }}" alt="Logo mitra" class="max-h-full max-w-full object-contain" loading="lazy" decoding="async">
         </div>
         @endforeach
     </div>
@@ -64,7 +64,7 @@
             <div class="flex h-full flex-col rounded-2xl border border-black/5 bg-white p-6 shadow-card">
                 <div class="flex items-center gap-3">
                     @if($t['photo_url'])
-                    <img src="{{ $t['photo_url'] }}" alt="{{ $t['name'] }}" class="h-12 w-12 rounded-full object-cover" loading="lazy">
+                    <img src="{{ $t['photo_url'] }}" alt="{{ $t['name'] }}" class="h-12 w-12 rounded-full object-cover" loading="lazy" decoding="async">
                     @else
                     <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full bg-primary-100 text-lg font-bold text-primary-700">{{ mb_substr($t['name'], 0, 1) }}</div>
                     @endif

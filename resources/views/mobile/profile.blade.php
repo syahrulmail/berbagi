@@ -76,7 +76,12 @@
             </div>
             <div class="mo-field">
                 <label for="username">Username <span class="req">*</span></label>
-                <input type="text" id="username" name="username" class="mo-input" value="{{ old('username', $user->username) }}" required>
+                @php $usernameLocked = $user->isSupervisor() || $user->isAgen(); @endphp
+                <input type="text" id="username" name="username" class="mo-input" value="{{ old('username', $user->username) }}" required
+                       @if($usernameLocked) readonly style="background:#eef3f2;color:#64748b;" @endif>
+                @if($usernameLocked)
+                    <div class="mo-form-help">Username tidak dapat diubah untuk akun Supervisor dan Agen.</div>
+                @endif
                 @error('username')
                     <small style="color:var(--mo-danger);display:block;">{{ $message }}</small>
                 @enderror

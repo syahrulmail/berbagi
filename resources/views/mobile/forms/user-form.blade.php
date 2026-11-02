@@ -61,7 +61,12 @@
 
             <div class="mo-field">
                 <label for="username">Username <span class="req">*</span></label>
-                <input type="text" id="username" name="username" class="mo-input" value="{{ old('username', $editUser->username ?? '') }}" required placeholder="nama.pengguna">
+                @php $usernameLocked = $editUser && in_array($editUser->role, ['supervisor', 'agen'], true); @endphp
+                <input type="text" id="username" name="username" class="mo-input" value="{{ old('username', $editUser->username ?? '') }}" required placeholder="nama.pengguna"
+                       @if($usernameLocked) readonly style="background:#eef3f2;color:#64748b;" @endif>
+                @if($usernameLocked)
+                    <div class="mo-form-help">Username tidak dapat diubah untuk pengguna Supervisor dan Agen.</div>
+                @endif
             </div>
 
             <div class="mo-field">
@@ -95,11 +100,21 @@
             <div class="mo-field">
                 <label for="api_ss">API SS</label>
                 <input type="text" id="api_ss" name="api_ss" class="mo-input" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
+                @if($editUser)
+                    <label style="margin-top:10px;">URL Webhook Starsender</label>
+                    <input type="text" readonly id="webhook-url-ss" class="mo-input" value="{{ $webhookUrlSs }}" onclick="this.select();" style="font-family:monospace;font-size:12px;">
+                    <button type="button" class="mo-btn mo-btn-ghost" data-copy-target="webhook-url-ss" style="width:100%;justify-content:center;margin-top:6px;"><i class="fas fa-copy"></i> Salin URL Webhook</button>
+                @endif
             </div>
 
             <div class="mo-field" style="margin-bottom:0;">
                 <label for="api_cc">API CC</label>
                 <input type="text" id="api_cc" name="api_cc" class="mo-input" value="{{ old('api_cc', $profile['api_cc'] ?? '') }}" autocomplete="off">
+                @if($editUser)
+                    <label style="margin-top:10px;">URL Webhook CloudChat</label>
+                    <input type="text" readonly id="webhook-url-cc" class="mo-input" value="{{ $webhookUrlCc }}" onclick="this.select();" style="font-family:monospace;font-size:12px;">
+                    <button type="button" class="mo-btn mo-btn-ghost" data-copy-target="webhook-url-cc" style="width:100%;justify-content:center;margin-top:6px;"><i class="fas fa-copy"></i> Salin URL Webhook</button>
+                @endif
             </div>
         </div>
 
@@ -198,5 +213,27 @@
             });
         }
     })();
+
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = document.getElementById(btn.dataset.copyTarget);
+            if (!input) return;
+
+            input.select();
+
+            function done() {
+                var original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> URL Tersalin';
+                setTimeout(function () { btn.innerHTML = original; }, 1500);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value).then(done, function () { document.execCommand('copy'); done(); });
+            } else {
+                document.execCommand('copy');
+                done();
+            }
+        });
+    });
 </script>
 @endpush

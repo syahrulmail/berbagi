@@ -32,6 +32,11 @@ class Banner extends Model
         if (\Illuminate\Support\Str::startsWith($img, ['http://', 'https://', '/', 'data:'])) {
             return $img;
         }
-        return asset('storage/' . ltrim($img, '/'));
+        return asset_photo_url($img);
+    }
+
+    public function getImageDimensionsAttribute()
+    {
+        return photo_dimensions($this->image);
     }
 }

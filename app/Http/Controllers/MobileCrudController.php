@@ -9,6 +9,7 @@ use App\Models\Donation;
 use App\Models\Program;
 use App\Models\User;
 use App\Services\ContactImportService;
+use App\Services\FollowupWaService;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -19,12 +20,12 @@ use Illuminate\Validation\ValidationException;
 class MobileCrudController extends MobileAppController
 {
     /**
-     * Hanya admin yang boleh mengubah / menghapus program.
+     * Hanya admin yang boleh menambah / mengubah / menghapus program.
      */
     protected function ensureProgramAdmin(): void
     {
         if (! auth()->user()->isAdmin()) {
-            abort(403, 'Hanya admin yang dapat mengubah atau menghapus program.');
+            abort(403, 'Hanya admin yang dapat menambah, mengubah, atau menghapus program.');
         }
     }
 
@@ -390,11 +391,15 @@ class MobileCrudController extends MobileAppController
 
     public function programCreate()
     {
+        $this->ensureProgramAdmin();
+
         return view('mobile.forms.program-form')->with('program', null);
     }
 
     public function programStore(Request $request)
     {
+        $this->ensureProgramAdmin();
+
         $data = $this->validateProgram($request);
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
@@ -631,8 +636,11 @@ class MobileCrudController extends MobileAppController
         $this->authorizeUserManage($editUser);
         $branches = $this->formBranches(auth()->user());
         $profile = (new ProfileService())->data($editUser);
+        $followup = app(FollowupWaService::class);
+        $webhookUrlSs = $followup->webhookUrl($editUser, 'starsender');
+        $webhookUrlCc = $followup->webhookUrl($editUser, 'cloudchat');
 
-        return view('mobile.forms.user-form', compact('editUser', 'branches', 'profile'));
+        return view('mobile.forms.user-form', compact('editUser', 'branches', 'profile', 'webhookUrlSs', 'webhookUrlCc'));
     }
 
     public function userUpdate(Request $request, $id)
@@ -641,9 +649,10 @@ class MobileCrudController extends MobileAppController
         $actor = auth()->user();
         $this->authorizeUserManage($user);
 
-        $data = $request->validate([
+        $usernameLocked = $user->isSupervisor() || $user->isAgen();
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $user->id],
             'email' => ['required', 'email', 'unique:users,email,' . $user->id],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,supervisor,agen,donatur'],
@@ -651,7 +660,13 @@ class MobileCrudController extends MobileAppController
             'phone' => ['required', 'string', 'max:30'],
             'api_ss' => ['nullable', 'string', 'max:255'],
             'api_cc' => ['nullable', 'string', 'max:255'],
-        ]);
+        ];
+
+        if (! $usernameLocked) {
+            $rules['username'] = ['required', 'string', 'max:50', 'unique:users,username,' . $user->id];
+        }
+
+        $data = $request->validate($rules);
 
         if (! $actor->isAdmin()) {
             $data['role'] = User::ROLE_AGEN;
@@ -666,7 +681,7 @@ class MobileCrudController extends MobileAppController
 
         $data['is_active'] = $request->boolean('is_active');
         $oldSlug = $user->slug;
-        $data['slug'] = User::uniqueSlug($data['username'], $user->id);
+        $data['slug'] = $usernameLocked ? $user->slug : User::uniqueSlug($data['username'], $user->id);
 
         unset($data['api_ss'], $data['api_cc']);
 

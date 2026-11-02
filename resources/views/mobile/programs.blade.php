@@ -133,9 +133,11 @@
     </div>
 </div>
 
-<a href="{{ route('mo.program.create') }}" class="mo-fab" aria-label="Tambah Program">
-    <i class="fas fa-plus"></i>
-</a>
+@if(auth()->user()->isAdmin())
+    <a href="{{ route('mo.program.create') }}" class="mo-fab" aria-label="Tambah Program">
+        <i class="fas fa-plus"></i>
+    </a>
+@endif
 @endsection
 
 @push('scripts')

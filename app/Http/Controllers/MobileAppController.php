@@ -151,14 +151,14 @@ class MobileAppController extends Controller
             }
         }
 
-        $todayTotal = (clone $donationsQuery)->where('donation_date', $today)->sum('amount');
+        $todayTotal = (clone $donationsQuery)->whereDate('donation_date', $today)->sum('amount');
         $donorsToday = (clone $donationsQuery)
-            ->where('donation_date', $today)
+            ->whereDate('donation_date', $today)
             ->whereNotNull('contact_id')
             ->distinct()
             ->count('contact_id');
         $todayTransactions = (clone $donationsQuery)
-            ->where('donation_date', $today)
+            ->whereDate('donation_date', $today)
             ->count();
 
         // Periode cepat (quick tabs): all | 7d | month | year
@@ -243,10 +243,13 @@ class MobileAppController extends Controller
             : 0;
 
         // Tren sesuai periode terpilih
+        $dateYear = $this->datePartSql('year');
+        $dateMonth = $this->datePartSql('month');
+        $dateDay = $this->datePartSql('day');
         $trend = [];
         if ($days <= 31) {
             $rows = (clone $periodQuery)
-                ->selectRaw('YEAR(donation_date) as yr, MONTH(donation_date) as mon, DAY(donation_date) as day, SUM(amount) as total')
+                ->selectRaw("{$dateYear} as yr, {$dateMonth} as mon, {$dateDay} as day, SUM(amount) as total")
                 ->groupBy('yr', 'mon', 'day')
                 ->get();
 
@@ -264,7 +267,7 @@ class MobileAppController extends Controller
             }
         } else {
             $rows = (clone $periodQuery)
-                ->selectRaw('YEAR(donation_date) as yr, MONTH(donation_date) as mon, SUM(amount) as total')
+                ->selectRaw("{$dateYear} as yr, {$dateMonth} as mon, SUM(amount) as total")
                 ->groupBy('yr', 'mon')
                 ->get();
 
@@ -282,6 +285,16 @@ class MobileAppController extends Controller
             }
         }
         $trendMax = max(1, max(array_column($trend, 'value')));
+
+        // Proporsi donasi: per cabang bila cabang yang ditampilkan > 1,
+        // per agen bila hanya satu cabang.
+        $displayedBranchCount = 1;
+        if ($isAdmin) {
+            $displayedBranchCount = empty($selectedBranches)
+                ? $branches->count()
+                : count($selectedBranches);
+        }
+        $donationProportion = $this->buildDonationProportions($periodQuery, $displayedBranchCount > 1);
 
         // 10 kontak dengan total donasi tertinggi (sesuai cabang & periode)
         $topContactRows = (clone $periodQuery)
@@ -445,7 +458,7 @@ class MobileAppController extends Controller
         return compact(
             'user', 'greeting', 'todayTotal', 'todayTransactions', 'donorsToday',
             'periodTotal', 'periodTransactions', 'periodDonors', 'periodLabel', 'growthPercent',
-            'overallProgress', 'totalTarget', 'trend', 'trendMax',
+            'overallProgress', 'totalTarget', 'trend', 'trendMax', 'donationProportion',
             'topContacts', 'topPrograms', 'totalPrograms', 'totalContacts',
             'topBranches', 'topAgents',
             'donatedContacts', 'waNumber',
@@ -453,6 +466,76 @@ class MobileAppController extends Controller
             'branches', 'selectedBranches', 'branchSummary', 'isAdmin', 'from', 'to',
             'periodIsAll', 'range', 'activeRange'
         );
+    }
+
+    /**
+     * Ekspresi SQL potongan tanggal yang kompatibel MySQL & SQLite.
+     */
+    protected function datePartSql(string $part): string
+    {
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            $format = ['year' => '%Y', 'month' => '%m', 'day' => '%d'][$part] ?? '%Y';
+
+            return "CAST(strftime('{$format}', donation_date) AS INTEGER)";
+        }
+
+        return strtoupper($part) . '(donation_date)';
+    }
+
+    /**
+     * Hitung proporsi nominal donasi per cabang atau per agen.
+     */
+    protected function buildDonationProportions($periodQuery, bool $perBranch): array
+    {
+        $column = $perBranch ? 'branch_id' : 'agen_id';
+
+        $rows = (clone $periodQuery)
+            ->whereNotNull($column)
+            ->selectRaw("{$column} as ref_id, SUM(amount) as total")
+            ->groupBy($column)
+            ->orderByDesc('total')
+            ->get();
+
+        $total = (float) $rows->sum('total');
+        $refIds = $rows->pluck('ref_id')->filter()->unique();
+
+        $names = $perBranch
+            ? Branch::whereIn('id', $refIds)->pluck('name', 'id')
+            : User::whereIn('id', $refIds)->pluck('name', 'id');
+
+        $items = [];
+        foreach ($rows as $row) {
+            $amount = (float) $row->total;
+            $items[] = [
+                'name' => $names[$row->ref_id] ?? ($perBranch ? 'Cabang #' . $row->ref_id : 'Agen #' . $row->ref_id),
+                'total' => $amount,
+                'total_formatted' => 'Rp ' . number_format($amount, 0, ',', '.'),
+                'percent' => $total > 0 ? round(($amount / $total) * 100, 1) : 0,
+            ];
+        }
+
+        if (count($items) > 8) {
+            $top = array_slice($items, 0, 7);
+            $rest = array_slice($items, 7);
+            $restTotal = array_sum(array_column($rest, 'total'));
+            $top[] = [
+                'name' => 'Lainnya (' . count($rest) . ' ' . ($perBranch ? 'cabang' : 'agen') . ')',
+                'total' => $restTotal,
+                'total_formatted' => 'Rp ' . number_format($restTotal, 0, ',', '.'),
+                'percent' => $total > 0 ? round(($restTotal / $total) * 100, 1) : 0,
+            ];
+            $items = $top;
+        }
+
+        return [
+            'mode' => $perBranch ? 'branch' : 'agent',
+            'label' => $perBranch ? 'Per Cabang' : 'Per Agen',
+            'items' => $items,
+            'total' => $total,
+            'total_formatted' => 'Rp ' . number_format($total, 0, ',', '.'),
+        ];
     }
 
     /**

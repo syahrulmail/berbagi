@@ -129,6 +129,9 @@
         <div class="mo-today-sub">{{ number_format($todayTransactions, 0, ',', '.') }} Transaksi dari {{ number_format($donorsToday, 0, ',', '.') }} Donatur (Hari ini)</div>
     </div>
 
+    {{-- Proporsi donasi (per cabang / per agen) --}}
+    @include('mobile.partials.donation-proportion', ['donationProportion' => $donationProportion])
+
     {{-- Tren periode --}}
     <div class="mo-card">
         <div class="mo-card-head mo-card-head--collapse">

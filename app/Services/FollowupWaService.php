@@ -12,6 +12,7 @@ use App\Models\WhatsappMessage;
 use App\Services\ImageWebpService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -375,6 +376,9 @@ class FollowupWaService
 
         $intervalMin = max(5, (int) ($data['interval_min'] ?? 20));
         $intervalMax = max($intervalMin, (int) ($data['interval_max'] ?? 60));
+        $startsAt = $scheduled && ! empty($data['scheduled_at'])
+            ? Carbon::parse($data['scheduled_at'])
+            : Carbon::now();
 
         $broadcast = Broadcast::create([
             'user_id' => $owner->id,
@@ -390,139 +394,276 @@ class FollowupWaService
             'stop_at' => ! empty($data['stop_at']) ? Carbon::parse($data['stop_at']) : null,
             'limit_count' => $mechanism === Broadcast::MECHANISM_LIMIT ? $batchSize : null,
             'schedule_type' => $scheduled ? 'scheduled' : 'now',
-            'scheduled_at' => $scheduled && ! empty($data['scheduled_at']) ? Carbon::parse($data['scheduled_at']) : null,
+            'scheduled_at' => $scheduled ? $startsAt : null,
             'interval_min' => $intervalMin,
             'interval_max' => $intervalMax,
             'provider' => $provider['provider'],
-            'status' => Broadcast::STATUS_RUNNING,
-            'total' => $total,
+            'status' => $startsAt->isFuture() ? Broadcast::STATUS_QUEUED : Broadcast::STATUS_RUNNING,
+            'total' => $batchSize,
         ]);
 
-        $contacts = $query->limit($batchSize)->get();
-        $this->createTargets($broadcast, $owner, $contacts);
-        $this->runPendingTargets($broadcast);
+        $contacts = $query->orderBy('id')->limit($batchSize)->get();
+        $this->createTargets($broadcast, $owner, $contacts, $startsAt);
 
         return ['ok' => true, 'broadcast' => $broadcast, 'error' => null];
     }
 
     /**
      * Buat baris target untuk sekumpulan kontak (idempotent per kontak).
+     *
+     * Setiap target diberi jadwal kirim berurutan dengan jeda acak
+     * interval_min..interval_max. Target pertama memakai $firstAt.
      */
-    protected function createTargets(Broadcast $broadcast, User $user, Collection $contacts): void
+    protected function createTargets(Broadcast $broadcast, User $user, Collection $contacts, Carbon $firstAt, bool $gapBeforeFirst = false): int
     {
-        foreach ($contacts as $contact) {
-            BroadcastTarget::firstOrCreate(
+        $cursor = $firstAt->copy();
+        $created = 0;
+
+        foreach ($contacts as $index => $contact) {
+            if ($index > 0 || $gapBeforeFirst) {
+                $cursor = $cursor->copy()->addSeconds(random_int($broadcast->interval_min, $broadcast->interval_max));
+            }
+
+            $target = BroadcastTarget::firstOrCreate(
                 ['broadcast_id' => $broadcast->id, 'contact_id' => $contact->id],
                 [
                     'provider' => $broadcast->provider,
                     'status' => BroadcastTarget::STATUS_PENDING,
                     'rendered_message' => $this->renderTemplate($broadcast->message_template, $contact, $user),
+                    'scheduled_at' => $cursor,
                 ]
             );
+
+            if ($target->wasRecentlyCreated) {
+                $created++;
+            }
         }
+
+        return $created;
     }
 
     /**
-     * Kirim seluruh target yang masih pending.
+     * Kirim satu target yang sudah jatuh tempo.
+     *
+     * @return array<string,mixed>
      */
-    public function runPendingTargets(Broadcast $broadcast): void
+    protected function sendTarget(Broadcast $broadcast, BroadcastTarget $target): array
     {
-        if ($broadcast->provider === null) {
-            return;
+        $contact = $target->contact;
+
+        if ($contact === null) {
+            $target->update(['status' => BroadcastTarget::STATUS_SKIPPED, 'error' => 'Kontak tidak ditemukan.']);
+
+            return ['ok' => false, 'provider' => $broadcast->provider, 'response' => '', 'error' => 'Kontak tidak ditemukan.'];
         }
 
+        $mediaPath = trim((string) $broadcast->media_path);
+        $options = [
+            'media_url' => $mediaPath !== '' ? asset_photo_url($mediaPath) : null,
+            'media_type' => $broadcast->media_type,
+        ];
+
+        $target->update([
+            'provider' => $broadcast->provider,
+            'status' => BroadcastTarget::STATUS_PROCESSING,
+            'attempts' => $target->attempts + 1,
+        ]);
+
+        $result = $this->sender->send(
+            $broadcast->provider,
+            $this->keyFor($broadcast->user, $broadcast->provider),
+            $contact->phone,
+            $target->rendered_message,
+            $options
+        );
+
+        $this->applySendResult($broadcast, $target, $contact, $result);
+
+        return $result;
+    }
+
+    /**
+     * Proses antrean broadcast: kirim target yang jatuh tempo dan tunggu
+     * target berikutnya hingga $until. Dipanggil command followup:starsender.
+     *
+     * @return array{sent:int,failed:int}
+     */
+    public function processQueue(?Carbon $until = null): array
+    {
+        $until = $until ?: Carbon::now();
+        $sent = 0;
+        $failed = 0;
+
+        do {
+            $didWork = false;
+            $nextDue = null;
+
+            $broadcasts = Broadcast::whereIn('status', [Broadcast::STATUS_QUEUED, Broadcast::STATUS_RUNNING])
+                ->orderBy('id')
+                ->get();
+
+            foreach ($broadcasts as $broadcast) {
+                try {
+                    $broadcast->refresh();
+                } catch (\Throwable $e) {
+                    continue;
+                }
+
+                if (! in_array($broadcast->status, [Broadcast::STATUS_QUEUED, Broadcast::STATUS_RUNNING], true)) {
+                    continue;
+                }
+
+                if ($broadcast->schedule_type === 'scheduled' && $broadcast->scheduled_at && Carbon::now()->lt($broadcast->scheduled_at)) {
+                    $nextDue = $this->earlier($nextDue, $broadcast->scheduled_at);
+
+                    continue;
+                }
+
+                if ($broadcast->status === Broadcast::STATUS_QUEUED) {
+                    $broadcast->update(['status' => Broadcast::STATUS_RUNNING]);
+                }
+
+                if ($broadcast->stop_at && Carbon::now()->greaterThanOrEqualTo($broadcast->stop_at)) {
+                    $this->stopBroadcast($broadcast);
+                    $didWork = true;
+
+                    continue;
+                }
+
+                $target = $broadcast->targets()
+                    ->where('status', BroadcastTarget::STATUS_PENDING)
+                    ->orderBy('scheduled_at')
+                    ->orderBy('id')
+                    ->first();
+
+                if ($target === null) {
+                    $this->finishIfDone($broadcast);
+
+                    continue;
+                }
+
+                if ($target->scheduled_at && $target->scheduled_at->greaterThan(Carbon::now())) {
+                    $nextDue = $this->earlier($nextDue, $target->scheduled_at);
+
+                    continue;
+                }
+
+                $result = $this->sendTarget($broadcast, $target);
+
+                if (! empty($result['ok'])) {
+                    $sent++;
+                } else {
+                    $failed++;
+                }
+
+                $didWork = true;
+                $broadcast->update(['last_tick_at' => Carbon::now()]);
+
+                $next = $broadcast->targets()
+                    ->where('status', BroadcastTarget::STATUS_PENDING)
+                    ->orderBy('scheduled_at')
+                    ->orderBy('id')
+                    ->first();
+
+                if ($next !== null) {
+                    $earliest = Carbon::now()->addSeconds(random_int($broadcast->interval_min, $broadcast->interval_max));
+
+                    if ($next->scheduled_at === null || $next->scheduled_at->lessThan($earliest)) {
+                        $next->update(['scheduled_at' => $earliest]);
+                    }
+                } else {
+                    $this->finishIfDone($broadcast);
+                }
+            }
+
+            if (! $didWork) {
+                if ($nextDue !== null && $nextDue->lessThanOrEqualTo($until)) {
+                    $seconds = $nextDue->getTimestamp() - Carbon::now()->getTimestamp();
+
+                    if ($seconds > 0) {
+                        sleep($seconds);
+                    }
+
+                    continue;
+                }
+
+                break;
+            }
+        } while (Carbon::now()->lessThan($until));
+
+        return ['sent' => $sent, 'failed' => $failed];
+    }
+
+    protected function earlier(?Carbon $current, Carbon $candidate): Carbon
+    {
+        if ($current === null || $candidate->lessThan($current)) {
+            return $candidate;
+        }
+
+        return $current;
+    }
+
+    /**
+     * Tandai broadcast selesai bila tidak ada target tersisa.
+     *
+     * Broadcast otomatis dibiarkan tetap berjalan selama masih ada kontak
+     * yang belum pernah dikirimi, karena balasan berikutnya akan menambah
+     * kuota 5 kontak. Broadcast selesai saat kontak habis atau dihentikan.
+     */
+    protected function finishIfDone(Broadcast $broadcast): void
+    {
         $broadcast->refresh();
 
-        if (in_array($broadcast->status, [Broadcast::STATUS_STOPPED, Broadcast::STATUS_COMPLETED], true)) {
+        if (in_array($broadcast->status, [Broadcast::STATUS_STOPPED, Broadcast::STATUS_COMPLETED, Broadcast::STATUS_FAILED], true)) {
             return;
         }
-
-        $user = $broadcast->user;
-        $provider = $broadcast->provider;
-        $key = $this->keyFor($user, $provider);
-        $scheduled = $broadcast->schedule_type === 'scheduled';
-
-        $targets = $broadcast->targets()
-            ->where('status', BroadcastTarget::STATUS_PENDING)
-            ->with('contact')
-            ->orderBy('id')
-            ->get();
-
-        $cursor = $broadcast->scheduled_at ? $broadcast->scheduled_at->copy() : Carbon::now();
-
-        foreach ($targets as $index => $target) {
-            if ($broadcast->status === Broadcast::STATUS_STOPPED) {
-                $target->update(['status' => BroadcastTarget::STATUS_STOPPED, 'error' => 'Dihentikan pengguna.']);
-                continue;
-            }
-
-            if ($broadcast->stop_at && Carbon::now()->greaterThan($broadcast->stop_at)) {
-                $target->update(['status' => BroadcastTarget::STATUS_STOPPED, 'error' => 'Melewati batas waktu stop.']);
-                $broadcast->update(['status' => Broadcast::STATUS_STOPPED]);
-                continue;
-            }
-
-            if ($index > 0) {
-                $cursor = $cursor->copy()->addSeconds(random_int($broadcast->interval_min, $broadcast->interval_max));
-            }
-
-            $contact = $target->contact;
-
-            if ($contact === null) {
-                $target->update(['status' => BroadcastTarget::STATUS_SKIPPED, 'error' => 'Kontak tidak ditemukan.']);
-
-                continue;
-            }
-
-            $mediaPath = trim((string) $broadcast->media_path);
-            $options = [
-                'media_url' => $mediaPath !== '' ? asset_photo_url($mediaPath) : null,
-                'media_type' => $broadcast->media_type,
-            ];
-
-            if ($scheduled) {
-                $options['schedule'] = $cursor->getTimestamp() * 1000;
-            }
-
-            $target->update([
-                'provider' => $provider,
-                'status' => BroadcastTarget::STATUS_PROCESSING,
-                'attempts' => $target->attempts + 1,
-                'scheduled_at' => $cursor,
-            ]);
-
-            $result = $this->sender->send($provider, $key, $contact->phone, $target->rendered_message, $options);
-
-            $this->applySendResult($broadcast, $target, $contact, $result, $cursor);
-        }
-
-        $broadcast->refresh();
 
         $pending = $broadcast->targets()->where('status', BroadcastTarget::STATUS_PENDING)->count();
 
-        if ($broadcast->status !== Broadcast::STATUS_STOPPED && $pending === 0) {
-            $hasMore = $broadcast->mechanism === Broadcast::MECHANISM_AUTO
-                && $broadcast->targets()->count() < $broadcast->total;
+        if ($pending > 0) {
+            return;
+        }
 
-            $broadcast->update([
-                'status' => $hasMore ? Broadcast::STATUS_RUNNING : Broadcast::STATUS_COMPLETED,
-                'last_tick_at' => Carbon::now(),
-            ]);
-        } else {
+        if ($broadcast->mechanism === Broadcast::MECHANISM_AUTO && $this->hasAvailableContacts($broadcast)) {
             $broadcast->update(['last_tick_at' => Carbon::now()]);
+
+            return;
         }
 
-        if ($broadcast->status === Broadcast::STATUS_STOPPED) {
-            $broadcast->targets()
-                ->where('status', BroadcastTarget::STATUS_PENDING)
-                ->update(['status' => BroadcastTarget::STATUS_STOPPED, 'error' => 'Dihentikan pengguna.']);
+        $broadcast->update([
+            'status' => Broadcast::STATUS_COMPLETED,
+            'last_tick_at' => Carbon::now(),
+        ]);
+    }
+
+    protected function hasAvailableContacts(Broadcast $broadcast): bool
+    {
+        $user = $broadcast->user;
+
+        if ($user === null) {
+            return false;
         }
+
+        $existing = $broadcast->targets()->pluck('contact_id')->filter()->all();
+
+        $filters = [
+            'branch_id' => $broadcast->target_branch_id,
+            'agen_id' => $broadcast->target_agen_id,
+            'statuses' => $broadcast->target_statuses,
+            'followups' => $broadcast->target_followups,
+        ];
+
+        return $this->filterContacts($user, $filters)
+            ->when($existing !== [], function ($query) use ($existing) {
+                return $query->whereNotIn('id', $existing);
+            })
+            ->exists();
     }
 
     /**
      * @param  array<string,mixed>  $result
      */
-    protected function applySendResult(Broadcast $broadcast, BroadcastTarget $target, Contact $contact, array $result, Carbon $cursor): void
+    protected function applySendResult(Broadcast $broadcast, BroadcastTarget $target, Contact $contact, array $result): void
     {
         if ($result['ok']) {
             $target->update([
@@ -592,9 +733,53 @@ class FollowupWaService
             ->update(['status' => BroadcastTarget::STATUS_STOPPED, 'error' => 'Dihentikan pengguna.']);
     }
 
+    public function pauseBroadcast(Broadcast $broadcast): bool
+    {
+        if ($broadcast->status !== Broadcast::STATUS_RUNNING) {
+            return false;
+        }
+
+        $broadcast->update(['status' => Broadcast::STATUS_PAUSED, 'last_tick_at' => Carbon::now()]);
+
+        return true;
+    }
+
+    public function resumeBroadcast(Broadcast $broadcast): bool
+    {
+        if ($broadcast->status !== Broadcast::STATUS_PAUSED) {
+            return false;
+        }
+
+        $broadcast->update(['status' => Broadcast::STATUS_RUNNING, 'last_tick_at' => Carbon::now()]);
+
+        $next = $broadcast->targets()
+            ->where('status', BroadcastTarget::STATUS_PENDING)
+            ->orderBy('scheduled_at')
+            ->orderBy('id')
+            ->first();
+
+        if ($next !== null) {
+            $earliest = Carbon::now()->addSeconds(random_int($broadcast->interval_min, $broadcast->interval_max));
+
+            if ($next->scheduled_at === null || $next->scheduled_at->lessThan($earliest)) {
+                $next->update(['scheduled_at' => $earliest]);
+            }
+        }
+
+        return true;
+    }
+
     /**
-     * Tambah 5 kontak berikutnya ke batch otomatis
-     * (dipanggil webhook setiap ada pesan masuk).
+     * Hapus riwayat broadcast. Log pesan (whatsapp_messages) tidak dihapus.
+     */
+    public function deleteBroadcast(Broadcast $broadcast): void
+    {
+        $broadcast->delete();
+    }
+
+    /**
+     * Tambah 5 kontak berikutnya ke batch otomatis, maksimal sebanyak
+     * kuota yang masih tersedia. Dipanggil webhook saat ada balasan.
      */
     public function nextAutoBatch(Broadcast $broadcast, int $size = 5): void
     {
@@ -616,17 +801,95 @@ class FollowupWaService
             ->when($existing !== [], function ($query) use ($existing) {
                 return $query->whereNotIn('id', $existing);
             })
+            ->orderBy('id')
             ->limit($size)
             ->get();
 
         if ($contacts->isEmpty()) {
-            $broadcast->update(['status' => Broadcast::STATUS_COMPLETED]);
+            $this->finishIfDone($broadcast);
 
             return;
         }
 
-        $this->createTargets($broadcast, $user, $contacts);
-        $this->runPendingTargets($broadcast);
+        $lastScheduled = $broadcast->targets()->max('scheduled_at');
+        $firstAt = $lastScheduled ? Carbon::parse($lastScheduled) : Carbon::now();
+
+        if ($firstAt->lessThan(Carbon::now())) {
+            $firstAt = Carbon::now();
+        }
+
+        $created = $this->createTargets($broadcast, $user, $contacts, $firstAt, true);
+
+        if ($created > 0) {
+            DB::table('broadcasts')->where('id', $broadcast->id)->increment('total', $created);
+        }
+    }
+
+    /**
+     * Proses balasan masuk untuk broadcast otomatis yang sedang berjalan.
+     *
+     * Balasan hanya dihitung bila:
+     * - status broadcast masih berjalan,
+     * - pengirim adalah kontak yang sudah dikirimi pesan oleh broadcast ini,
+     * - waktu pesan masuk tidak lebih lama dari broadcast/pesan yang dikirim
+     *   (mencegah balasan dari histori masa lalu dihitung ulang).
+     */
+    public function handleIncomingBroadcastReply(User $user, string $from, ?Carbon $receivedAt = null, ?string $messageId = null): bool
+    {
+        $broadcast = $this->activeBroadcast($user);
+
+        if ($broadcast === null
+            || $broadcast->mechanism !== Broadcast::MECHANISM_AUTO
+            || $broadcast->status !== Broadcast::STATUS_RUNNING) {
+            return false;
+        }
+
+        $receivedAt = $receivedAt ?: Carbon::now();
+
+        if ($broadcast->created_at && $receivedAt->lessThan($broadcast->created_at)) {
+            return false;
+        }
+
+        if ($messageId !== null && $messageId !== '') {
+            $cacheKey = 'wa_bc_reply:' . $broadcast->id . ':' . sha1($messageId);
+
+            if (! Cache::add($cacheKey, 1, Carbon::now()->addDay())) {
+                return false;
+            }
+        }
+
+        $phone = $this->sender->normalizePhone($from);
+
+        if ($phone === '') {
+            return false;
+        }
+
+        $variants = array_values(array_unique([
+            $phone,
+            '0' . substr($phone, 2),
+            '+' . $phone,
+        ]));
+
+        $target = $broadcast->targets()
+            ->where('status', BroadcastTarget::STATUS_SENT)
+            ->whereHas('contact', function ($query) use ($variants) {
+                $query->whereIn('phone', $variants);
+            })
+            ->orderByDesc('sent_at')
+            ->first();
+
+        if ($target === null) {
+            return false;
+        }
+
+        if ($target->sent_at && $receivedAt->lessThan($target->sent_at)) {
+            return false;
+        }
+
+        $this->recordReply($broadcast);
+        $this->nextAutoBatch($broadcast, 5);
+
+        return true;
     }
 
     public function recordReply(Broadcast $broadcast): void
@@ -1013,6 +1276,108 @@ class FollowupWaService
             'direction' => WarmingLog::DIRECTION_IN,
             'response' => null,
         ]);
+    }
+
+    /**
+     * Gabungan log pengiriman WhatsApp (broadcast/manual) dan warming
+     * yang sudah dinormalisasi untuk tabel log di halaman Follow-up.
+     *
+     * @return Collection<int,array<string,mixed>>
+     */
+    public function recentLogs(User $viewer, int $limit = 50): Collection
+    {
+        $limit = max(1, min(200, $limit));
+
+        $messageQuery = WhatsappMessage::query()->with(['contact.agen.branch']);
+
+        if ($viewer->isAgen()) {
+            $messageQuery->whereHas('contact', function ($query) use ($viewer) {
+                $query->where('agen_id', $viewer->id);
+            });
+        } elseif ($viewer->isSupervisor() && $viewer->branch_id) {
+            $agentIds = User::where('branch_id', $viewer->branch_id)->pluck('id');
+            $messageQuery->whereHas('contact', function ($query) use ($viewer, $agentIds) {
+                $query->where('branch_id', $viewer->branch_id)
+                    ->orWhereIn('agen_id', $agentIds);
+            });
+        }
+
+        $messages = $messageQuery->orderByDesc('created_at')->limit($limit)->get();
+
+        $manualIds = $messages->map(function (WhatsappMessage $message) {
+            $response = json_decode((string) $message->response, true);
+            $kind = is_array($response) ? ($response['kind'] ?? null) : null;
+
+            return $kind === 'manual' ? (int) ($response['by'] ?? 0) : 0;
+        })->filter()->unique()->values();
+
+        $manualUsers = $manualIds->isEmpty()
+            ? collect()
+            : User::with('branch')->whereIn('id', $manualIds)->get()->keyBy('id');
+
+        $warmingQuery = WarmingLog::query()
+            ->with(['fromUser.branch', 'toUser'])
+            ->where('direction', WarmingLog::DIRECTION_OUT);
+
+        if ($viewer->isAgen()) {
+            $warmingQuery->where('from_user_id', $viewer->id);
+        } elseif ($viewer->isSupervisor() && $viewer->branch_id) {
+            $warmingQuery->whereIn('from_user_id', User::where('branch_id', $viewer->branch_id)->pluck('id'));
+        }
+
+        $warmingLogs = $warmingQuery->orderByDesc('created_at')->limit($limit)->get();
+
+        $entries = collect();
+
+        foreach ($messages as $message) {
+            $response = json_decode((string) $message->response, true);
+            $kind = is_array($response) ? ($response['kind'] ?? null) : null;
+            $sender = $message->contact->agen ?? null;
+
+            if ($kind === 'manual' && isset($response['by'])) {
+                $sender = $manualUsers->get((int) $response['by']) ?: $sender;
+            }
+
+            $entries->push([
+                'key' => 'wa-' . $message->id,
+                'source' => 'whatsapp',
+                'id' => $message->id,
+                'contact_name' => $message->contact->name ?? '-',
+                'phone' => $message->phone,
+                'message' => (string) $message->message,
+                'status' => $message->status,
+                'created_at' => $message->created_at,
+                'method' => $kind === 'manual' ? 'Manual' : 'Otomatis',
+                'sender_name' => $sender->name ?? '-',
+                'sender_branch' => $sender->branch->name ?? '-',
+                'sender_phone' => $sender->phone ?? '-',
+            ]);
+        }
+
+        foreach ($warmingLogs as $log) {
+            $response = json_decode((string) $log->response, true);
+            $ok = ! is_array($response) || ($response['ok'] ?? true) !== false;
+            $sender = $log->fromUser;
+
+            $entries->push([
+                'key' => 'warming-' . $log->id,
+                'source' => 'warming',
+                'id' => $log->id,
+                'contact_name' => $log->toUser->name ?? $log->to_phone,
+                'phone' => $log->to_phone,
+                'message' => (string) $log->message,
+                'status' => $ok ? WhatsappMessage::STATUS_SENT : WhatsappMessage::STATUS_FAILED,
+                'created_at' => $log->created_at,
+                'method' => 'Warming',
+                'sender_name' => $sender->name ?? '-',
+                'sender_branch' => $sender->branch->name ?? '-',
+                'sender_phone' => $log->from_phone ?: ($sender->phone ?? '-'),
+            ]);
+        }
+
+        return $entries->sortByDesc(function ($entry) {
+            return $entry['created_at'] ? $entry['created_at']->getTimestamp() : 0;
+        })->take($limit)->values();
     }
 
     /* =====================================================

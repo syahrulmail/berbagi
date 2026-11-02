@@ -124,35 +124,29 @@
                 <div class="txt">Pencapaian</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
+            <a href="{{ route('mo.banners') }}" class="mo-menu-item">
+                <i class="fas fa-images mi"></i>
+                <div class="txt">Banner &amp; Label</div>
+                <i class="fas fa-chevron-right chev"></i>
+            </a>
         </div>
     @endif
 
     @if($user->isAdmin() || $user->isSupervisor())
-        <div class="mo-section-title">Konten &amp; Monitoring</div>
+        <div class="mo-section-title">Sistem</div>
         <div class="mo-menu">
-            @if($user->isAdmin())
-                <a href="{{ route('mo.banners') }}" class="mo-menu-item">
-                    <i class="fas fa-images mi"></i>
-                    <div class="txt">Banner &amp; Label</div>
-                    <i class="fas fa-chevron-right chev"></i>
-                </a>
-            @endif
             <a href="{{ route('mo.activity-logs') }}" class="mo-menu-item">
                 <i class="fas fa-clock-rotate-left mi blue"></i>
                 <div class="txt">Log Aktivitas</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
-        </div>
-    @endif
-
-    @if($user->isAdmin())
-        <div class="mo-section-title">Sistem</div>
-        <div class="mo-menu">
-            <a href="{{ route('mo.settings') }}" class="mo-menu-item">
-                <i class="fas fa-gear mi"></i>
-                <div class="txt">Pengaturan Sistem</div>
-                <i class="fas fa-chevron-right chev"></i>
-            </a>
+            @if($user->isAdmin())
+                <a href="{{ route('mo.settings') }}" class="mo-menu-item">
+                    <i class="fas fa-gear mi"></i>
+                    <div class="txt">Pengaturan Sistem</div>
+                    <i class="fas fa-chevron-right chev"></i>
+                </a>
+            @endif
         </div>
     @endif
 

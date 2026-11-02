@@ -46,9 +46,10 @@ class ProfileService
      */
     public function save(User $user, Request $request): void
     {
-        $data = $request->validate([
+        $usernameLocked = $user->isSupervisor() || $user->isAgen();
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $user->id],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
@@ -61,20 +62,28 @@ class ProfileService
             'intro' => ['nullable', 'string', 'max:500'],
             'api_ss' => ['nullable', 'string', 'max:255'],
             'api_cc' => ['nullable', 'string', 'max:255'],
-        ]);
+        ];
+
+        if (! $usernameLocked) {
+            $rules['username'] = ['required', 'string', 'max:50', 'unique:users,username,' . $user->id];
+        }
+
+        $data = $request->validate($rules);
 
         $oldSlug = $user->slug;
 
         // Identitas (role & cabang tidak dapat diubah dari halaman ini).
         $user->name = $data['name'];
-        $user->username = $data['username'];
+        if (! $usernameLocked) {
+            $user->username = $data['username'];
+        }
         $user->email = $data['email'];
         $user->phone = $data['phone'] ?? null;
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
         }
 
-        $newSlug = User::uniqueSlug($user->username, $user->id);
+        $newSlug = $usernameLocked ? $oldSlug : User::uniqueSlug($user->username, $user->id);
         $slugChanged = $oldSlug !== $newSlug;
         $user->slug = $newSlug;
         $user->save();

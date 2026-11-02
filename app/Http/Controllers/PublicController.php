@@ -62,9 +62,14 @@ class PublicController extends Controller
                 return null;
             }
 
+            $photo = (string) ($item['photo'] ?? '');
+            $dims = photo_dimensions($photo);
+
             return [
-                'photo' => (string) ($item['photo'] ?? ''),
-                'photo_url' => asset_photo_url((string) ($item['photo'] ?? '')),
+                'photo' => $photo,
+                'photo_url' => asset_photo_url($photo),
+                'width' => $dims[0] ?? null,
+                'height' => $dims[1] ?? null,
                 'text'  => $text,
                 'name'  => $name,
             ];
@@ -73,7 +78,17 @@ class PublicController extends Controller
         $partnerLogos = array_values(array_filter(array_map(function ($item) {
             $path = trim(is_array($item) ? (string) ($item['photo'] ?? '') : (string) $item);
 
-            return $path !== '' ? asset_photo_url($path) : null;
+            if ($path === '') {
+                return null;
+            }
+
+            $dims = photo_dimensions($path);
+
+            return [
+                'url' => asset_photo_url($path),
+                'width' => $dims[0] ?? null,
+                'height' => $dims[1] ?? null,
+            ];
         }, $this->decodeJsonList(Setting::get('home_partner_logos', '[]')))));
 
         return compact('homeQuote', 'testimonials', 'partnerLogos');
@@ -131,7 +146,7 @@ class PublicController extends Controller
 
         $waTemplate = Setting::get('wa_agent_template', '');
 
-        $relatedCards = $this->relatedProgramCards($program, $waNumber, $waTemplate, 'agent');
+        $relatedCards = $this->relatedProgramCards($program, $waNumber, $waTemplate, 'agent', $agen);
 
         $profile = $this->agentProfile($agen);
         $agenPhoto = asset_photo_url($profile['photo'] ?? '');
@@ -259,7 +274,7 @@ class PublicController extends Controller
         })->values()->all();
     }
 
-    protected function relatedProgramCards(Program $program, string $waNumber, string $waTemplate, string $waSource): array
+    protected function relatedProgramCards(Program $program, string $waNumber, string $waTemplate, string $waSource, $agen = null): array
     {
         $tagIds = $program->campaignTags->pluck('id');
 
@@ -277,7 +292,7 @@ class PublicController extends Controller
             ->limit(3)
             ->get();
 
-        return $this->cardifyPrograms($related, $waNumber, $waTemplate, $waSource);
+        return $this->cardifyPrograms($related, $waNumber, $waTemplate, $waSource, $agen);
     }
 
     public function followup(Request $request)

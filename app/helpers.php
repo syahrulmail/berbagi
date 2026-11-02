@@ -16,10 +16,97 @@ if (! function_exists('assetv')) {
     }
 }
 
+if (! function_exists('photo_variant_path')) {
+    /**
+     * Path varian WebP terkompresi (bila ada) untuk sebuah foto storage.
+     */
+    function photo_variant_path($path)
+    {
+        $path = ltrim((string) $path, '/');
+
+        if ($path === '' || preg_match('#^(https?://|data:)#i', $path)) {
+            return null;
+        }
+
+        static $cache = [];
+
+        if (array_key_exists($path, $cache)) {
+            return $cache[$path];
+        }
+
+        $optimizer = new \App\Services\ImageOptimizer();
+        $width = $optimizer->widthFor($path);
+        $variant = null;
+
+        if ($width !== null) {
+            $candidate = $optimizer->variantPath($path, $width);
+
+            if (is_file(public_path('storage/' . $candidate))) {
+                $variant = $candidate;
+            }
+        }
+
+        return $cache[$path] = $variant;
+    }
+}
+
+if (! function_exists('photo_dimensions')) {
+    /**
+     * Dimensi intrinsik foto (varian WebP lebih dulu) sebagai [width, height].
+     *
+     * @return array{0:int,1:int}|null
+     */
+    function photo_dimensions($path)
+    {
+        $path = ltrim((string) $path, '/');
+
+        if ($path === '' || preg_match('#^(https?://|data:)#i', $path)) {
+            return null;
+        }
+
+        static $cache = [];
+
+        if (array_key_exists($path, $cache)) {
+            return $cache[$path];
+        }
+
+        $resolved = photo_variant_path($path) ?: $path;
+        $file = public_path('storage/' . $resolved);
+        $size = is_file($file) ? @getimagesize($file) : false;
+
+        return $cache[$path] = ($size && ! empty($size[0]) && ! empty($size[1]))
+            ? [(int) $size[0], (int) $size[1]]
+            : null;
+    }
+}
+
+if (! function_exists('optimize_uploaded_photo')) {
+    /**
+     * Buat varian WebP untuk foto yang baru diunggah (abaikan kegagalan).
+     */
+    function optimize_uploaded_photo($path)
+    {
+        $path = (string) $path;
+
+        if ($path === '' || preg_match('#^(https?://|data:)#i', $path)) {
+            return $path;
+        }
+
+        try {
+            (new \App\Services\ImageOptimizer())->optimize($path);
+        } catch (\Throwable $e) {
+            // Optimasi bersifat opsional; unggahan asli tetap dipakai.
+        }
+
+        return $path;
+    }
+}
+
 if (! function_exists('asset_photo_url')) {
     /**
      * Ubah path foto (relatif ke storage/public) menjadi URL publik.
-     * Path absolut/URL sudah jadi dikembalikan apa adanya.
+     * Path absolut/URL sudah jadi dikembalikan apa adanya. Bila tersedia
+     * varian WebP terkompresi, varian itulah yang dipakai.
      */
     function asset_photo_url($path)
     {
@@ -31,7 +118,9 @@ if (! function_exists('asset_photo_url')) {
             return $path;
         }
 
-        return asset('storage/' . ltrim($path, '/'));
+        $variant = photo_variant_path($path);
+
+        return asset('storage/' . ($variant ?: ltrim($path, '/')));
     }
 }
 

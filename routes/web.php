@@ -154,6 +154,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,supervisor,agen')->group(function () {
         Route::resource('contacts', ContactController::class)->except('show');
         Route::get('contacts/download', [ContactController::class, 'download'])->name('contacts.download');
+        Route::get('contacts/download/count', [ContactController::class, 'downloadCount'])->name('contacts.download.count');
         Route::post('contacts/quick', [ContactController::class, 'storeQuick'])->name('contacts.quick');
         Route::post('contacts/paste', [ContactController::class, 'storePaste'])->name('contacts.paste');
         Route::post('contacts/import', [ContactController::class, 'import'])->name('contacts.import');
@@ -171,6 +172,9 @@ Route::middleware('auth')->group(function () {
         Route::get('followup-wa', [FollowupWaController::class, 'index'])->name('whatsapp.index');
         Route::post('followup-wa/broadcast', [FollowupWaController::class, 'storeBroadcast'])->name('followupwa.broadcast.store');
         Route::post('followup-wa/broadcast/{broadcast}/stop', [FollowupWaController::class, 'stopBroadcast'])->name('followupwa.broadcast.stop');
+        Route::post('followup-wa/broadcast/{broadcast}/pause', [FollowupWaController::class, 'pauseBroadcast'])->name('followupwa.broadcast.pause');
+        Route::post('followup-wa/broadcast/{broadcast}/resume', [FollowupWaController::class, 'resumeBroadcast'])->name('followupwa.broadcast.resume');
+        Route::delete('followup-wa/broadcast/{broadcast}', [FollowupWaController::class, 'destroyBroadcast'])->name('followupwa.broadcast.destroy');
         Route::post('followup-wa/kontak', [FollowupWaController::class, 'previewContacts'])->name('followupwa.contacts');
         Route::post('followup-wa/manual', [FollowupWaController::class, 'logManual'])->name('followupwa.manual');
         Route::post('followup-wa/warming', [FollowupWaController::class, 'saveWarming'])->name('followupwa.warming');
@@ -251,6 +255,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/whatsapp/{whatsapp}', [MobileModuleController::class, 'whatsappDestroy'])->name('whatsapp.destroy');
         Route::post('/whatsapp/broadcast', [MobileFollowupWaController::class, 'storeBroadcast'])->name('whatsapp.broadcast');
         Route::post('/whatsapp/broadcast/{broadcast}/stop', [MobileFollowupWaController::class, 'stopBroadcast'])->name('whatsapp.broadcast.stop');
+        Route::post('/whatsapp/broadcast/{broadcast}/pause', [MobileFollowupWaController::class, 'pauseBroadcast'])->name('whatsapp.broadcast.pause');
+        Route::post('/whatsapp/broadcast/{broadcast}/resume', [MobileFollowupWaController::class, 'resumeBroadcast'])->name('whatsapp.broadcast.resume');
+        Route::delete('/whatsapp/broadcast/{broadcast}', [MobileFollowupWaController::class, 'destroyBroadcast'])->name('whatsapp.broadcast.destroy');
         Route::post('/whatsapp/kontak', [MobileFollowupWaController::class, 'previewContacts'])->name('whatsapp.contacts');
         Route::post('/whatsapp/manual', [MobileFollowupWaController::class, 'logManual'])->name('whatsapp.manual');
         Route::post('/whatsapp/warming', [MobileFollowupWaController::class, 'saveWarming'])->name('whatsapp.warming');

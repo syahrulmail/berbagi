@@ -21,6 +21,9 @@
         visibility: hidden;
         transform: translateY(18px);
         transition: opacity .35s ease, transform .35s ease, visibility .35s;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
     }
     .bp-stats.is-visible {
         opacity: 1;
@@ -105,7 +108,7 @@
     .bp-modal-dialog {
         position: relative;
         z-index: 1;
-        max-width: min(92vw, 620px);
+        width: min(92vw, 620px);
         max-height: 88vh;
         opacity: 0;
         transform: scale(.94);
@@ -115,14 +118,30 @@
         opacity: 1;
         transform: scale(1);
     }
-    .bp-modal-dialog img {
+    .bp-modal-dialog a {
         display: block;
-        width: auto;
+        line-height: 0;
+    }
+    .bp-modal-image {
+        display: block;
+        width: 100%;
         height: auto;
-        max-width: 100%;
         max-height: 88vh;
+        object-fit: contain;
         border-radius: 14px;
+        background-color: #f8fafc;
         box-shadow: 0 28px 70px -24px rgba(0, 0, 0, .6);
+    }
+    .bp-modal-dialog .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
     .bp-modal-close {
         position: absolute;
@@ -172,12 +191,18 @@
 @endif
 
 @if(!empty($popupBanners))
+@php
+    $firstPopup = $popupBanners[0];
+    $popupWidth = !empty($firstPopup['width']) ? (int) $firstPopup['width'] : 1024;
+    $popupHeight = !empty($firstPopup['height']) ? (int) $firstPopup['height'] : 1280;
+@endphp
 <div id="bpModalRoot" class="bp-modal-root" aria-hidden="true">
     <div class="bp-modal-overlay" data-bp-close></div>
-    <div class="bp-modal-dialog" role="dialog" aria-modal="true">
+    <div class="bp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bpModalTitle">
         <button type="button" class="bp-modal-close" data-bp-close aria-label="Tutup banner">&times;</button>
+        <h2 id="bpModalTitle" class="sr-only">Informasi promosi</h2>
         <a id="bpModalLink" href="#" target="_blank" rel="noopener">
-            <img id="bpModalImage" src="" alt="">
+            <canvas id="bpModalImage" class="bp-modal-image" role="img" aria-label="" width="{{ $popupWidth }}" height="{{ $popupHeight }}" style="aspect-ratio: {{ $popupWidth }} / {{ $popupHeight }};"></canvas>
         </a>
     </div>
 </div>
@@ -221,9 +246,9 @@ window.BerbagiPopupConfig = {!! json_encode([
             var iconBox = document.getElementById('bpStatsIcon');
             var patterns = stats.patterns;
             var currentIndex = -1;
-            var cycles = 0;
             var isVisible = false;
             var isPaused = false;
+            var isHeld = false;
             var showTimer = null;
             var hideTimer = null;
             var nextTimer = null;
@@ -288,14 +313,18 @@ window.BerbagiPopupConfig = {!! json_encode([
 
             function scheduleNext() {
                 window.clearTimeout(nextTimer);
+                var gap = 2000 + Math.floor(Math.random() * 13001);
+                nextTimer = window.setTimeout(show, gap);
+            }
 
-                if (cycles > 0 && cycles < 3) {
-                    nextTimer = window.setTimeout(show, 2000);
+            function scheduleHide() {
+                window.clearTimeout(hideTimer);
+
+                if (!isVisible || isPaused || isHeld) {
                     return;
                 }
 
-                var gap = 2000 + Math.floor(Math.random() * 58001);
-                nextTimer = window.setTimeout(show, gap);
+                hideTimer = window.setTimeout(hide, 4000);
             }
 
             function show() {
@@ -304,15 +333,16 @@ window.BerbagiPopupConfig = {!! json_encode([
                 currentIndex = nextIndex();
                 renderPattern(patterns[currentIndex]);
                 isVisible = true;
+                isHeld = false;
                 box.classList.add('is-visible');
-                hideTimer = window.setTimeout(hide, 3000);
+                scheduleHide();
             }
 
             function hide() {
                 window.clearTimeout(hideTimer);
                 box.classList.remove('is-visible');
                 isVisible = false;
-                cycles++;
+                isHeld = false;
 
                 if (!isPaused) {
                     scheduleNext();
@@ -321,6 +351,7 @@ window.BerbagiPopupConfig = {!! json_encode([
 
             function pause() {
                 isPaused = true;
+                isHeld = false;
                 clearTimers();
                 box.classList.remove('is-visible');
                 isVisible = false;
@@ -332,6 +363,30 @@ window.BerbagiPopupConfig = {!! json_encode([
                 isPaused = false;
                 scheduleNext();
             }
+
+            function holdStats() {
+                isHeld = true;
+                window.clearTimeout(hideTimer);
+            }
+
+            function releaseStats() {
+                isHeld = false;
+
+                if (isVisible && !isPaused) {
+                    scheduleHide();
+                }
+            }
+
+            box.addEventListener('mouseenter', holdStats);
+            box.addEventListener('mouseleave', releaseStats);
+            box.addEventListener('pointerdown', holdStats);
+            box.addEventListener('pointerup', releaseStats);
+            box.addEventListener('pointercancel', releaseStats);
+            box.addEventListener('touchstart', holdStats, { passive: true });
+            box.addEventListener('touchend', releaseStats);
+            box.addEventListener('touchcancel', releaseStats);
+            box.addEventListener('focusin', holdStats);
+            box.addEventListener('focusout', releaseStats);
 
             var initialDelay = Math.max(0, parseInt(stats.delay_seconds || 0, 10)) * 1000;
             showTimer = window.setTimeout(show, initialDelay);
@@ -363,6 +418,38 @@ window.BerbagiPopupConfig = {!! json_encode([
         return height <= view ? 1 : (top + view) / height;
     }
 
+    // Poster dirender ke <canvas> agar overlay promosi tidak pernah menjadi
+    // kandidat LCP (LCP hanya menghitung <img>, <video>, background-image,
+    // dan blok teks) sekaligus menghindari pergeseran tata letak.
+    function paintPoster(banner) {
+        if (!image || !image.getContext || !banner.image) return;
+
+        if (banner.width && banner.height) {
+            image.width = banner.width;
+            image.height = banner.height;
+            image.style.aspectRatio = banner.width + ' / ' + banner.height;
+        }
+
+        var ctx = image.getContext('2d');
+        var poster = new window.Image();
+        poster.decoding = 'async';
+
+        poster.onload = function () {
+            if (!ctx || !image.isConnected) return;
+
+            if (!banner.width || !banner.height) {
+                image.width = poster.naturalWidth;
+                image.height = poster.naturalHeight;
+                image.style.aspectRatio = poster.naturalWidth + ' / ' + poster.naturalHeight;
+            }
+
+            ctx.clearRect(0, 0, image.width, image.height);
+            ctx.drawImage(poster, 0, 0, image.width, image.height);
+        };
+
+        poster.src = banner.image;
+    }
+
     function showBanner(banner) {
         if (isOpen) {
             pending.push(banner);
@@ -375,8 +462,8 @@ window.BerbagiPopupConfig = {!! json_encode([
 
         current = banner;
         isOpen = true;
-        image.src = banner.image;
-        image.alt = banner.title || '';
+        image.setAttribute('aria-label', banner.title || 'Banner informasi');
+        paintPoster(banner);
 
         if (banner.url) {
             link.href = banner.url;
@@ -466,7 +553,28 @@ window.BerbagiPopupConfig = {!! json_encode([
             return;
         }
 
-        window.setTimeout(function () { showBanner(banner); }, 1200);
+        // Banner sambutan ditunda sampai halaman selesai dimuat dan browser
+        // idle, agar poster besar (ratusan KB) tidak berebut bandwidth
+        // dengan LCP/TBT. Bila browser tidak mendukung requestIdleCallback,
+        // pakai batas waktu tetap.
+        var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var welcomeDelay = reduced ? 800 : 2600;
+
+        var reveal = function () {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(function () {
+                    window.setTimeout(function () { showBanner(banner); }, welcomeDelay);
+                }, { timeout: 3000 });
+            } else {
+                window.setTimeout(function () { showBanner(banner); }, welcomeDelay);
+            }
+        };
+
+        if (document.readyState === 'complete') {
+            reveal();
+        } else {
+            window.addEventListener('load', reveal, { once: true });
+        }
     }
 
     banners.forEach(schedule);

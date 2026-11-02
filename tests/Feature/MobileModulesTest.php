@@ -187,6 +187,7 @@ class MobileModulesTest extends TestCase
     public function test_desktop_profile_updates_identity_and_password(): void
     {
         $agen = $this->makeUser('agen', $this->makeBranch());
+        $oldUsername = $agen->username;
 
         $this->actingAs($agen)->put(route('profile.update'), [
             'name' => 'Nama Baru',
@@ -202,17 +203,19 @@ class MobileModulesTest extends TestCase
 
         $fresh = $agen->fresh();
         $this->assertSame('Nama Baru', $fresh->name);
-        $this->assertSame('usernamebaru', $fresh->username);
+        // Username agen dikunci agar tautan publiknya tidak berubah.
+        $this->assertSame($oldUsername, $fresh->username);
         $this->assertSame('baru@example.test', $fresh->email);
         $this->assertTrue(Hash::check('rahasia123', $fresh->password));
     }
 
-    public function test_profile_username_change_migrates_public_slug(): void
+    public function test_profile_username_is_locked_for_agent(): void
     {
         $agen = $this->makeUser('agen', $this->makeBranch());
         Setting::set('agent_profile_' . $agen->slug, json_encode(['photo' => 'agents/x.jpg', 'intro' => 'Hai']));
 
         $oldSlug = $agen->slug;
+        $oldUsername = $agen->username;
 
         $this->actingAs($agen)->put(route('profile.update'), [
             'name' => $agen->name,
@@ -226,8 +229,10 @@ class MobileModulesTest extends TestCase
         ])->assertRedirect(route('profile.edit'));
 
         $fresh = $agen->fresh();
-        $this->assertNotSame($oldSlug, $fresh->slug);
-        $this->assertNull(Setting::where('key', 'agent_profile_' . $oldSlug)->first());
+        // Agen tidak boleh mengubah username maupun slug publiknya.
+        $this->assertSame($oldUsername, $fresh->username);
+        $this->assertSame($oldSlug, $fresh->slug);
+        $this->assertNotNull(Setting::where('key', 'agent_profile_' . $oldSlug)->first());
         $this->assertStringContainsString('Hai', Setting::get('agent_profile_' . $fresh->slug, '{}'));
     }
 

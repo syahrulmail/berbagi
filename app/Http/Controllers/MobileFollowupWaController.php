@@ -41,11 +41,7 @@ class MobileFollowupWaController extends MobileModuleController
         $warmingRecipients = $this->service->warmingRecipients($user);
         $cronStatus = $this->service->cronStatus();
 
-        $logs = $this->logScope($user)
-            ->with('contact')
-            ->orderByDesc('created_at')
-            ->limit(50)
-            ->get();
+        $logs = $this->service->recentLogs($user);
 
         return view('mobile.followupwa.index', compact(
             'user',
@@ -148,6 +144,36 @@ class MobileFollowupWaController extends MobileModuleController
         return redirect()->route('mo.whatsapp')->with('success', 'Broadcast dihentikan.');
     }
 
+    public function pauseBroadcast(Broadcast $broadcast)
+    {
+        $this->authorizeBroadcast($broadcast);
+
+        if (! $this->service->pauseBroadcast($broadcast)) {
+            return redirect()->route('mo.whatsapp')->with('error', 'Hanya broadcast berjalan yang dapat dijeda.');
+        }
+
+        return redirect()->route('mo.whatsapp')->with('success', 'Broadcast dijeda.');
+    }
+
+    public function resumeBroadcast(Broadcast $broadcast)
+    {
+        $this->authorizeBroadcast($broadcast);
+
+        if (! $this->service->resumeBroadcast($broadcast)) {
+            return redirect()->route('mo.whatsapp')->with('error', 'Hanya broadcast yang dijeda yang dapat dilanjutkan.');
+        }
+
+        return redirect()->route('mo.whatsapp')->with('success', 'Broadcast dilanjutkan.');
+    }
+
+    public function destroyBroadcast(Broadcast $broadcast)
+    {
+        $this->authorizeBroadcast($broadcast);
+        $this->service->deleteBroadcast($broadcast);
+
+        return redirect()->route('mo.whatsapp')->with('success', 'Riwayat broadcast dihapus. Log pesan tetap tersimpan.');
+    }
+
     public function logManual(Request $request)
     {
         $data = $request->validate([
@@ -223,25 +249,6 @@ class MobileFollowupWaController extends MobileModuleController
     /* =====================================================
      | SCOPING
      | ===================================================== */
-
-    protected function logScope(User $viewer)
-    {
-        $query = WhatsappMessage::query();
-
-        if ($viewer->isAgen()) {
-            $query->whereHas('contact', function ($sub) use ($viewer) {
-                $sub->where('agen_id', $viewer->id);
-            });
-        } elseif ($viewer->isSupervisor() && $viewer->branch_id) {
-            $agentIds = User::where('branch_id', $viewer->branch_id)->pluck('id');
-            $query->whereHas('contact', function ($sub) use ($viewer, $agentIds) {
-                $sub->where('branch_id', $viewer->branch_id)
-                    ->orWhereIn('agen_id', $agentIds);
-            });
-        }
-
-        return $query;
-    }
 
     protected function broadcastScope(User $viewer)
     {

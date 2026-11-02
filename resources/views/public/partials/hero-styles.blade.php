@@ -77,6 +77,11 @@
         100% { background-position: -200% 0; }
     }
 
+    /* Ruang slider dicadangkan sebelum Vue memasang komponen agar hero
+       tidak "tumbuh" saat mount (penyebab layout shift terbesar). */
+    [data-vue-app="BannerSlider"] {
+        min-height: 520px;
+    }
     .hero-cutout-shell {
         position: relative;
         width: 100%;
@@ -150,25 +155,27 @@
         object-fit: contain;
     }
     @media (max-width: 640px) {
+        [data-vue-app="BannerSlider"] { min-height: 420px; }
         .hero-cutout-shell { min-height: 420px; }
         .hero-cutout-stage { height: 360px; }
         .hero-cutout-img { max-width: 340px; max-height: 340px; }
         .hero-cutout-glow { width: 340px; height: 340px; }
     }
 
+    /* Animasi masuk hanya menggeser, tanpa mengubah opacity, agar elemen
+       hero (termasuk H1) tetap dihitung LCP sejak paint pertama. */
     .hero-enter {
-        opacity: 0;
-        transform: translateY(18px);
-        animation: heroFadeUp .7s cubic-bezier(.22, .61, .36, 1) forwards;
+        transform: translateY(16px);
+        animation: heroRise .55s cubic-bezier(.22, .61, .36, 1) forwards;
     }
-    .hero-enter-1 { animation-delay: .05s; }
-    .hero-enter-2 { animation-delay: .18s; }
-    .hero-enter-3 { animation-delay: .32s; }
-    .hero-enter-4 { animation-delay: .46s; }
-    .hero-enter-5 { animation-delay: .6s; }
-    @keyframes heroFadeUp {
-        from { opacity: 0; transform: translateY(18px); }
-        to { opacity: 1; transform: none; }
+    .hero-enter-1 { animation-delay: .04s; }
+    .hero-enter-2 { animation-delay: .1s; }
+    .hero-enter-3 { animation-delay: .16s; }
+    .hero-enter-4 { animation-delay: .22s; }
+    .hero-enter-5 { animation-delay: .28s; }
+    @keyframes heroRise {
+        from { transform: translateY(16px); }
+        to { transform: none; }
     }
     @media (prefers-reduced-motion: reduce) {
         .hero-mesh::before, .hero-shimmer-text, .hero-blob-a, .hero-blob-b, .hero-blob-c,

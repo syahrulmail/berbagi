@@ -61,6 +61,8 @@ class PopupService
                     && $this->matchesAgent($banner, $contexts, $agent);
             })
             ->map(function (PopupBanner $banner) {
+                $dims = photo_dimensions($banner->image);
+
                 return [
                     'id'            => $banner->id,
                     'title'         => $banner->title,
@@ -68,6 +70,8 @@ class PopupService
                     'url'           => $banner->url,
                     'trigger'       => $banner->trigger_type,
                     'delay_minutes' => max(1, (int) $banner->delay_minutes),
+                    'width'         => $dims[0] ?? null,
+                    'height'        => $dims[1] ?? null,
                 ];
             })
             ->values()

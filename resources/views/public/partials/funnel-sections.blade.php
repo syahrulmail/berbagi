@@ -15,7 +15,7 @@
             <div class="testimonial-slide {{ $i === 0 ? 'active' : '' }}">
                 <div class="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-10">
                     @if($testimonial['photo_url'])
-                    <img src="{{ $testimonial['photo_url'] }}" alt="{{ $testimonial['name'] }}" class="testimonial-photo" loading="lazy">
+                    <img src="{{ $testimonial['photo_url'] }}" alt="{{ $testimonial['name'] }}" class="testimonial-photo" loading="lazy" decoding="async"@if(!empty($testimonial['width']) && !empty($testimonial['height'])) width="{{ $testimonial['width'] }}" height="{{ $testimonial['height'] }}"@endif>
                     @else
                     <div class="testimonial-photo-placeholder">{{ mb_substr($testimonial['name'], 0, 1) }}</div>
                     @endif
@@ -40,10 +40,10 @@
         <div class="logo-marquee">
             <div class="logo-track">
                 @foreach($partnerLogos as $logo)
-                <img src="{{ $logo }}" alt="Logo mitra" class="logo-item" loading="lazy">
+                <img src="{{ $logo['url'] }}" alt="Logo mitra" class="logo-item" loading="lazy" decoding="async"@if(!empty($logo['width']) && !empty($logo['height'])) width="{{ $logo['width'] }}" height="{{ $logo['height'] }}"@endif>
                 @endforeach
                 @foreach($partnerLogos as $logo)
-                <img src="{{ $logo }}" alt="Logo mitra" class="logo-item" loading="lazy" aria-hidden="true">
+                <img src="{{ $logo['url'] }}" alt="Logo mitra" class="logo-item" loading="lazy" decoding="async" aria-hidden="true"@if(!empty($logo['width']) && !empty($logo['height'])) width="{{ $logo['width'] }}" height="{{ $logo['height'] }}"@endif>
                 @endforeach
             </div>
         </div>

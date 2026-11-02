@@ -101,6 +101,8 @@ class ContactController extends Controller
      */
     public function download(Request $request)
     {
+        $this->ensureCanDownload();
+
         $contacts = $this->filteredQuery($request)
             ->withCount('donations')
             ->orderBy('name')
@@ -154,6 +156,26 @@ class ContactController extends Controller
         return response()->download($path, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Jumlah kontak yang akan diunduh untuk kombinasi filter yang dipilih.
+     */
+    public function downloadCount(Request $request)
+    {
+        $this->ensureCanDownload();
+
+        return response()->json([
+            'count' => $this->filteredQuery($request)->count(),
+        ]);
+    }
+
+    /**
+     * Agen tidak diizinkan mengunduh kontak.
+     */
+    protected function ensureCanDownload(): void
+    {
+        abort_if(auth()->user()->isAgen(), 403, 'Agen tidak diizinkan mengunduh data kontak.');
     }
 
     public function create()

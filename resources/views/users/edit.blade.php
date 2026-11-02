@@ -24,7 +24,12 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="username">Username *</label>
-                <input type="text" id="username" name="username" value="{{ old('username', $user->username) }}" required>
+                @php $usernameLocked = in_array($user->role, ['supervisor', 'agen'], true); @endphp
+                <input type="text" id="username" name="username" value="{{ old('username', $user->username) }}" required
+                       @if($usernameLocked) readonly style="background:var(--gray-100);" @endif>
+                @if($usernameLocked)
+                    <small style="color: var(--gray-500);">Username tidak dapat diubah untuk pengguna Supervisor dan Agen.</small>
+                @endif
             </div>
             <div class="form-group">
                 <label for="email">Email *</label>
@@ -108,10 +113,22 @@
             <div class="form-group">
                 <label for="api_ss">API SS</label>
                 <input type="text" id="api_ss" name="api_ss" value="{{ old('api_ss', $profile['api_ss'] ?? '') }}" autocomplete="off">
+                <label for="webhook-url-ss" style="margin-top:8px;">Webhook SS</label>
+                <div class="input-group">
+                    <input type="text" readonly id="webhook-url-ss" value="{{ $webhookUrlSs }}" onclick="this.select();"
+                           style="flex:1;font-family:monospace;font-size:12.5px;background:var(--gray-100);word-break:break-all;">
+                    <button type="button" class="btn btn-sm" data-copy-target="webhook-url-ss"><i class="fas fa-copy"></i> Salin</button>
+                </div>
             </div>
             <div class="form-group">
                 <label for="api_cc">API CC</label>
                 <input type="text" id="api_cc" name="api_cc" value="{{ old('api_cc', $profile['api_cc'] ?? '') }}" autocomplete="off">
+                <label for="webhook-url-cc" style="margin-top:8px;">Webhook CC</label>
+                <div class="input-group">
+                    <input type="text" readonly id="webhook-url-cc" value="{{ $webhookUrlCc }}" onclick="this.select();"
+                           style="flex:1;font-family:monospace;font-size:12.5px;background:var(--gray-100);word-break:break-all;">
+                    <button type="button" class="btn btn-sm" data-copy-target="webhook-url-cc"><i class="fas fa-copy"></i> Salin</button>
+                </div>
             </div>
         </div>
         <div class="form-group">
@@ -127,4 +144,30 @@
 </div>
 
 @include('partials.photo-upload-script')
+
+@push('scripts')
+<script>
+document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.dataset.copyTarget);
+        if (!input) return;
+
+        input.select();
+
+        function done() {
+            var original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Tersalin';
+            setTimeout(function () { btn.innerHTML = original; }, 1500);
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(input.value).then(done, function () { document.execCommand('copy'); done(); });
+        } else {
+            document.execCommand('copy');
+            done();
+        }
+    });
+});
+</script>
+@endpush
 @endsection

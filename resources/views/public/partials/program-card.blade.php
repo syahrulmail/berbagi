@@ -21,7 +21,7 @@
     };
 @endphp
 <article class="program-card group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-    <a href="{{ $p['url'] }}" class="relative block aspect-[4/3] overflow-hidden">
+    <a href="{{ $p['url'] }}" class="relative block aspect-[16/9] overflow-hidden">
         @if($p['image'])
             <img src="{{ $p['image'] }}" alt="{{ $p['name'] }}" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105">
         @else

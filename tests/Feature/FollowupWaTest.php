@@ -122,6 +122,13 @@ class FollowupWaTest extends TestCase
 
         $broadcast = Broadcast::where('user_id', $agen->id)->first();
         $this->assertNotNull($broadcast);
+        // Broadcast kini masuk antrean; pengiriman dilakukan proses cron.
+        $this->assertSame(0, $broadcast->sent);
+        $this->assertSame(2, $broadcast->targets()->where('status', BroadcastTarget::STATUS_PENDING)->count());
+
+        app(FollowupWaService::class)->processQueue(Carbon::now()->addSeconds(30));
+
+        $broadcast->refresh();
         $this->assertSame(2, $broadcast->sent);
         $this->assertSame(2, $broadcast->targets()->where('status', BroadcastTarget::STATUS_SENT)->count());
 
@@ -153,6 +160,10 @@ class FollowupWaTest extends TestCase
 
         $broadcast = Broadcast::where('user_id', $agen->id)->first();
         $this->assertNotNull($broadcast);
+
+        app(FollowupWaService::class)->processQueue(Carbon::now()->addSeconds(30));
+
+        $broadcast->refresh();
         $this->assertSame(1, $broadcast->sent);
 
         Http::assertSent(function ($request) {
@@ -639,8 +650,14 @@ class FollowupWaTest extends TestCase
 
         $broadcast = Broadcast::where('user_id', $admin->id)->first();
         $this->assertNotNull($broadcast);
-        $this->assertGreaterThanOrEqual(8, $broadcast->total);
+        // Mekanisme otomatis hanya mengantrekan satu batch (limit_count) lebih dulu.
+        $this->assertSame(3, $broadcast->total);
         $this->assertSame(3, $broadcast->targets()->count());
+
+        $service = app(FollowupWaService::class);
+        $service->processQueue(Carbon::now()->addSeconds(30));
+
+        $broadcast->refresh();
         $this->assertSame(3, $broadcast->sent);
     }
 

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('layouts.partials.favicon')
     <title>@yield('title', 'Berbagi.or.id · Badan Wakaf Al Qur\'an')</title>
     @php
         $ogTitle = html_entity_decode(trim($__env->yieldContent('og_title')) ?: trim($__env->yieldContent('title')), ENT_QUOTES, 'UTF-8');
@@ -37,12 +38,17 @@
     @endif
     <meta name="twitter:title" content="{{ $ogTitle }}">
     <meta name="twitter:description" content="{{ $ogDesc }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    {{-- Fira Sans di-self-host (subset latin) agar tidak ada permintaan
+         lintas-origin dan teks tidak bergeser saat font selesai dimuat. --}}
+    <link rel="preload" as="font" type="font/woff2" href="{{ asset('fonts/fira-sans-latin-400.woff2') }}" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="{{ asset('fonts/fira-sans-latin-700.woff2') }}" crossorigin>
+    <link rel="stylesheet" href="{{ assetv('css/fira-sans.css') }}">
+    {{-- Font Awesome versi ringkas (hanya ikon yang dipakai). Bila ada ikon
+         dinamis di luar subset, fontawesome-fallback.js memuat CSS penuh. --}}
+    <link rel="stylesheet" href="{{ assetv('css/fontawesome-subset.css') }}">
     <link rel="stylesheet" href="{{ assetv('css/app.css') }}">
     @stack('styles')
+    @stack('head')
     <style>
         #siteHeader .container { height: 64px; }
         #siteHeader.header-scrolled .container { height: 56px; }
@@ -129,12 +135,44 @@
     @if(!empty($googleSiteVerification))
     <meta name="google-site-verification" content="{{ $googleSiteVerification }}">
     @endif
-    @if(!empty($gtmContainerId))
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','{{ $gtmContainerId }}');</script>
-    @endif
-    @if(!empty($gaMeasurementId))
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaMeasurementId }}"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ $gaMeasurementId }}');</script>
+    @if(!empty($gtmContainerId) || !empty($gaMeasurementId))
+    {{-- Antrian dataLayer/gtag disiapkan langsung agar tidak ada event yang hilang,
+         tetapi skrip GTM/GA baru dimuat setelah pengunjung berinteraksi (atau
+         paling lambat 10 detik) supaya tidak berebut bandwidth dengan LCP. --}}
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    @if(!empty($gaMeasurementId))gtag('config', '{{ $gaMeasurementId }}');@endif
+    @if(!empty($gtmContainerId))dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});@endif
+    window.__berbagiLoadTracking = function () {
+        if (window.__berbagiTrackingLoaded) return;
+        window.__berbagiTrackingLoaded = true;
+        var d = document, s, first = d.getElementsByTagName('script')[0];
+        @if(!empty($gtmContainerId))
+        s = d.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtm.js?id={{ $gtmContainerId }}';
+        first.parentNode.insertBefore(s, first);
+        @endif
+        @if(!empty($gaMeasurementId))
+        s = d.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id={{ $gaMeasurementId }}';
+        first.parentNode.insertBefore(s, first);
+        @endif
+    };
+    ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (evt) {
+        window.addEventListener(evt, window.__berbagiLoadTracking, { once: true, passive: true });
+    });
+    if (document.readyState === 'complete') {
+        window.setTimeout(window.__berbagiLoadTracking, 10000);
+    } else {
+        window.addEventListener('load', function () {
+            window.setTimeout(window.__berbagiLoadTracking, 10000);
+        });
+    }
+    </script>
     @endif
     {!! $headTrackingCode !!}
 </head>
@@ -187,7 +225,7 @@
                 <p class="max-w-xs text-sm leading-relaxed text-primary-300">Platform wakaf, infak, dan sedekah Badan Wakaf Al Qur'an (BWA). Semangat dalam mentadabburi dan mengamalkan Al Qur'an untuk kebaikan ummat.</p>
             </div>
             <div>
-                <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Program</h4>
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Program</h3>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Semua Program</a></li>
                     <li><a href="{{ route('home') }}#program" class="text-primary-300 transition hover:text-white">Program Penggalangan</a></li>
@@ -195,7 +233,7 @@
                 </ul>
             </div>
             <div>
-                <h4 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Lembaga</h4>
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-wide text-white">Lembaga</h3>
                 <ul class="space-y-2.5 text-sm">
                     <li><a href="{{ route('home') }}" class="text-primary-300 transition hover:text-white">Beranda</a></li>
                     <li><a href="{{ route('login') }}" class="text-primary-300 transition hover:text-white">Masuk Anggota</a></li>
@@ -243,6 +281,7 @@
 <script src="{{ assetv('js/components/BarChart.js') }}"></script>
 <script src="{{ assetv('js/components/DonutChart.js') }}"></script>
 <script src="{{ assetv('js/app.js') }}"></script>
+<script src="{{ assetv('js/fontawesome-fallback.js') }}" defer></script>
 
 @include('public.partials.popup-widgets')
 

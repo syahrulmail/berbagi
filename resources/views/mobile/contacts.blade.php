@@ -12,9 +12,11 @@
         <a href="{{ route('mo.contact.import-form') }}" class="mo-icon-btn" aria-label="Impor Kontak">
             <i class="fas fa-file-import"></i>
         </a>
-        <a href="{{ route('contacts.download', request()->only('search', 'status', 'sort', 'branch_id', 'agen_id', 'from', 'to')) }}" class="mo-icon-btn" aria-label="Unduh Kontak">
-            <i class="fas fa-download"></i>
-        </a>
+        @if(!auth()->user()->isAgen())
+            <button type="button" class="mo-icon-btn" data-contact-download-open="mo-contact-download-sheet" aria-label="Unduh Kontak">
+                <i class="fas fa-download"></i>
+            </button>
+        @endif
         <a href="{{ route('mo.more') }}" class="mo-icon-btn" aria-label="Menu">
             <i class="fas fa-bars"></i>
         </a>
@@ -172,9 +174,13 @@
 
 @section('sheets')
 @include('mobile.partials.contact-sheet')
+@if(!auth()->user()->isAgen())
+    @include('mobile.partials.contact-download-sheet')
+@endif
 @endsection
 
 @push('scripts')
+<script src="{{ assetv('js/contact-download.js') }}"></script>
 <script>
 (function () {
     var branch = document.getElementById('mo-contact-branch');

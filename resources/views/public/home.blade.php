@@ -5,17 +5,28 @@
 @include('public.partials.funnel-styles')
 @include('public.partials.hero-styles')
 
-@section('content')
-
 @php
-    $bannerSlides = $banners->map(function ($b) {
+    $bannerSlides = $banners->map(function ($b, $index) {
+        $dims = $b->image_dimensions;
+
         return [
-            'image' => $b->image_url,
-            'title' => $b->title,
-            'url'   => $b->url,
+            'image'    => $b->image_url,
+            'title'    => $b->title,
+            'url'      => $b->url,
+            'width'    => $dims[0] ?? null,
+            'height'   => $dims[1] ?? null,
+            'priority' => $index === 0,
         ];
     })->values();
 @endphp
+
+@push('head')
+@if($firstSlide = $bannerSlides->first())
+<link rel="preload" as="image" href="{{ $firstSlide['image'] }}" fetchpriority="high">
+@endif
+@endpush
+
+@section('content')
 
 <section class="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-800 to-primary-950 text-white">
     <div class="hero-mesh"></div>
@@ -52,10 +63,8 @@
 
 <main class="section" id="program">
     <div class="container">
-        <div data-reveal>
-            <div data-vue-app="ProgramExplorer">
-                <script type="application/json">@json(['programs' => $programCards, 'tags' => $tags->pluck('name')->all(), 'sticky' => true])</script>
-            </div>
+        <div data-vue-app="ProgramExplorer">
+            <script type="application/json">@json(['programs' => $programCards, 'tags' => $tags->pluck('name')->all(), 'sticky' => true])</script>
         </div>
     </div>
 </main>

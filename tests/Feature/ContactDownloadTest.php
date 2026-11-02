@@ -129,7 +129,7 @@ class ContactDownloadTest extends TestCase
         $this->assertStringNotContainsString('Kontak Supervisor Dua', $sheet);
     }
 
-    public function test_agent_download_contains_only_own_contacts()
+    public function test_agent_cannot_download_contacts()
     {
         $branch = $this->makeBranch();
         $agen1 = $this->makeUser('agen', $branch);
@@ -138,10 +138,8 @@ class ContactDownloadTest extends TestCase
         $this->makeContact('Kontak Agen Satu', $branch, $agen1);
         $this->makeContact('Kontak Agen Dua', $branch, $agen2);
 
-        $sheet = $this->sheetContent($this->actingAs($agen1)->get(route('contacts.download')));
-
-        $this->assertStringContainsString('Kontak Agen Satu', $sheet);
-        $this->assertStringNotContainsString('Kontak Agen Dua', $sheet);
+        $this->actingAs($agen1)->get(route('contacts.download'))->assertForbidden();
+        $this->actingAs($agen1)->get(route('contacts.download.count'))->assertForbidden();
     }
 
     public function test_download_respects_active_search_filter()
