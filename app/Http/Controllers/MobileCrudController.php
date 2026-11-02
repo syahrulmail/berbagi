@@ -50,7 +50,7 @@ class MobileCrudController extends MobileAppController
         $data = $this->validateDonation($request);
 
         if ($request->hasFile('payment_proof')) {
-            $data['payment_proof'] = $request->file('payment_proof')->store('donation-proofs', 'public');
+            $data['payment_proof'] = app(\App\Services\ImageWebpService::class)->store($request->file('payment_proof'), 'donation-proofs');
         }
 
         $data['created_by'] = auth()->id();
@@ -106,7 +106,7 @@ class MobileCrudController extends MobileAppController
 
         $proofPath = $donation->payment_proof;
         if ($request->hasFile('payment_proof')) {
-            $proofPath = $request->file('payment_proof')->store('donation-proofs', 'public');
+            $proofPath = app(\App\Services\ImageWebpService::class)->store($request->file('payment_proof'), 'donation-proofs');
         } elseif ($request->boolean('remove_payment_proof')) {
             $proofPath = null;
         }
@@ -404,7 +404,7 @@ class MobileCrudController extends MobileAppController
         $data['klik'] = (int) ($data['klik'] ?? 0);
 
         if ($request->hasFile('cover_image')) {
-            $data['media'] = [['path' => $request->file('cover_image')->store('programs', 'public'), 'order' => 0]];
+            $data['media'] = [['path' => app(\App\Services\ImageWebpService::class)->store($request->file('cover_image'), 'programs'), 'order' => 0]];
         }
 
         $program = Program::create($data);
@@ -439,7 +439,7 @@ class MobileCrudController extends MobileAppController
 
         if ($request->hasFile('cover_image')) {
             $data['media'] = array_merge(
-                [['path' => $request->file('cover_image')->store('programs', 'public'), 'order' => 0]],
+                [['path' => app(\App\Services\ImageWebpService::class)->store($request->file('cover_image'), 'programs'), 'order' => 0]],
                 collect($program->media ?? [])->reject(fn ($m) => ($m['order'] ?? 0) === 0)->all()
             );
         } elseif ($request->boolean('remove_cover')) {

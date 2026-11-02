@@ -234,7 +234,7 @@ class ProgramController extends Controller
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
         ]);
 
-        $path = $request->file('image')->store('programs', 'public');
+        $path = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'programs');
 
         if (!$path) {
             return response()->json(['error' => 'Gagal menyimpan gambar.'], 500);
@@ -315,7 +315,7 @@ class ProgramController extends Controller
             $replacement = $request->file("media_replace.$i");
 
             if ($replacement !== null && $replacement->isValid()) {
-                $newPath = $replacement->store('programs', 'public');
+                $newPath = app(\App\Services\ImageWebpService::class)->store($replacement, 'programs');
 
                 if ($newPath) {
                     $this->deleteStoredMedia($path);
@@ -338,7 +338,7 @@ class ProgramController extends Controller
         $newOrders = array_values((array) $request->input('media_new_orders', []));
 
         foreach ($files as $idx => $file) {
-            $path = $file->store('programs', 'public');
+            $path = app(\App\Services\ImageWebpService::class)->store($file, 'programs');
 
             if (!$path) {
                 continue;

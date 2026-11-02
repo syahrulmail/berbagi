@@ -158,7 +158,7 @@ class UserController extends Controller
         $photo = '';
         $file = $request->file('photo');
         if ($file !== null && $file->isValid()) {
-            $photo = $file->store('agents', 'public') ?: '';
+            $photo = app(\App\Services\ImageWebpService::class)->store($file, 'agents') ?: '';
         }
 
         Setting::set('agent_profile_' . $user->slug, json_encode([
@@ -278,7 +278,7 @@ class UserController extends Controller
 
         $file = $request->file('photo');
         if ($file !== null && $file->isValid()) {
-            $newPath = $file->store('agents', 'public');
+            $newPath = app(\App\Services\ImageWebpService::class)->store($file, 'agents');
             if ($newPath && $photo && $photo !== $newPath) {
                 $this->deleteStoredPhoto($photo);
             }

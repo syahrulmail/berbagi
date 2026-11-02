@@ -44,7 +44,7 @@ class PopupBannerController extends Controller
         $data = $this->validated($request);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('popup-banners', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'popup-banners');
         }
 
         $data = $this->normalize($request, $data);
@@ -73,7 +73,7 @@ class PopupBannerController extends Controller
             if ($popupBanner->image) {
                 Storage::disk('public')->delete($popupBanner->image);
             }
-            $data['image'] = $request->file('image')->store('popup-banners', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'popup-banners');
         } elseif ($request->boolean('remove_image') && $popupBanner->image) {
             Storage::disk('public')->delete($popupBanner->image);
             $data['image'] = null;

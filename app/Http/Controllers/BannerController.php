@@ -34,7 +34,7 @@ class BannerController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('banners', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'banners');
         }
 
         $data['is_active'] = $request->boolean('is_active');
@@ -67,7 +67,7 @@ class BannerController extends Controller
             if ($banner->image) {
                 Storage::disk('public')->delete($banner->image);
             }
-            $data['image'] = $request->file('image')->store('banners', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'banners');
         }
 
         $data['is_active'] = $request->boolean('is_active');

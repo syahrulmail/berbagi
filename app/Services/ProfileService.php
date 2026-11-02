@@ -87,7 +87,7 @@ class ProfileService
 
         $file = $request->file('photo');
         if ($file !== null && $file->isValid()) {
-            $newPath = $file->store('agents', 'public');
+            $newPath = app(\App\Services\ImageWebpService::class)->store($file, 'agents');
             if ($newPath && $photo && $photo !== $newPath) {
                 $this->deleteStoredPhoto($photo);
             }
@@ -104,7 +104,7 @@ class ProfileService
 
         $sigFile = $request->file('signature');
         if ($sigFile !== null && $sigFile->isValid()) {
-            $newSigPath = $sigFile->store('signatures', 'public');
+            $newSigPath = app(\App\Services\ImageWebpService::class)->store($sigFile, 'signatures');
             if ($newSigPath && $signature && $signature !== $newSigPath) {
                 $this->deleteStoredPhoto($signature);
             }
@@ -160,7 +160,7 @@ class ProfileService
 
         $file = $request->file('photo');
         if ($file !== null && $file->isValid()) {
-            $newPath = $file->store('agents', 'public');
+            $newPath = app(\App\Services\ImageWebpService::class)->store($file, 'agents');
             if ($newPath && $photo && $photo !== $newPath) {
                 $this->deleteStoredPhoto($photo);
             }

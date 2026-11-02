@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\WarmingLog;
 use App\Models\WhatsappMessage;
+use App\Services\ImageWebpService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -1025,9 +1026,20 @@ class FollowupWaService
      */
     public function storeUploadedMedia(\Illuminate\Http\UploadedFile $file): array
     {
+        $type = $this->detectMediaType($file->getMimeType(), $file->getClientOriginalExtension());
+
+        // Hanya gambar yang dikonversi ke WebP; video/audio/dokumen disimpan apa adanya.
+        if ($type === 'image') {
+            $path = app(ImageWebpService::class)->store($file, 'wa-media', 'public');
+
+            if ($path !== null) {
+                return ['media_path' => $path, 'media_type' => 'image'];
+            }
+        }
+
         return [
             'media_path' => $file->store('wa-media', 'public'),
-            'media_type' => $this->detectMediaType($file->getMimeType(), $file->getClientOriginalExtension()),
+            'media_type' => $type,
         ];
     }
 

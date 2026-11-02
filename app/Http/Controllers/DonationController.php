@@ -457,7 +457,7 @@ class DonationController extends Controller
         $this->normalizeBranch($data);
 
         if ($request->hasFile('payment_proof')) {
-            $data['payment_proof'] = $request->file('payment_proof')->store('donation-proofs', 'public');
+            $data['payment_proof'] = app(\App\Services\ImageWebpService::class)->store($request->file('payment_proof'), 'donation-proofs');
         }
 
         $data['created_by'] = auth()->id();
@@ -677,7 +677,7 @@ class DonationController extends Controller
 
         $proofPath = $donation->payment_proof;
         if ($request->hasFile('payment_proof')) {
-            $proofPath = $request->file('payment_proof')->store('donation-proofs', 'public');
+            $proofPath = app(\App\Services\ImageWebpService::class)->store($request->file('payment_proof'), 'donation-proofs');
         } elseif ($request->boolean('remove_payment_proof')) {
             $proofPath = null;
         }

@@ -26,7 +26,7 @@ class AchievementController extends Controller
         $data = $this->validated($request);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('achievements', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'achievements');
         }
 
         $data['is_active'] = $request->boolean('is_active');
@@ -51,7 +51,7 @@ class AchievementController extends Controller
             if ($achievement->image) {
                 Storage::disk('public')->delete($achievement->image);
             }
-            $data['image'] = $request->file('image')->store('achievements', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'achievements');
         }
 
         $data['is_active'] = $request->boolean('is_active');

@@ -220,7 +220,7 @@ class SettingController extends Controller
 
             $file = $request->file('testimonials.' . $index . '.photo');
             if ($file !== null && $file->isValid()) {
-                $newPath = $file->store('testimonials', 'public');
+                $newPath = app(\App\Services\ImageWebpService::class)->store($file, 'testimonials');
                 if ($newPath && $photo && $photo !== $newPath) {
                     $this->deleteStoredPhoto($photo);
                 }
@@ -281,7 +281,7 @@ class SettingController extends Controller
 
             $file = $request->file('logos.' . $index . '.photo');
             if ($file !== null && $file->isValid()) {
-                $newPath = $file->store('partner-logos', 'public');
+                $newPath = app(\App\Services\ImageWebpService::class)->store($file, 'partner-logos');
                 if ($newPath && $photo && $photo !== $newPath) {
                     $this->deleteStoredPhoto($photo);
                 }

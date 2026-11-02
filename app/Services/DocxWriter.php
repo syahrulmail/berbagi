@@ -67,6 +67,16 @@ class DocxWriter
                 $page['ext'] = $this->imageExtension($info[2] ?? 0);
                 $page['cx'] = $cx;
                 $page['cy'] = $cy;
+
+                // WebP belum didukung merata oleh Microsoft Office lama.
+                // Kirim sebagai PNG agar gambar tetap tampil di Word.
+                if ($page['ext'] === 'webp') {
+                    $png = $this->webpToPng($bytes);
+                    if ($png !== null) {
+                        $page['bytes'] = $png;
+                        $page['ext'] = 'png';
+                    }
+                }
             }
         }
 
@@ -260,5 +270,32 @@ class DocxWriter
     protected function escape(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+    }
+
+    /**
+     * Ubah byte WebP menjadi PNG agar kompatibel dengan Word.
+     */
+    protected function webpToPng(string $bytes): ?string
+    {
+        if (! function_exists('imagecreatefromstring') || ! function_exists('imagepng')) {
+            return null;
+        }
+
+        $image = @imagecreatefromstring($bytes);
+
+        if (! $image) {
+            return null;
+        }
+
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+
+        ob_start();
+        $ok = imagepng($image);
+        $png = ob_get_clean();
+
+        imagedestroy($image);
+
+        return ($ok && is_string($png) && $png !== '') ? $png : null;
     }
 }

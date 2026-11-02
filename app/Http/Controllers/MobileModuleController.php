@@ -256,7 +256,7 @@ class MobileModuleController extends MobileAppController
         $data = $this->validateBanner($request);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('banners', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'banners');
         }
 
         $data['is_active'] = $request->boolean('is_active');
@@ -281,7 +281,7 @@ class MobileModuleController extends MobileAppController
             if ($banner->image) {
                 Storage::disk('public')->delete($banner->image);
             }
-            $data['image'] = $request->file('image')->store('banners', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'banners');
         }
 
         $data['is_active'] = $request->boolean('is_active');
@@ -339,7 +339,7 @@ class MobileModuleController extends MobileAppController
         $data = $this->validateAchievement($request);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('achievements', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'achievements');
         }
 
         $data['is_active'] = $request->boolean('is_active');
@@ -364,7 +364,7 @@ class MobileModuleController extends MobileAppController
             if ($achievement->image) {
                 Storage::disk('public')->delete($achievement->image);
             }
-            $data['image'] = $request->file('image')->store('achievements', 'public');
+            $data['image'] = app(\App\Services\ImageWebpService::class)->store($request->file('image'), 'achievements');
         }
 
         $data['is_active'] = $request->boolean('is_active');

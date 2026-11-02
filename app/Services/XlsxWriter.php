@@ -228,8 +228,20 @@ class XlsxWriter
                 continue;
             }
 
+            $ext = $this->imageExtension($image['path']);
+
+            // WebP belum didukung merata oleh Microsoft Excel lama.
+            // Kirim sebagai PNG agar gambar tetap tampil.
+            if ($ext === 'webp') {
+                $png = $this->webpToPng($bytes);
+                if ($png !== null) {
+                    $bytes = $png;
+                    $ext = 'png';
+                }
+            }
+
             $resolved[] = $image + [
-                'ext' => $this->imageExtension($image['path']),
+                'ext' => $ext,
                 'bytes' => $bytes,
             ];
         }
@@ -470,6 +482,33 @@ class XlsxWriter
             . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
             . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>'
             . '</Relationships>';
+    }
+
+    /**
+     * Ubah byte WebP menjadi PNG agar kompatibel dengan Excel.
+     */
+    protected function webpToPng(string $bytes): ?string
+    {
+        if (! function_exists('imagecreatefromstring') || ! function_exists('imagepng')) {
+            return null;
+        }
+
+        $image = @imagecreatefromstring($bytes);
+
+        if (! $image) {
+            return null;
+        }
+
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+
+        ob_start();
+        $ok = imagepng($image);
+        $png = ob_get_clean();
+
+        imagedestroy($image);
+
+        return ($ok && is_string($png) && $png !== '') ? $png : null;
     }
 
     protected function imageExtension(string $path): string
