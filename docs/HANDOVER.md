@@ -97,9 +97,24 @@ server produksi** (cPanel Terminal atau cron sekali jalan).
 
 Dump database:
 
+- **Di server (fungsi shell dimatikan)**: pakai dumper PHP murni
+  (tanpa `mysqldump`), tulis gzip bertahap:
+  ```bash
+  php scripts/db-dump-php.php /path/backup.sql.gz
+  ```
+- **Bila ada shell + mysqldump** (mis. dev/VPS): pakai
+  `bash scripts/db-dump.sh /path/backup.sql.gz`.
+
+Restore:
+
 ```bash
-bash scripts/db-dump.sh /path/backup.sql.gz
+gunzip -c backup.sql.gz | mysql -h HOST -u USER -p DATABASE
 ```
+
+> Produksi `berbagi.or.id`: `disable_functions` mencakup
+> `exec`, `shell_exec`, `proc_open`, `popen`, `system` → `mysqldump` via shell
+> **tidak bisa**; gunakan `scripts/db-dump-php.php`.
+> Baseline dump diverifikasi: 23 tabel, 118.767 baris, ~2 MB gzip.
 
 Migrasi di produksi (tanpa SSH):
 
