@@ -30,7 +30,7 @@ class ContactController extends Controller
                 $query->orderBy('contacts.name', $dir)->orderBy('contacts.id');
                 break;
             case 'status':
-                $query->orderBy('contacts.status', $dir)->orderBy('contacts.id');
+                $query->orderByRaw($this->statusOrderSql($dir))->orderBy('contacts.id');
                 break;
             case 'agen':
                 $query->orderBy(
@@ -52,6 +52,27 @@ class ContactController extends Controller
         $branches = $this->visibleBranches();
 
         return view('contacts.index', compact('contacts', 'agents', 'branches'));
+    }
+
+    /**
+     * Urutan status sesuai alur kerja donasi, bukan alfabetis.
+     * Portable untuk MySQL dan SQLite (memakai CASE, bukan FIELD).
+     */
+    protected function statusOrderSql(string $dir): string
+    {
+        $order = [
+            Contact::STATUS_PROSPECT,
+            Contact::STATUS_CONTACTED,
+            Contact::STATUS_DONATED,
+            Contact::STATUS_CHURNED,
+        ];
+
+        $cases = [];
+        foreach ($order as $index => $status) {
+            $cases[] = "WHEN '" . $status . "' THEN " . $index;
+        }
+
+        return 'CASE contacts.status ' . implode(' ', $cases) . ' ELSE ' . count($order) . ' END ' . $dir;
     }
 
     /**
