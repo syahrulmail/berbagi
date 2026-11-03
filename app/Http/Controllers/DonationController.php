@@ -344,6 +344,55 @@ class DonationController extends Controller
     }
 
     /**
+     * Batasi query kontak sesuai peran pengguna: agen hanya kontak miliknya,
+     * supervisor hanya kontak di cabangnya, admin melihat semuanya.
+     */
+    protected function scopeContacts($query)
+    {
+        $user = auth()->user();
+
+        if ($user && $user->isAgen()) {
+            $query->where('contacts.agen_id', $user->id);
+        } elseif ($user && $user->isSupervisor() && $user->branch_id) {
+            $query->where('contacts.branch_id', $user->branch_id);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Kontak donatur yang boleh dipilih pengguna saat ini.
+     */
+    protected function visibleContacts()
+    {
+        return $this->scopeContacts(Contact::query())->orderBy('name')->get();
+    }
+
+    /**
+     * Pastikan kontak donatur yang dikirim termasuk yang boleh diakses
+     * pengguna, agar batasan tidak dapat dilewati lewat POST langsung.
+     *
+     * $allowId dipakai saat edit: kontak lama yang sudah terlanjur berada di
+     * luar cakupan tetap boleh dipertahankan agar donasi lama masih dapat
+     * diperbarui tanpa mengganti donaturnya.
+     */
+    protected function ensureContactVisible($contactId, $allowId = null): void
+    {
+        if ($allowId !== null && (int) $allowId === (int) $contactId) {
+            return;
+        }
+
+        $query = Contact::whereKey($contactId);
+        $this->scopeContacts($query);
+
+        if (! $query->exists()) {
+            throw ValidationException::withMessages([
+                'contact_id' => 'Kontak donatur yang dipilih tidak tersedia untuk akun Anda.',
+            ]);
+        }
+    }
+
+    /**
      * Ambil daftar kategori, program, dan nominal donasi untuk ekspor.
      * Donasi lama tanpa item memakai relasi program langsung.
      *
@@ -411,7 +460,7 @@ class DonationController extends Controller
         $branches = $this->visibleBranches();
         $programs = $this->donationPrograms();
         $agents = $this->visibleAgents();
-        $contacts = Contact::orderBy('name')->get();
+        $contacts = $this->visibleContacts();
 
         return view('donations.create', compact('branches', 'programs', 'agents', 'contacts'));
     }
@@ -451,6 +500,8 @@ class DonationController extends Controller
         ]);
 
         unset($data['payment_proof']);
+
+        $this->ensureContactVisible($data['contact_id']);
 
         $data = $this->enforceRoleAssignment($data);
 
@@ -494,7 +545,7 @@ class DonationController extends Controller
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
         $programs = $this->editablePrograms($donation);
         $agents = $this->visibleAgents();
-        $contacts = Contact::orderBy('name')->get();
+        $contacts = $this->visibleContacts();
 
         return view('donations.edit', compact('donation', 'branches', 'programs', 'agents', 'contacts'));
     }
@@ -642,7 +693,7 @@ class DonationController extends Controller
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
         $programs = $this->editablePrograms($donation);
         $agents = $this->visibleAgents();
-        $contacts = Contact::orderBy('name')->get();
+        $contacts = $this->visibleContacts();
 
         $html = view('donations._edit_fields', compact('donation', 'branches', 'programs', 'agents', 'contacts'))->render();
 
@@ -670,6 +721,8 @@ class DonationController extends Controller
         ]);
 
         unset($data['payment_proof']);
+
+        $this->ensureContactVisible($data['contact_id'], $donation->contact_id);
 
         $data = $this->enforceRoleAssignment($data);
 

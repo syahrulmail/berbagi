@@ -255,6 +255,10 @@ class ContactController extends Controller
         }
         $data['phone'] = $normalized;
 
+        if (auth()->user()->isSupervisor()) {
+            $data['branch_id'] = auth()->user()->branch_id;
+        }
+
         if (!auth()->user()->isAgen() && !empty($data['agen_id'])) {
             $agent = User::find($data['agen_id']);
             if ($agent) {

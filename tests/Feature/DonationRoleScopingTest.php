@@ -133,7 +133,12 @@ class DonationRoleScopingTest extends TestCase
         $supervisor = $this->makeUser('supervisor', $ownBranch);
         $otherAgent = $this->makeUser('agen', $otherBranch);
         $program = $this->makeProgram();
-        $contact = Contact::create(['name' => 'Donatur ' . uniqid(), 'phone' => '0812000001', 'status' => 'prospect']);
+        $contact = Contact::create([
+            'name' => 'Donatur ' . uniqid(),
+            'phone' => '0812000001',
+            'status' => 'prospect',
+            'branch_id' => $ownBranch->id,
+        ]);
 
         $this->actingAs($supervisor)
             ->from(route('donations.create'))
@@ -151,7 +156,12 @@ class DonationRoleScopingTest extends TestCase
         $supervisor = $this->makeUser('supervisor', $ownBranch);
         $ownAgent = $this->makeUser('agen', $ownBranch);
         $program = $this->makeProgram();
-        $contact = Contact::create(['name' => 'Donatur ' . uniqid(), 'phone' => '0812000002', 'status' => 'prospect']);
+        $contact = Contact::create([
+            'name' => 'Donatur ' . uniqid(),
+            'phone' => '0812000002',
+            'status' => 'prospect',
+            'branch_id' => $ownBranch->id,
+        ]);
 
         $this->actingAs($supervisor)
             ->post(route('donations.store'), $this->storePayload($program, $contact, $otherBranch->id, $ownAgent->id))
@@ -171,7 +181,13 @@ class DonationRoleScopingTest extends TestCase
         $agent = $this->makeUser('agen', $ownBranch);
         $otherAgent = $this->makeUser('agen', $otherBranch);
         $program = $this->makeProgram();
-        $contact = Contact::create(['name' => 'Donatur ' . uniqid(), 'phone' => '0812000003', 'status' => 'prospect']);
+        $contact = Contact::create([
+            'name' => 'Donatur ' . uniqid(),
+            'phone' => '0812000003',
+            'status' => 'prospect',
+            'branch_id' => $ownBranch->id,
+            'agen_id' => $agent->id,
+        ]);
 
         $this->actingAs($agent)
             ->post(route('donations.store'), $this->storePayload($program, $contact, $otherBranch->id, $otherAgent->id))
@@ -315,5 +331,143 @@ class DonationRoleScopingTest extends TestCase
             ->assertOk()
             ->assertSee($contactA->name)
             ->assertDontSee($contactB->name);
+    }
+
+    public function test_agent_donation_create_only_lists_own_contacts()
+    {
+        $branch = $this->makeBranch('Kontak Agen');
+        $agent = $this->makeUser('agen', $branch);
+        $otherAgent = $this->makeUser('agen', $branch);
+
+        $ownContact = Contact::create([
+            'name' => 'Donatur Milik Sendiri ' . uniqid(),
+            'phone' => '0814000001',
+            'status' => 'prospect',
+            'branch_id' => $branch->id,
+            'agen_id' => $agent->id,
+        ]);
+        $otherContact = Contact::create([
+            'name' => 'Donatur Milik Lain ' . uniqid(),
+            'phone' => '0814000002',
+            'status' => 'prospect',
+            'branch_id' => $branch->id,
+            'agen_id' => $otherAgent->id,
+        ]);
+
+        $this->actingAs($agent)->get(route('donations.create'))
+            ->assertOk()
+            ->assertSee($ownContact->name)
+            ->assertDontSee($otherContact->name);
+    }
+
+    public function test_supervisor_donation_create_lists_own_branch_contacts_only()
+    {
+        $ownBranch = $this->makeBranch('Kontak Sup');
+        $otherBranch = $this->makeBranch('Kontak Sup Lain');
+
+        $supervisor = $this->makeUser('supervisor', $ownBranch);
+        $ownAgent = $this->makeUser('agen', $ownBranch);
+        $otherAgent = $this->makeUser('agen', $otherBranch);
+
+        $ownContact = Contact::create([
+            'name' => 'Donatur Cabang Sendiri ' . uniqid(),
+            'phone' => '0814000003',
+            'status' => 'prospect',
+            'branch_id' => $ownBranch->id,
+            'agen_id' => $ownAgent->id,
+        ]);
+        $otherContact = Contact::create([
+            'name' => 'Donatur Cabang Lain ' . uniqid(),
+            'phone' => '0814000004',
+            'status' => 'prospect',
+            'branch_id' => $otherBranch->id,
+            'agen_id' => $otherAgent->id,
+        ]);
+
+        $this->actingAs($supervisor)->get(route('donations.create'))
+            ->assertOk()
+            ->assertSee($ownContact->name)
+            ->assertDontSee($otherContact->name);
+    }
+
+    public function test_admin_donation_create_lists_all_contacts()
+    {
+        $branchA = $this->makeBranch('Kontak Admin A');
+        $branchB = $this->makeBranch('Kontak Admin B');
+        $admin = $this->makeUser('admin');
+        $agentA = $this->makeUser('agen', $branchA);
+        $agentB = $this->makeUser('agen', $branchB);
+
+        $contactA = Contact::create([
+            'name' => 'Donatur Admin A ' . uniqid(),
+            'phone' => '0814000005',
+            'status' => 'prospect',
+            'branch_id' => $branchA->id,
+            'agen_id' => $agentA->id,
+        ]);
+        $contactB = Contact::create([
+            'name' => 'Donatur Admin B ' . uniqid(),
+            'phone' => '0814000006',
+            'status' => 'prospect',
+            'branch_id' => $branchB->id,
+            'agen_id' => $agentB->id,
+        ]);
+
+        $this->actingAs($admin)->get(route('donations.create'))
+            ->assertOk()
+            ->assertSee($contactA->name)
+            ->assertSee($contactB->name);
+    }
+
+    public function test_agent_donation_edit_only_lists_own_contacts()
+    {
+        $branch = $this->makeBranch('Edit Kontak Agen');
+        $agent = $this->makeUser('agen', $branch);
+        $otherAgent = $this->makeUser('agen', $branch);
+
+        $ownContact = Contact::create([
+            'name' => 'Edit Donatur Sendiri ' . uniqid(),
+            'phone' => '0814000007',
+            'status' => 'prospect',
+            'branch_id' => $branch->id,
+            'agen_id' => $agent->id,
+        ]);
+        $otherContact = Contact::create([
+            'name' => 'Edit Donatur Lain ' . uniqid(),
+            'phone' => '0814000008',
+            'status' => 'prospect',
+            'branch_id' => $branch->id,
+            'agen_id' => $otherAgent->id,
+        ]);
+
+        $donation = $this->makeDonation($branch, $agent, $ownContact);
+
+        $this->actingAs($agent)->get(route('donations.edit', $donation))
+            ->assertOk()
+            ->assertSee($ownContact->name)
+            ->assertDontSee($otherContact->name);
+    }
+
+    public function test_agent_cannot_store_donation_with_contact_of_another_agent()
+    {
+        $branch = $this->makeBranch('Store Kontak Agen');
+        $agent = $this->makeUser('agen', $branch);
+        $otherAgent = $this->makeUser('agen', $branch);
+        $program = $this->makeProgram();
+
+        $otherContact = Contact::create([
+            'name' => 'Donatur Bukan Milik ' . uniqid(),
+            'phone' => '0814000009',
+            'status' => 'prospect',
+            'branch_id' => $branch->id,
+            'agen_id' => $otherAgent->id,
+        ]);
+
+        $this->actingAs($agent)
+            ->from(route('donations.create'))
+            ->post(route('donations.store'), $this->storePayload($program, $otherContact, $branch->id, $agent->id))
+            ->assertSessionHasErrors('contact_id');
+
+        $this->assertDatabaseMissing('donations', ['contact_id' => $otherContact->id]);
     }
 }

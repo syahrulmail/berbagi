@@ -174,4 +174,30 @@ class ContactDuplicateScopingTest extends TestCase
             ->assertOk()
             ->assertSee('Siti Aminah');
     }
+
+    public function test_quick_store_assigns_supervisor_branch_so_contact_stays_visible(): void
+    {
+        $branch = $this->makeBranch('Quick Sup');
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $agen = $this->makeUser('agen', $branch);
+        $phone = '62816' . random_int(1000000, 9999999);
+
+        $this->actingAs($supervisor)
+            ->postJson(route('contacts.quick'), [
+                'name' => 'Kontak Quick Sup',
+                'phone' => $phone,
+                'status' => 'prospect',
+                'agen_id' => $agen->id,
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        // Tanpa cabang yang dipilih, kontak harus otomatis masuk cabang supervisor
+        // agar tetap muncul pada daftar kontak donatur yang ter-scope.
+        $this->assertDatabaseHas('contacts', [
+            'phone' => $phone,
+            'branch_id' => $branch->id,
+            'agen_id' => $agen->id,
+        ]);
+    }
 }
