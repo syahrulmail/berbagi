@@ -26,8 +26,18 @@ class IntegrationCheckService
     public const STATUS_FAIL = 'fail';
 
     protected const TTL_MINUTES = 10;
+    protected const TTL_TRANSIENT_MINUTES = 1;
+    protected const TTL_LAST_OK_HOURS = 6;
     protected const TIMEOUT_SECONDS = 6;
     protected const PROBE_PHONE = '6281234567890';
+
+    /**
+     * Status hasil klasifikasi sebuah probe.
+     * - STATUS_OK / STATUS_FAIL: hasil definitif (aman di-cache lama).
+     * - STATUS_UNKNOWN: gangguan sementara (timeout, koneksi, 5xx, 429);
+     *   tidak boleh di-cache sebagai kegagalan permanen.
+     */
+    protected const STATUS_UNKNOWN = 'unknown';
 
     /**
      * Hitung status untuk banyak pengguna sekaligus dalam satu pool request.
@@ -90,40 +100,98 @@ class IntegrationCheckService
         // CloudChat: satu probe sudah final.
         foreach ($ccJobs as $id => $job) {
             list($userId) = explode('|', $id);
-            $status = $this->isSuccess($responses[$id] ?? null) ? self::STATUS_OK : self::STATUS_FAIL;
-            Cache::put($job['cacheKey'], $status, now()->addMinutes(self::TTL_MINUTES));
-            $result[$userId]['cc'] = $status;
+            $result[$userId]['cc'] = $this->resolve(
+                'cc', $job['key'], $job['cacheKey'], $responses[$id] ?? null
+            );
         }
 
         // Starsender: cukup probe check-number memakai Device API key.
         foreach ($ssJobs as $id => $job) {
             list($userId) = explode('|', $id);
-            $status = $this->isSuccess($responses[$id] ?? null) ? self::STATUS_OK : self::STATUS_FAIL;
-            Cache::put($job['cacheKey'], $status, now()->addMinutes(self::TTL_MINUTES));
-            $result[$userId]['ss'] = $status;
+            $result[$userId]['ss'] = $this->resolve(
+                'ss', $job['key'], $job['cacheKey'], $responses[$id] ?? null
+            );
         }
 
         return $result;
     }
 
     /**
-     * Apakah respons menandakan koneksi/kunci valid.
+     * Tentukan status akhir sebuah probe dan simpan ke cache.
+     *
+     * Kegagalan definitif (kunci salah, device terputus) di-cache normal,
+     * sedangkan gangguan sementara (timeout, koneksi, 5xx, 429) tidak
+     * boleh menimpa status sehat menjadi "fail" selama berapa menit.
+     */
+    protected function resolve(string $provider, string $key, string $cacheKey, $response): string
+    {
+        $status = $this->classify($response);
+
+        if ($status === self::STATUS_OK) {
+            Cache::put($cacheKey, self::STATUS_OK, now()->addMinutes(self::TTL_MINUTES));
+            Cache::put($this->lastOkKey($provider, $key), true, now()->addHours(self::TTL_LAST_OK_HOURS));
+
+            return self::STATUS_OK;
+        }
+
+        if ($status === self::STATUS_FAIL) {
+            Cache::put($cacheKey, self::STATUS_FAIL, now()->addMinutes(self::TTL_MINUTES));
+
+            return self::STATUS_FAIL;
+        }
+
+        // Gangguan sementara: pertahankan status sehat terakhir bila ada.
+        if (Cache::get($this->lastOkKey($provider, $key))) {
+            Cache::put($cacheKey, self::STATUS_OK, now()->addMinutes(self::TTL_TRANSIENT_MINUTES));
+
+            return self::STATUS_OK;
+        }
+
+        // Belum pernah sukses: tandai gagal sesaat agar cepat dipulihkan.
+        Cache::put($cacheKey, self::STATUS_FAIL, now()->addMinutes(self::TTL_TRANSIENT_MINUTES));
+
+        return self::STATUS_FAIL;
+    }
+
+    /**
+     * Klasifikasi respons probe menjadi ok / fail / unknown (sementara).
      *
      * @param  mixed  $response
      */
-    protected function isSuccess($response): bool
+    protected function classify($response): string
     {
-        if (! $response instanceof Response || ! $response->successful()) {
-            return false;
+        if (! $response instanceof Response) {
+            // Timeout, koneksi putus, atau exception lain: bukan bukti kunci salah.
+            return self::STATUS_UNKNOWN;
+        }
+
+        $status = $response->status();
+
+        if ($status === 429 || $status >= 500) {
+            return self::STATUS_UNKNOWN;
+        }
+
+        if ($status === 401 || $status === 403) {
+            return self::STATUS_FAIL;
         }
 
         $json = $response->json();
 
-        if (is_array($json) && array_key_exists('success', $json) && ! $json['success']) {
-            return false;
+        if ($status >= 400) {
+            // Starsender memakai 400 + success:false untuk "Device not connected".
+            return self::STATUS_FAIL;
         }
 
-        return true;
+        if (is_array($json) && array_key_exists('success', $json) && ! $json['success']) {
+            return self::STATUS_FAIL;
+        }
+
+        return self::STATUS_OK;
+    }
+
+    protected function lastOkKey(string $provider, string $key): string
+    {
+        return 'integration_last_ok_' . $provider . '_' . sha1($key);
     }
 
     protected function cacheKey(string $provider, string $key): string

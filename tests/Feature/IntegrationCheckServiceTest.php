@@ -98,4 +98,79 @@ class IntegrationCheckServiceTest extends TestCase
 
         Http::assertSentCount(1);
     }
+
+    public function test_transient_failure_does_not_downgrade_known_good_key(): void
+    {
+        $key = 'SS-' . uniqid();
+        $service = new IntegrationCheckService();
+
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response(['success' => true], 200),
+        ]);
+        $this->assertSame(IntegrationCheckService::STATUS_OK, $service->forUsers([1 => ['ss' => $key, 'cc' => '']])[1]['ss']);
+
+        Cache::forget('integration_status_ss_' . sha1($key));
+
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response('', 500),
+        ]);
+        $this->assertSame(
+            IntegrationCheckService::STATUS_OK,
+            $service->forUsers([1 => ['ss' => $key, 'cc' => '']])[1]['ss'],
+            'Kegagalan sementara (5xx) tidak boleh menandai kunci yang sehat sebagai fail.'
+        );
+    }
+
+    public function test_transient_failure_is_short_cached_for_never_good_key(): void
+    {
+        $key = 'SS-' . uniqid();
+        $service = new IntegrationCheckService();
+
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response('', 429),
+        ]);
+
+        $this->assertSame(IntegrationCheckService::STATUS_FAIL, $service->forUsers([1 => ['ss' => $key, 'cc' => '']])[1]['ss']);
+
+        $cached = Cache::get('integration_status_ss_' . sha1($key));
+        $this->assertSame(IntegrationCheckService::STATUS_FAIL, $cached);
+    }
+
+    public function test_key_recovers_after_transient_failure_is_cleared(): void
+    {
+        $key = 'SS-' . uniqid();
+        $service = new IntegrationCheckService();
+
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response('', 429),
+        ]);
+        $this->assertSame(IntegrationCheckService::STATUS_FAIL, $service->forUsers([1 => ['ss' => $key, 'cc' => '']])[1]['ss']);
+
+        Cache::forget('integration_status_ss_' . sha1($key));
+
+        Http::swap(new \Illuminate\Http\Client\Factory());
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response(['success' => true], 200),
+        ]);
+        $this->assertSame(IntegrationCheckService::STATUS_OK, $service->forUsers([1 => ['ss' => $key, 'cc' => '']])[1]['ss']);
+    }
+
+    public function test_definitive_device_disconnected_is_cached_as_fail(): void
+    {
+        Http::fake([
+            'https://api.starsender.online/*' => Http::response([
+                'success' => false,
+                'data' => ['status' => false, 'message' => 'Device not connected'],
+            ], 400),
+        ]);
+
+        $key = 'SS-' . uniqid();
+        $service = new IntegrationCheckService();
+
+        $this->assertSame(IntegrationCheckService::STATUS_FAIL, $service->forUsers([1 => ['ss' => $key, 'cc' => '']])[1]['ss']);
+
+        Http::fake();
+        (new IntegrationCheckService())->forUsers([1 => ['ss' => $key, 'cc' => '']]);
+        Http::assertNothingSent();
+    }
 }
