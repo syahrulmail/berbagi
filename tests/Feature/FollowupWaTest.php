@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FollowupWaTest extends TestCase
@@ -984,5 +985,42 @@ class FollowupWaTest extends TestCase
     public function test_cron_endpoint_rejects_invalid_token(): void
     {
         $this->get(route('wa.cron', ['token' => 'wrong-token']))->assertStatus(403);
+    }
+
+    public function test_broadcast_image_media_is_stored_without_webp_conversion(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->makeUser('admin');
+        $this->setApi($admin);
+
+        $agen = $this->makeUser('agen');
+        $this->setApi($agen);
+        $this->makeContact('Kontak Media', '628333333333', ['agen_id' => $agen->id]);
+
+        $image = imagecreatetruecolor(120, 80);
+        imagefilledrectangle($image, 0, 0, 120, 80, imagecolorallocate($image, 30, 140, 90));
+        $path = tempnam(sys_get_temp_dir(), 'wa_') . '.png';
+        imagepng($image, $path);
+        imagedestroy($image);
+
+        $file = new \Illuminate\Http\UploadedFile($path, 'poster.png', null, null, true);
+
+        $this->actingAs($admin)->post(route('followupwa.broadcast.store'), [
+            'name' => 'Uji Media Asli',
+            'message' => 'Halo [nama]',
+            'mechanism' => 'limit',
+            'limit_count' => 1,
+            'schedule_type' => 'now',
+            'interval_min' => 5,
+            'interval_max' => 5,
+            'agen_id' => $agen->id,
+            'media_file' => $file,
+        ])->assertRedirect(route('whatsapp.index'));
+
+        $broadcast = Broadcast::where('user_id', $agen->id)->latest('id')->first();
+        $this->assertNotNull($broadcast);
+        $this->assertStringEndsWith('.png', (string) $broadcast->media_path, 'Media Follow-up WA tidak boleh dikonversi ke WebP.');
+        Storage::disk('public')->assertExists($broadcast->media_path);
     }
 }
