@@ -85,6 +85,23 @@ class DonationKwitansiTest extends TestCase
         $response->assertDontSee('Asli (putih)');
     }
 
+    public function test_kwitansi_shows_receipt_number_and_swapped_name_labels(): void
+    {
+        $admin = $this->makeUser('admin');
+        [, , , , $donation] = $this->makeDonation($admin);
+
+        $response = $this->actingAs($admin)->get(route('donations.kwitansi', $donation));
+
+        $response->assertOk();
+        $response->assertSee('No. Kwitansi: ' . $donation->id);
+        $response->assertSeeInOrder([
+            'Nama Pendaftar',
+            'Budi Test',
+            'Nama Wakif / Donatur',
+            'Info Donatur Test',
+        ], false);
+    }
+
     public function test_kwitansi_is_forbidden_for_unrelated_agen(): void
     {
         $admin = $this->makeUser('admin');

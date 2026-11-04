@@ -20,7 +20,7 @@ class KwitansiImageService
     protected const MARGIN = 28;
 
     /** Versi tata letak — naikkan agar gambar lama di-regenerate ulang. */
-    protected const VERSION = 3;
+    protected const VERSION = 4;
 
     /** @var string */
     protected $font;
@@ -114,6 +114,7 @@ class KwitansiImageService
         return [
             'wakifName' => $wakifName,
             'pendaftar' => (string) ($donation->donor_info ?: ''),
+            'noKwitansi' => 'No. Kwitansi: ' . $donation->id,
             'phoneMasked' => mask_phone($phone),
             'items' => $items,
             'total' => $total,
@@ -194,8 +195,8 @@ class KwitansiImageService
             $this->ink, false, 26) + 22;
 
         $rows = [
-            ['Nama Wakif / Donatur *', $data['wakifName']],
-            ['Nama Pendaftar *', $data['pendaftar']],
+            ['Nama Pendaftar *', $data['wakifName']],
+            ['Nama Wakif / Donatur *', $data['pendaftar']],
             ['Alamat Surat', ''],
             ['Kota / Kabupaten', ''],
             ['No. Handphone', $data['phoneMasked']],
@@ -293,6 +294,8 @@ class KwitansiImageService
     {
         $width = $right - $x;
         $y = 232;
+
+        $this->text($img, 11, $x, 196, $data['noKwitansi'], $this->muted, false, 'right', $right);
 
         $logo = $this->loadImage($this->logo);
         if ($logo) {

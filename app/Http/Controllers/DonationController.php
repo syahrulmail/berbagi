@@ -660,6 +660,7 @@ class DonationController extends Controller
         return [
             'wakifName' => $wakifName,
             'pendaftar' => (string) ($donation->donor_info ?: ''),
+            'noKwitansi' => 'No. Kwitansi: ' . $donation->id,
             'phoneMasked' => mask_phone($phone),
             'items' => $items,
             'total' => $total,
