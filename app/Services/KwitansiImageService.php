@@ -20,13 +20,19 @@ class KwitansiImageService
     protected const MARGIN = 28;
 
     /** Versi tata letak — naikkan agar gambar lama di-regenerate ulang. */
-    protected const VERSION = 4;
+    protected const VERSION = 5;
 
     /** @var string */
     protected $font;
 
     /** @var string */
     protected $fontBold;
+
+    /** @var string  Font monospace (gaya nomor kwitansi). */
+    protected $fontMono;
+
+    /** @var string */
+    protected $fontMonoBold;
 
     /** @var string  Logo BWA (di public/images). */
     protected $logo;
@@ -49,6 +55,8 @@ class KwitansiImageService
     {
         $this->font = resource_path('fonts/DejaVuSans.ttf');
         $this->fontBold = resource_path('fonts/DejaVuSans-Bold.ttf');
+        $this->fontMono = resource_path('fonts/DejaVuSansMono.ttf');
+        $this->fontMonoBold = resource_path('fonts/DejaVuSansMono-Bold.ttf');
         $this->logo = public_path('images/logo-bwa.png');
         $this->logoWhite = public_path('images/logo-bwa-putih.png');
         $this->stamp = public_path('images/stamp-bwa.png');
@@ -295,7 +303,7 @@ class KwitansiImageService
         $width = $right - $x;
         $y = 232;
 
-        $this->text($img, 11, $x, 196, $data['noKwitansi'], $this->muted, false, 'right', $right);
+        $this->text($img, 16, $x, 202, $data['noKwitansi'], $this->ink, true, 'center', $right, true);
 
         $logo = $this->loadImage($this->logo);
         if ($logo) {
@@ -488,30 +496,34 @@ class KwitansiImageService
         return imagecolorallocate($img, $rgb[0], $rgb[1], $rgb[2]);
     }
 
-    protected function font(bool $bold): string
+    protected function font(bool $bold, bool $mono = false): string
     {
+        if ($mono) {
+            return $bold ? $this->fontMonoBold : $this->fontMono;
+        }
+
         return $bold ? $this->fontBold : $this->font;
     }
 
-    protected function textWidth($img, $size, string $text, bool $bold): float
+    protected function textWidth($img, $size, string $text, bool $bold, bool $mono = false): float
     {
         if ($text === '') {
             return 0;
         }
 
-        $bbox = imagettfbbox($size, 0, $this->font($bold), $text);
+        $bbox = imagettfbbox($size, 0, $this->font($bold, $mono), $text);
 
         return abs($bbox[2] - $bbox[0]);
     }
 
-    protected function text($img, $size, $x, $baseline, string $text, array $color, bool $bold = false, string $align = 'left', $right = null): void
+    protected function text($img, $size, $x, $baseline, string $text, array $color, bool $bold = false, string $align = 'left', $right = null, bool $mono = false): void
     {
         if ($text === '') {
             return;
         }
 
         $col = $this->color($img, $color);
-        $width = $this->textWidth($img, $size, $text, $bold);
+        $width = $this->textWidth($img, $size, $text, $bold, $mono);
 
         if ($align === 'center' && $right !== null) {
             $x = $x + (($right - $x - $width) / 2);
@@ -519,7 +531,7 @@ class KwitansiImageService
             $x = $right - $width;
         }
 
-        imagettftext($img, $size, 0, (int) round($x), (int) round($baseline), $col, $this->font($bold), $text);
+        imagettftext($img, $size, 0, (int) round($x), (int) round($baseline), $col, $this->font($bold, $mono), $text);
     }
 
     protected function wrapped($img, $size, $x, $baseline, $maxWidth, string $text, array $color, bool $bold = false, $lineHeight = 13): float

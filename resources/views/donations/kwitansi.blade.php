@@ -106,7 +106,15 @@
     .syarat { margin: 14px 12px 0; font-size: 9px; line-height: 1.55; }
     .syarat ol { margin: 4px 0 0; padding-left: 16px; }
 
-    .stub-no { font-size: 10px; text-align: right; margin: 0 0 2px; color: var(--muted); }
+    .stub-no {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        text-align: center;
+        color: var(--line);
+        margin: 0 0 4px;
+    }
     .stub-logo { text-align: center; margin: 6px 0 4px; }
     .stub-logo-img { height: 56px; width: auto; }
     .sign-area { position: absolute; right: 22px; bottom: 34px; width: 150px; height: 108px; pointer-events: none; }
