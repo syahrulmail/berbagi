@@ -788,6 +788,65 @@ class MobileModulesTest extends TestCase
             ->assertSee('Rp 150.000');
     }
 
+    public function test_dashboard_lists_all_agents_with_donations_above_zero(): void
+    {
+        $branch = $this->makeBranch();
+        $admin = $this->makeUser('admin');
+        $program = $this->makeProgram();
+
+        $agents = [];
+        for ($i = 0; $i < 12; $i++) {
+            $agent = $this->makeUser('agen', $branch);
+            $agent->name = 'Agen Berdonasi ' . $i;
+            $agent->save();
+            $this->makeProgramDonation($branch, $agent, $program, 10000 + $i, now()->toDateString());
+            $agents[] = $agent;
+        }
+
+        $zeroAgent = $this->makeUser('agen', $branch);
+        $zeroAgent->name = 'Agen Tanpa Donasi';
+        $zeroAgent->save();
+
+        $response = $this->actingAs($admin)->get(route('mo.dashboard'));
+
+        $response->assertOk();
+        foreach ($agents as $agent) {
+            $response->assertSee($agent->name);
+        }
+        $response->assertDontSee('Agen Tanpa Donasi');
+        $this->assertSame(12, substr_count($response->getContent(), 'mo-row-title">Agen Berdonasi '));
+    }
+
+    public function test_public_dashboard_lists_all_agents_with_donations_above_zero(): void
+    {
+        Setting::set('lapdfbwa_password', Hash::make('rahasia'));
+
+        $branch = $this->makeBranch();
+        $program = $this->makeProgram();
+
+        $agents = [];
+        for ($i = 0; $i < 12; $i++) {
+            $agent = $this->makeUser('agen', $branch);
+            $agent->name = 'Agen Publik ' . $i;
+            $agent->save();
+            $this->makeProgramDonation($branch, $agent, $program, 5000 + $i, now()->toDateString());
+            $agents[] = $agent;
+        }
+
+        $zeroAgent = $this->makeUser('agen', $branch);
+        $zeroAgent->name = 'Agen Publik Tanpa Donasi';
+        $zeroAgent->save();
+
+        $response = $this->get(route('lapdfbwa.show', ['t' => encrypt(json_encode(['exp' => now()->addHours(6)->timestamp]))]));
+
+        $response->assertOk();
+        foreach ($agents as $agent) {
+            $response->assertSee($agent->name);
+        }
+        $response->assertDontSee('Agen Publik Tanpa Donasi');
+        $this->assertSame(12, substr_count($response->getContent(), 'mo-row-title">Agen Publik '));
+    }
+
     public function test_dashboard_has_period_inputs_with_month_defaults(): void
     {
         $agent = $this->makeUser('agen', $this->makeBranch());

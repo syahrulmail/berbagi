@@ -384,14 +384,13 @@ class MobileAppController extends Controller
             ];
         });
 
-        // Agen dengan total donasi tertinggi (> 0) sesuai periode
+        // Semua agen dengan total donasi > 0 sesuai periode (tanpa batas jumlah)
         $topAgentRows = (clone $leaderboardQuery)
             ->whereNotNull('agen_id')
             ->selectRaw('agen_id, SUM(amount) as total, COUNT(*) as transactions')
             ->groupBy('agen_id')
             ->havingRaw('SUM(amount) > 0')
             ->orderByDesc('total')
-            ->limit(10)
             ->get();
 
         $agentsById = User::with('branch')->whereIn('id', $topAgentRows->pluck('agen_id'))->get()->keyBy('id');
