@@ -17,7 +17,7 @@
     <div class="mo-card mo-card--flat" style="font-size:12.5px;color:var(--mo-muted);line-height:1.55;">
         <strong style="color:var(--mo-text);"><i class="fas fa-circle-info"></i> Format data</strong><br>
         Urutan kolom: <b>Cabang, Agen, Nama, No. WhatsApp, Status, Catatan</b> (boleh pakai baris judul).
-        Status: Prospek, Simpan, Wakif, atau Stop. Nomor WA: 10-15 digit (contoh 62812xxxxxxx).
+        Status: Prospek, Simpan, Wakif, atau Stop. Nomor WA: 8-15 digit, boleh diawali 0/8, 62, +62, atau kode negara lain (contoh 62812xxxxxxx atau +60123456789).
     </div>
 
     <div class="mo-form-card">

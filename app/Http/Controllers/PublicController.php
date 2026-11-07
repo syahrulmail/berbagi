@@ -139,10 +139,8 @@ class PublicController extends Controller
 
         $collected = (float) $program->public_collected;
 
-        $waNumber = preg_replace('/\D/', '', $agen->phone ?: '');
-        $waNumber = $waNumber !== ''
-            ? $waNumber
-            : preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890'));
+        $waNumber = normalize_wa_phone($agen->phone ?: '')
+            ?? (preg_replace('/\D/', '', Setting::get('wa_public_number', '6281234567890')) ?: '6281234567890');
 
         $waTemplate = Setting::get('wa_agent_template', '');
 
@@ -166,8 +164,8 @@ class PublicController extends Controller
         $waTemplate = Setting::get('wa_agent_template', '');
         $waFallback = Setting::get('wa_public_number', '6281234567890');
 
-        $cleanPhone = preg_replace('/\D/', '', $agen->phone ?: '');
-        $waNumber = $cleanPhone !== '' ? $cleanPhone : preg_replace('/\D/', '', $waFallback);
+        $cleanPhone = normalize_wa_phone($agen->phone ?: '');
+        $waNumber = $cleanPhone ?? (preg_replace('/\D/', '', $waFallback) ?: '6281234567890');
 
         $programCards = $this->cardifyPrograms($programs, $waNumber, $waTemplate, 'agent', $agen);
 

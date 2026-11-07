@@ -368,7 +368,7 @@ class MobileCrudController extends MobileAppController
 
         if ($normalized === null) {
             throw ValidationException::withMessages([
-                'phone' => 'Format No. WhatsApp tidak valid. Gunakan 10-15 digit angka (contoh: 62812xxxxxxx atau 0812xxxxxxx).',
+                'phone' => 'Format No. WhatsApp tidak valid. Gunakan 8-15 digit angka, boleh diawali 0/8 (Indonesia), 62, +62, atau kode negara lain (contoh: 62812xxxxxxx atau +60123456789).',
             ]);
         }
 

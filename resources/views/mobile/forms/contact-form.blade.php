@@ -33,7 +33,7 @@
             <div class="mo-field">
                 <label for="phone">No. WhatsApp <span class="req">*</span></label>
                 <input type="tel" id="phone" name="phone" class="mo-input" value="{{ old('phone', $contact->phone ?? '') }}" required placeholder="628xxxxxxx">
-                <div class="mo-form-help">Gunakan angka 10-15 digit, boleh diawali 0, 62, atau +62.</div>
+                <div class="mo-form-help">Gunakan angka 8-15 digit, boleh diawali 0/8, 62, +62, atau kode negara lain (mis. +60).</div>
             </div>
 
             <div class="mo-field">

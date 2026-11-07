@@ -238,17 +238,14 @@ class WhatsAppSenderService
 
     public function normalizePhone(string $phone): string
     {
-        $digits = preg_replace('/\D+/', '', $phone);
+        $normalized = normalize_wa_phone($phone);
 
-        if ($digits === '') {
-            return '';
+        if ($normalized !== null) {
+            return $normalized;
         }
 
-        if ($digits[0] === '0') {
-            $digits = '62' . substr($digits, 1);
-        }
-
-        return $digits;
+        // Fallback: kirim digit mentah agar nomor lama/aneh tetap dapat dicoba.
+        return (string) preg_replace('/\D+/', '', $phone);
     }
 
     protected function starsenderBase(): string

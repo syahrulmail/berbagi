@@ -212,6 +212,59 @@ if (! function_exists('terbilang_id')) {
     }
 }
 
+if (! function_exists('normalize_wa_phone')) {
+    /**
+     * Normalisasi nomor WhatsApp ke bentuk digit tanpa tanda "+".
+     *
+     * Nomor Indonesia lokal (diawali 0 atau 8) diubah ke awalan 62, sedangkan
+     * nomor luar negeri wajib sudah menyertakan kode negara (mis. 60, 65, 1)
+     * dan disimpan apa adanya tanpa "+". Awalan internasional "00" dibuang.
+     *
+     * @return string|null  Digit 8-15 karakter, atau null bila tidak valid.
+     */
+    function normalize_wa_phone($phone)
+    {
+        $phone = trim((string) $phone);
+
+        if ($phone === '') {
+            return null;
+        }
+
+        // Hanya izinkan digit dan pemisah umum (spasi, -, (), ., +).
+        if (preg_match('/[^\d\s\-().+]/', $phone)) {
+            return null;
+        }
+
+        $trimmed = ltrim($phone);
+        $explicitInternational = ($trimmed !== '' && $trimmed[0] === '+')
+            || preg_match('/^\s*00/', $phone) === 1;
+
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        if ($digits === '' || $digits === null) {
+            return null;
+        }
+
+        if (substr($digits, 0, 2) === '00') {
+            // Awalan internasional 00 -> kode negara langsung.
+            $digits = substr($digits, 2);
+        } elseif (! $explicitInternational && $digits[0] === '0') {
+            // Nomor lokal Indonesia: 08xx -> 628xx.
+            $digits = '62' . substr($digits, 1);
+        } elseif (! $explicitInternational && $digits[0] === '8') {
+            // Nomor Indonesia tanpa 0 di depan: 8xx -> 628xx.
+            $digits = '62' . $digits;
+        }
+
+        $len = strlen($digits);
+        if ($len < 8 || $len > 15) {
+            return null;
+        }
+
+        return $digits;
+    }
+}
+
 if (! function_exists('mask_phone')) {
     /**
      * Sembunyikan 4 digit terakhir nomor telepon dengan tanda bintang,
@@ -276,11 +329,7 @@ if (! function_exists('kwitansi_link_wa_url')) {
     {
         $contact = $donation->contact;
         $phone = $contact ? (string) $contact->phone : '';
-        $digits = preg_replace('/\D+/', '', $phone);
-
-        if ($digits !== '' && $digits[0] === '0') {
-            $digits = '62' . substr($digits, 1);
-        }
+        $digits = normalize_wa_phone($phone) ?? '';
 
         if ($digits === '') {
             return '';

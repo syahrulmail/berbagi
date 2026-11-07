@@ -286,6 +286,13 @@ class DonationController extends Controller
                 } elseif (strpos($digits, '8') === 0) {
                     $phoneVariants[] = '62' . $digits;
                 }
+
+                $normalized = normalize_wa_phone($search);
+                if ($normalized !== null) {
+                    $phoneVariants[] = $normalized;
+                }
+
+                $phoneVariants = array_values(array_unique($phoneVariants));
             }
 
             return $q->where(function ($inner) use ($search, $phoneVariants) {

@@ -94,7 +94,7 @@ class ContactImportService
 
             $normalizedPhone = $this->normalizePhone($phone);
             if ($normalizedPhone === null) {
-                $errors[] = "Baris {$lineNo}: No. WhatsApp '{$phone}' tidak valid. Gunakan 10-15 digit angka (contoh: 62812xxxxxxx atau 0812xxxxxxx).";
+                $errors[] = "Baris {$lineNo}: No. WhatsApp '{$phone}' tidak valid. Gunakan 8-15 digit angka, boleh diawali 0/8 (Indonesia), 62, +62, atau kode negara lain (contoh: 62812xxxxxxx atau +60123456789).";
                 continue;
             }
 
@@ -750,36 +750,7 @@ class ContactImportService
 
     public function normalizePhone(string $phone): ?string
     {
-        $phone = trim($phone);
-        if ($phone === '') {
-            return null;
-        }
-
-        if (preg_match('/[^\d\s\-().+]/', $phone)) {
-            return null;
-        }
-
-        $digits = preg_replace('/\D+/', '', $phone);
-        if ($digits === '') {
-            return null;
-        }
-
-        if (substr($digits, 0, 2) === '62') {
-            // already in international format
-        } elseif ($digits[0] === '0') {
-            $digits = '62' . substr($digits, 1);
-        } elseif ($digits[0] === '8') {
-            $digits = '62' . $digits;
-        } else {
-            return null;
-        }
-
-        $len = strlen($digits);
-        if ($len < 10 || $len > 15) {
-            return null;
-        }
-
-        return $digits;
+        return normalize_wa_phone($phone);
     }
 
     public function normalizedPhoneMap(?int $agenId = null): array
