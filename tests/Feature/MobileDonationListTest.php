@@ -119,6 +119,26 @@ class MobileDonationListTest extends TestCase
         $response->assertDontSee('Lainnya');
     }
 
+    public function test_quick_add_sheet_has_followup_wa_at_bottom(): void
+    {
+        $branch = $this->makeBranch();
+        $agen = $this->makeUser('agen', $branch);
+
+        $response = $this->actingAs($agen)->get(route('mo.donations'));
+
+        $response->assertOk();
+        $response->assertSee('id="mo-add-sheet"', false);
+        $response->assertSee('Follow-up WA');
+
+        // Follow-up WA harus muncul setelah Tambah Donasi & Tambah Kontak (paling bawah).
+        $content = $response->getContent();
+        $this->assertGreaterThan(
+            strpos($content, 'Tambah Kontak'),
+            strpos($content, 'Follow-up WA')
+        );
+        $this->assertStringContainsString(route('mo.whatsapp'), $content);
+    }
+
     public function test_advanced_filters_are_hidden_by_default(): void
     {
         $branch = $this->makeBranch();

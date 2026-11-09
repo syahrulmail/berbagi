@@ -86,6 +86,14 @@
                     <i class="fas fa-chevron-right mo-add-action-chevron"></i>
                 </a>
             @endif
+            <a href="{{ route('mo.whatsapp') }}" class="mo-add-action">
+                <span class="mo-add-action-icon mo-add-action-icon--followup"><i class="fab fa-whatsapp"></i></span>
+                <span class="mo-add-action-text">
+                    <strong>Follow-up WA</strong>
+                    <small>Kirim &amp; pantau follow-up WhatsApp</small>
+                </span>
+                <i class="fas fa-chevron-right mo-add-action-chevron"></i>
+            </a>
         </div>
     </div>
 
