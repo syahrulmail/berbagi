@@ -61,6 +61,28 @@ class ContactImportTemplateTest extends TestCase
         $response->assertSee('downloads/template-import-kontak.csv', false);
     }
 
+    public function test_mobile_import_page_shows_structured_format_guide(): void
+    {
+        $branch = Branch::create([
+            'code' => 'BWA-FMT',
+            'name' => 'Cabang Format',
+            'is_active' => true,
+        ]);
+        $admin = $this->makeUser('admin', $branch);
+
+        $response = $this->actingAs($admin)->get(route('mo.contact.import-form'));
+
+        $response->assertOk();
+        $response->assertSee('<b>Cabang, Agen, Nama, No. WhatsApp, Status, Catatan</b>', false);
+        $response->assertSee('<b>Prospek, Simpan, Wakif, atau Stop</b>', false);
+        $response->assertSee('8-15 digit', false);
+        $response->assertSee('<b>62</b>', false);
+        $response->assertSee('<b>+62</b>', false);
+        $response->assertSee('+60123456789');
+        $response->assertSee('data-file-label', false);
+        $response->assertSee('data-import-file', false);
+    }
+
     public function test_template_files_exist_in_public_downloads()
     {
         foreach (['xlsx', 'xls', 'csv'] as $ext) {
