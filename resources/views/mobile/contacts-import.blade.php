@@ -18,7 +18,7 @@
         <strong style="color:var(--mo-text);"><i class="fas fa-circle-info"></i> Format data</strong><br>
         <div style="margin-top:6px;"><strong style="color:var(--mo-text);">Urutan kolom:</strong> <b>Cabang, Agen, Nama, No. WhatsApp, Status, Catatan</b> (boleh pakai baris judul).</div>
         <div><strong style="color:var(--mo-text);">Status:</strong> <b>Prospek, Simpan, Wakif, atau Stop</b>.</div>
-        <div><strong style="color:var(--mo-text);">Nomor WA:</strong> 8-15 digit, harus diawali <b>62</b>, <b>+62</b>, atau kode negara lain (contoh 62812xxxxxxx atau +60123456789).</div>
+        <div><strong style="color:var(--mo-text);">Nomor WA:</strong> 8-15 digit, boleh diawali <b>62</b>, <b>+62</b>, kode negara lain, atau 0/8 yang otomatis diubah ke 62 (contoh 62812xxxxxxx atau +60123456789).</div>
     </div>
 
     <div class="mo-form-card">
