@@ -817,6 +817,54 @@ class MobileModulesTest extends TestCase
         $this->assertSame(12, substr_count($response->getContent(), 'mo-row-title">Agen Berdonasi '));
     }
 
+    public function test_dashboard_donation_proportion_lists_all_agents_above_zero(): void
+    {
+        $branch = $this->makeBranch();
+        $supervisor = $this->makeUser('supervisor', $branch);
+        $program = $this->makeProgram();
+
+        $agents = [];
+        for ($i = 0; $i < 10; $i++) {
+            $agent = $this->makeUser('agen', $branch);
+            $this->makeProgramDonation($branch, $agent, $program, 10000 + $i, now()->toDateString());
+            $agents[] = $agent;
+        }
+
+        $zeroAgent = $this->makeUser('agen', $branch);
+        $zeroAgent->name = 'Agen Proporsi Nol';
+        $zeroAgent->save();
+
+        $response = $this->actingAs($supervisor)->get(route('mo.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Proporsi Donasi');
+        $this->assertSame(10, substr_count($response->getContent(), 'class="mo-proporsi-item"'));
+        $response->assertDontSee('Agen Proporsi Nol');
+    }
+
+    public function test_dashboard_donation_proportion_lists_all_branches_above_zero(): void
+    {
+        $admin = $this->makeUser('admin');
+        $program = $this->makeProgram();
+
+        $branches = [];
+        for ($i = 0; $i < 10; $i++) {
+            $branch = $this->makeBranch('Prop ' . $i);
+            $agen = $this->makeUser('agen', $branch);
+            $this->makeProgramDonation($branch, $agen, $program, 20000 + $i, now()->toDateString());
+            $branches[] = $branch;
+        }
+
+        $zeroBranch = $this->makeBranch('Prop Nol');
+        $zeroAgen = $this->makeUser('agen', $zeroBranch);
+
+        $response = $this->actingAs($admin)->get(route('mo.dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(10, substr_count($response->getContent(), 'class="mo-proporsi-item"'));
+        $response->assertDontSee('title="' . $zeroBranch->name . '"', false);
+    }
+
     public function test_public_dashboard_lists_all_agents_with_donations_above_zero(): void
     {
         Setting::set('lapdfbwa_password', Hash::make('rahasia'));

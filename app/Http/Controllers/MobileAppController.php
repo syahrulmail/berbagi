@@ -494,6 +494,7 @@ class MobileAppController extends Controller
             ->whereNotNull($column)
             ->selectRaw("{$column} as ref_id, SUM(amount) as total")
             ->groupBy($column)
+            ->havingRaw('SUM(amount) > 0')
             ->orderByDesc('total')
             ->get();
 
@@ -513,19 +514,6 @@ class MobileAppController extends Controller
                 'total_formatted' => 'Rp ' . number_format($amount, 0, ',', '.'),
                 'percent' => $total > 0 ? round(($amount / $total) * 100, 1) : 0,
             ];
-        }
-
-        if (count($items) > 8) {
-            $top = array_slice($items, 0, 7);
-            $rest = array_slice($items, 7);
-            $restTotal = array_sum(array_column($rest, 'total'));
-            $top[] = [
-                'name' => 'Lainnya (' . count($rest) . ' ' . ($perBranch ? 'cabang' : 'agen') . ')',
-                'total' => $restTotal,
-                'total_formatted' => 'Rp ' . number_format($restTotal, 0, ',', '.'),
-                'percent' => $total > 0 ? round(($restTotal / $total) * 100, 1) : 0,
-            ];
-            $items = $top;
         }
 
         return [
