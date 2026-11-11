@@ -77,4 +77,22 @@ class MobileSettingController extends SettingController
 
         return redirect()->route('mo.settings.partners')->with('success', 'Logo mitra berhasil disimpan.');
     }
+
+    public function instagram()
+    {
+        $settings = [
+            'home_instagram_posts' => $this->decodeInstagramPosts(Setting::get('home_instagram_posts', '[]')),
+        ];
+
+        return view('mobile.settings.instagram', compact('settings'));
+    }
+
+    public function instagramUpdate(Request $request)
+    {
+        $this->saveInstagramPosts($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui postingan Instagram beranda');
+
+        return redirect()->route('mo.settings.instagram')->with('success', 'Postingan Instagram berhasil disimpan.');
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
@@ -77,6 +78,24 @@ class SettingController extends Controller
         ActivityLog::record('settings.update', 'Memperbarui logo mitra');
 
         return redirect()->route('settings.partners')->with('success', 'Logo mitra berhasil disimpan.');
+    }
+
+    public function instagram()
+    {
+        $settings = [
+            'home_instagram_posts' => $this->decodeInstagramPosts(Setting::get('home_instagram_posts', '[]')),
+        ];
+
+        return view('settings.instagram', compact('settings'));
+    }
+
+    public function instagramUpdate(Request $request)
+    {
+        $this->saveInstagramPosts($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui postingan Instagram beranda');
+
+        return redirect()->route('settings.instagram')->with('success', 'Postingan Instagram berhasil disimpan.');
     }
 
     protected function generalSettings(): array
@@ -177,6 +196,61 @@ class SettingController extends Controller
         $html = preg_replace('/<(a|span)[^>]*\s+(href|src)\s*=\s*(?:"|\')javascript:[^"\']*(?:"|\')/i', '<$1', $html);
 
         return trim($html);
+    }
+
+    /**
+     * @return array<int,array{url:string,embed:string}>
+     */
+    protected function decodeInstagramPosts(string $json): array
+    {
+        $decoded = json_decode($json, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $posts = [];
+        foreach ($decoded as $item) {
+            $url = trim(is_array($item) ? (string) ($item['url'] ?? '') : (string) $item);
+            if ($url === '') {
+                continue;
+            }
+
+            $posts[] = [
+                'url'   => $url,
+                'embed' => instagram_embed_url($url) ?? '',
+            ];
+        }
+
+        return $posts;
+    }
+
+    protected function saveInstagramPosts(Request $request): void
+    {
+        $request->validate([
+            'posts' => ['nullable', 'array'],
+            'posts.*.url' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $posts = [];
+
+        foreach ((array) $request->input('posts', []) as $row) {
+            $url = trim((string) (is_array($row) ? ($row['url'] ?? '') : $row));
+
+            if ($url === '') {
+                continue;
+            }
+
+            if (instagram_embed_url($url) === null) {
+                throw ValidationException::withMessages([
+                    'posts' => 'Tautan "' . $url . '" bukan URL postingan Instagram yang valid. Gunakan contoh: https://www.instagram.com/p/KODE/ atau https://www.instagram.com/reel/KODE/',
+                ]);
+            }
+
+            $posts[] = ['url' => $url];
+        }
+
+        Setting::set('home_instagram_posts', json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     protected function decodeTestimonials(string $json): array

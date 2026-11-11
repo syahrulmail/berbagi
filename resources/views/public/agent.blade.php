@@ -118,6 +118,8 @@
 
 @include('public.partials.achievement-slider')
 
+@include('public.partials.instagram-posts')
+
 <main class="section">
     <div class="container">
         <div data-vue-app="ProgramExplorer">

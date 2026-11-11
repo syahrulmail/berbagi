@@ -42,9 +42,38 @@ class PublicController extends Controller
 
         $sections = $this->funnelSections();
 
+        $instagramPosts = $this->instagramPosts();
+
         return view('public.home', compact(
-            'programs', 'programCards', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate'
+            'programs', 'programCards', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate', 'instagramPosts'
         ) + $sections);
+    }
+
+    /**
+     * Daftar URL embed Instagram yang ditampilkan di bawah kartu pencapaian.
+     * Kunci "home_instagram_posts" menyimpan larik objek berisi "url".
+     *
+     * @return array<int,string>
+     */
+    protected function instagramPosts(): array
+    {
+        $decoded = json_decode((string) Setting::get('home_instagram_posts', '[]'), true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $posts = [];
+        foreach ($decoded as $item) {
+            $url = is_array($item) ? (string) ($item['url'] ?? '') : (string) $item;
+            $embed = instagram_embed_url($url);
+
+            if ($embed !== null) {
+                $posts[] = $embed;
+            }
+        }
+
+        return $posts;
     }
 
     protected function funnelSections(): array
@@ -186,7 +215,9 @@ class PublicController extends Controller
             ? $profile['intro']
             : 'Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.';
 
-        return view('public.agent', compact('agen', 'programs', 'programCards', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro') + $sections);
+        $instagramPosts = $this->instagramPosts();
+
+        return view('public.agent', compact('agen', 'programs', 'programCards', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro', 'instagramPosts') + $sections);
     }
 
     protected function agentProfile(User $user): array

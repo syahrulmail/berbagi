@@ -395,3 +395,33 @@ if (! function_exists('kwitansi_caption')) {
         return implode("\n", $lines);
     }
 }
+
+if (! function_exists('instagram_embed_url')) {
+    /**
+     * Ubah tautan postingan Instagram menjadi URL embed resmi.
+     *
+     * Mendukung tautan post (/p/), reel (/reel/ atau /reels/), dan IGTV
+     * (/tv/), termasuk awalan http/https, www, dan parameter query.
+     *
+     * @return string|null  URL embed, atau null bila bukan tautan postingan.
+     */
+    function instagram_embed_url($url)
+    {
+        $url = trim((string) $url);
+
+        if ($url === '') {
+            return null;
+        }
+
+        if (! preg_match('#^https?://(?:www\.)?(?:instagram\.com|instagr\.am)/(p|reel|reels|tv)/([A-Za-z0-9_-]+)#i', $url, $m)) {
+            return null;
+        }
+
+        $type = strtolower($m[1]);
+        if ($type === 'reels') {
+            $type = 'reel';
+        }
+
+        return 'https://www.instagram.com/' . $type . '/' . $m[2] . '/embed/';
+    }
+}
