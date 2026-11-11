@@ -68,8 +68,28 @@ class InstagramPostsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('https://www.instagram.com/p/DfmbqAppDMi/embed/', false);
-        $response->assertSee('Kabar Terbaru Kami');
         $response->assertSee('data-ig-posts', false);
+        // Header embed disembunyikan: tidak ada judul bagian maupun header akun.
+        $response->assertDontSee('Kabar Terbaru Kami');
+        $response->assertDontSee('Ikuti kegiatan dan program terbaru BWA melalui Instagram.');
+    }
+
+    public function test_reel_posts_are_zoomed_to_remove_black_side_bars(): void
+    {
+        Setting::set('home_instagram_posts', json_encode([
+            ['url' => 'https://www.instagram.com/reel/REELWIDE1/', 'ratio' => 1.775],
+            ['url' => 'https://www.instagram.com/p/SQUAREPOST1/', 'ratio' => 1.0],
+        ]));
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        // Reel vertikal: kartu setinggi media & iframe diperbesar.
+        $response->assertSee('aspect-ratio: 1 / 1.775', false);
+        $response->assertSee('--ig-zoom: 1.42', false);
+        // Foto persegi: tidak perlu diperbesar.
+        $response->assertSee('aspect-ratio: 1 / 1;', false);
+        $response->assertSee('--ig-zoom: 1;', false);
     }
 
     public function test_home_hides_instagram_section_without_posts(): void
@@ -78,7 +98,7 @@ class InstagramPostsTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertDontSee('Kabar Terbaru Kami');
+            ->assertDontSee('data-ig-posts', false);
     }
 
     public function test_invalid_setting_links_are_ignored_on_public_home(): void
@@ -123,6 +143,7 @@ class InstagramPostsTest extends TestCase
     public function test_admin_cannot_save_non_instagram_link(): void
     {
         $admin = $this->makeUser('admin');
+        $before = Setting::get('home_instagram_posts', '[]');
 
         $this->actingAs($admin)
             ->put(route('settings.instagram.update'), [
@@ -132,7 +153,7 @@ class InstagramPostsTest extends TestCase
             ])
             ->assertSessionHasErrors('posts');
 
-        $this->assertSame('[]', Setting::get('home_instagram_posts', '[]'));
+        $this->assertSame($before, Setting::get('home_instagram_posts', '[]'));
     }
 
     public function test_supervisor_cannot_manage_instagram_posts(): void

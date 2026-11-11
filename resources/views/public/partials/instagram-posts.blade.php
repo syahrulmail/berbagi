@@ -1,64 +1,67 @@
 @push('styles')
 <style>
+    /* Kartu menampilkan isi postingan saja: header embed Instagram
+       (avatar, nama akun, tombol "View profile") dan footer disembunyikan
+       dengan menggeser/memotong iframe, dan bilah hitam kiri-kanan pada
+       video vertikal dihilangkan dengan memperbesar iframe sesuai rasio
+       media (lihat perhitungan --ig-zoom & --ig-top dari controller). */
     .ig-posts {
         position: relative;
     }
     .ig-posts-track {
         display: flex;
-        gap: 16px;
+        align-items: flex-start;
+        gap: 14px;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
-        padding: 4px 2px 12px;
+        padding: 2px 2px 8px;
     }
     .ig-posts-track::-webkit-scrollbar {
         display: none;
     }
+    /* Saat postingan sedikit (muat di layar lebar), kartu ditengahkan. */
+    @media (min-width: 768px) {
+        .ig-posts-track--center {
+            justify-content: center;
+        }
+    }
     .ig-posts-item {
-        flex: 0 0 300px;
-        max-width: 300px;
-        scroll-snap-align: center;
-        border-radius: 20px;
+        position: relative;
+        flex: 0 0 272px;
+        max-width: 272px;
         overflow: hidden;
-        background: #fff;
-        border: 1px solid rgba(2, 35, 33, .08);
+        border-radius: 14px;
+        background: #000;
         box-shadow: 0 12px 30px -18px rgba(2, 35, 33, .45);
     }
     .ig-posts-item iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
         display: block;
         width: 100%;
-        height: 380px;
+        height: 1600px;
         border: 0;
-        background: #fff;
-    }
-    @media (min-width: 768px) {
-        .ig-posts-item {
-            flex: 0 0 320px;
-            max-width: 320px;
-        }
-        .ig-posts-item iframe {
-            height: 400px;
-        }
+        background: #000;
+        transform-origin: top center;
+        transform: translateY(var(--ig-top, -54px)) scale(var(--ig-zoom, 1));
     }
 </style>
 @endpush
 
 @if(!empty($instagramPosts))
-<section class="border-b border-black/5 bg-white py-14" data-reveal>
+<section class="border-b border-black/5 bg-white py-10" data-reveal>
     <div class="container">
         <div class="mx-auto max-w-6xl">
-            <div class="mb-6 text-center">
-                <h2 class="text-2xl font-extrabold text-primary-900">Kabar Terbaru Kami</h2>
-                <p class="mt-2 text-sm text-gray-500">Ikuti kegiatan dan program terbaru BWA melalui Instagram.</p>
-            </div>
-
             <div class="ig-posts" data-ig-posts data-interval="7000">
-                <div class="ig-posts-track" data-ig-track>
-                    @foreach($instagramPosts as $index => $embed)
-                        <div class="ig-posts-item" data-ig-item>
+                <div class="ig-posts-track{{ count($instagramPosts) <= 4 ? ' ig-posts-track--center' : '' }}" data-ig-track>
+                    @foreach($instagramPosts as $index => $post)
+                        <div class="ig-posts-item" data-ig-item
+                             style="aspect-ratio: 1 / {{ $post['ratio'] }}; --ig-zoom: {{ $post['zoom'] }}; --ig-top: {{ $post['top'] }}px;">
                             <iframe
-                                src="{{ $embed }}"
+                                src="{{ $post['embed'] }}"
                                 title="Postingan Instagram {{ $index + 1 }}"
                                 loading="lazy"
                                 allowtransparency="true"

@@ -86,6 +86,8 @@ class SettingController extends Controller
             'home_instagram_posts' => $this->decodeInstagramPosts(Setting::get('home_instagram_posts', '[]')),
         ];
 
+        $this->backfillInstagramRatios($settings['home_instagram_posts']);
+
         return view('settings.instagram', compact('settings'));
     }
 
@@ -219,10 +221,48 @@ class SettingController extends Controller
             $posts[] = [
                 'url'   => $url,
                 'embed' => instagram_embed_url($url) ?? '',
+                'ratio' => instagram_post_ratio($url),
             ];
         }
 
         return $posts;
+    }
+
+    /**
+     * Postingan yang disimpan sebelum fitur rasio ada belum punya data
+     * "ratio". Lengkapi sekali di halaman admin agar kartu publik dapat
+     * menyesuaikan bentuk media tanpa memanggil Instagram saat render.
+     *
+     * @param  array<int,array{url:string,embed:string,ratio:?float}>  $posts
+     */
+    protected function backfillInstagramRatios(array &$posts): void
+    {
+        $changed = false;
+
+        foreach ($posts as $index => $post) {
+            if ($post['ratio'] !== null || $post['embed'] === '') {
+                continue;
+            }
+
+            $ratio = instagram_post_ratio($post['url']);
+            if ($ratio !== null) {
+                $posts[$index]['ratio'] = $ratio;
+                $changed = true;
+            }
+        }
+
+        if (! $changed) {
+            return;
+        }
+
+        $stored = array_map(function ($post) {
+            return [
+                'url'   => $post['url'],
+                'ratio' => $post['ratio'],
+            ];
+        }, $posts);
+
+        Setting::set('home_instagram_posts', json_encode($stored, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     protected function saveInstagramPosts(Request $request): void
@@ -247,7 +287,10 @@ class SettingController extends Controller
                 ]);
             }
 
-            $posts[] = ['url' => $url];
+            $posts[] = [
+                'url'   => $url,
+                'ratio' => instagram_post_ratio($url),
+            ];
         }
 
         Setting::set('home_instagram_posts', json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

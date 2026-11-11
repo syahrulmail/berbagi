@@ -425,3 +425,67 @@ if (! function_exists('instagram_embed_url')) {
         return 'https://www.instagram.com/' . $type . '/' . $m[2] . '/embed/';
     }
 }
+
+if (! function_exists('instagram_post_ratio')) {
+    /**
+     * Rasio tinggi/lebar media sebuah postingan Instagram (mis. 1.775 untuk
+     * reel 9:16), diambil dari metadata oEmbed resmi Instagram.
+     *
+     * Dipakai untuk menyusun kartu embed sesuai bentuk asli media sehingga
+     * tidak ada bilah hitam di kiri-kanan. Hasil di-cache agar halaman
+     * publik tidak memanggil Instagram pada setiap request.
+     *
+     * @return float|null  Rasio tinggi/lebar, atau null bila tidak diketahui.
+     */
+    function instagram_post_ratio($url)
+    {
+        $url = trim((string) $url);
+
+        if (! preg_match('#instagram\.com/(?:p|reel|tv)/([A-Za-z0-9_-]+)#i', $url, $m)) {
+            return null;
+        }
+
+        $shortcode = $m[1];
+        $cacheKey = 'instagram_ratio_' . $shortcode;
+
+        $cached = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $cached === 'fail' ? null : (float) $cached;
+        }
+
+        // Jangan melakukan panggilan jaringan saat unit test.
+        if (app()->runningUnitTests()) {
+            return null;
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)
+                ->withOptions(['connect_timeout' => 3])
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; BerbagiBot/1.0)'])
+                ->get('https://www.instagram.com/api/v1/oembed/', ['url' => $url]);
+
+            if (! $response->ok()) {
+                throw new \RuntimeException('oEmbed HTTP ' . $response->status());
+            }
+
+            $data = $response->json();
+            $w = (int) ($data['thumbnail_width'] ?? 0);
+            $h = (int) ($data['thumbnail_height'] ?? 0);
+
+            if ($w > 0 && $h > 0) {
+                $ratio = round($h / $w, 3);
+                if ($ratio >= 0.5 && $ratio <= 2.6) {
+                    \Illuminate\Support\Facades\Cache::put($cacheKey, $ratio, 604800);
+
+                    return $ratio;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Diamkan: kartu tetap tampil dengan rasio kotak (1:1).
+        }
+
+        \Illuminate\Support\Facades\Cache::put($cacheKey, 'fail', 900);
+
+        return null;
+    }
+}

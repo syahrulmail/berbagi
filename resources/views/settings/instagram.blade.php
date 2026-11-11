@@ -73,10 +73,11 @@
                         <div class="ig-row-fields">
                             <input type="url" name="posts[{{ $index }}][url]" value="{{ $post['url'] }}" placeholder="https://www.instagram.com/p/DfmbqAppDMi/" maxlength="255">
                             <div class="ig-row-hint {{ $post['embed'] === '' ? 'error' : '' }}">
-                                @if($post['embed'] !== '')
-                                    Embed: {{ $post['embed'] }}
-                                @else
+                                @if($post['embed'] === '')
                                     Tautan tidak dikenali sebagai postingan Instagram.
+                                @else
+                                    Embed: {{ $post['embed'] }}<br>
+                                    Rasio media: {{ $post['ratio'] ? number_format($post['ratio'], 3, ',', '.') : 'belum terdeteksi (kartu memakai bentuk persegi)' }}
                                 @endif
                             </div>
                         </div>
@@ -92,7 +93,8 @@
                 <code>https://www.instagram.com/p/KODE/</code>,
                 <code>https://www.instagram.com/reel/KODE/</code>,
                 <code>https://www.instagram.com/tv/KODE/</code>.
-                Postingan harus berasal dari akun publik.
+                Postingan harus berasal dari akun publik. Bentuk kartu mengikuti
+                rasio media yang dibaca saat URL disimpan.
             </small>
         </div>
 

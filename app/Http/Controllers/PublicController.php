@@ -50,10 +50,10 @@ class PublicController extends Controller
     }
 
     /**
-     * Daftar URL embed Instagram yang ditampilkan di bawah kartu pencapaian.
+     * Daftar postingan Instagram yang ditampilkan di bawah kartu pencapaian.
      * Kunci "home_instagram_posts" menyimpan larik objek berisi "url".
      *
-     * @return array<int,string>
+     * @return array<int,array{embed:string,ratio:float,zoom:float,top:int}>
      */
     protected function instagramPosts(): array
     {
@@ -68,9 +68,35 @@ class PublicController extends Controller
             $url = is_array($item) ? (string) ($item['url'] ?? '') : (string) $item;
             $embed = instagram_embed_url($url);
 
-            if ($embed !== null) {
-                $posts[] = $embed;
+            if ($embed === null) {
+                continue;
             }
+
+            // Rasio media diambil sekali saat admin menyimpan URL, agar
+            // halaman publik tidak pernah menunggu panggilan ke Instagram.
+            $ratio = is_array($item) ? (float) ($item['ratio'] ?? 0) : 0.0;
+            if ($ratio < 0.5 || $ratio > 2.6) {
+                $ratio = 1.0;
+            }
+
+            // Embed resmi membatasi tinggi media pada kotak 4:5 (1,25).
+            // Media yang lebih tinggi (reel/IGTV) jadi mengecil dan diberi
+            // bilah hitam di kiri-kanan, sehingga perlu diperbesar tepat
+            // sampai lebarnya memenuhi kartu. Media 4:5 atau lebih pendek
+            // sudah selebar kartu, tetapi masih ada sisa kotak di atasnya
+            // yang ikut digeser agar media rata atas. Lebar kartu dikunci
+            // 272px supaya hitungan piksel ini tepat.
+            $cardWidth = 272;
+            $zoom = max(1, $ratio / 1.25);
+            $pad  = max(0, (1.25 - $ratio) / 2) * $cardWidth;
+
+            $posts[] = [
+                'embed' => $embed,
+                'ratio' => $ratio,
+                'zoom'  => round($zoom, 4),
+                // 54px = tinggi header embed Instagram pada lebar alaminya.
+                'top'   => (int) round(-(54 * $zoom + $pad)),
+            ];
         }
 
         return $posts;

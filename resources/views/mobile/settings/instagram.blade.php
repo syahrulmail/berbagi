@@ -32,10 +32,11 @@
                             <input type="url" class="mo-input" name="posts[{{ $index }}][url]" value="{{ $post['url'] }}" placeholder="https://www.instagram.com/p/DfmbqAppDMi/" maxlength="255">
                         </div>
                         <div class="mo-form-help" style="word-break:break-all;{{ $post['embed'] === '' ? 'color:var(--mo-danger);' : '' }}">
-                            @if($post['embed'] !== '')
-                                Embed: {{ $post['embed'] }}
-                            @else
+                            @if($post['embed'] === '')
                                 Tautan tidak dikenali sebagai postingan Instagram.
+                            @else
+                                Embed: {{ $post['embed'] }}<br>
+                                Rasio media: {{ $post['ratio'] ? number_format($post['ratio'], 3, ',', '.') : 'belum terdeteksi' }}
                             @endif
                         </div>
                         <button type="button" class="mo-ig-rm mo-remove-btn" style="margin-top:8px;width:100%;"><i class="fas fa-trash-can"></i> Hapus</button>
