@@ -80,28 +80,6 @@ if (! function_exists('photo_dimensions')) {
     }
 }
 
-if (! function_exists('optimize_uploaded_photo')) {
-    /**
-     * Buat varian WebP untuk foto yang baru diunggah (abaikan kegagalan).
-     */
-    function optimize_uploaded_photo($path)
-    {
-        $path = (string) $path;
-
-        if ($path === '' || preg_match('#^(https?://|data:)#i', $path)) {
-            return $path;
-        }
-
-        try {
-            (new \App\Services\ImageOptimizer())->optimize($path);
-        } catch (\Throwable $e) {
-            // Optimasi bersifat opsional; unggahan asli tetap dipakai.
-        }
-
-        return $path;
-    }
-}
-
 if (! function_exists('asset_photo_url')) {
     /**
      * Ubah path foto (relatif ke storage/public) menjadi URL publik.

@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
@@ -77,6 +78,24 @@ class SettingController extends Controller
         ActivityLog::record('settings.update', 'Memperbarui logo mitra');
 
         return redirect()->route('settings.partners')->with('success', 'Logo mitra berhasil disimpan.');
+    }
+
+    public function videos()
+    {
+        $settings = [
+            'home_videos' => $this->decodeVideos(Setting::get('home_videos', '[]')),
+        ];
+
+        return view('settings.videos', compact('settings'));
+    }
+
+    public function videosUpdate(Request $request)
+    {
+        $this->saveVideos($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui video beranda');
+
+        return redirect()->route('settings.videos')->with('success', 'Video beranda berhasil disimpan.');
     }
 
     protected function generalSettings(): array
@@ -177,6 +196,166 @@ class SettingController extends Controller
         $html = preg_replace('/<(a|span)[^>]*\s+(href|src)\s*=\s*(?:"|\')javascript:[^"\']*(?:"|\')/i', '<$1', $html);
 
         return trim($html);
+    }
+
+    /**
+     * @return array<int,array{url:string,embed:string,ratio:?float,thumbnail:?string}>
+     */
+    /**
+     * @return array<int,array{video:string,poster:?string,ratio:float}>
+     */
+    protected function decodeVideos(string $json): array
+    {
+        $decoded = json_decode($json, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $videos = [];
+        foreach ($decoded as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $video = trim((string) ($item['video'] ?? ''));
+            if ($video === '') {
+                continue;
+            }
+
+            $poster = trim((string) ($item['poster'] ?? ''));
+            $ratio = (float) ($item['ratio'] ?? 0);
+            if ($ratio < 0.3 || $ratio > 3) {
+                $ratio = 1.0;
+            }
+
+            $videos[] = [
+                'video'  => $video,
+                'poster' => $poster !== '' ? $poster : null,
+                'ratio'  => round($ratio, 3),
+            ];
+        }
+
+        return $videos;
+    }
+
+    protected function saveVideos(Request $request): void
+    {
+        $request->validate([
+            'videos' => ['nullable', 'array'],
+            'videos.*.video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm', 'max:10240'],
+            'videos.*.poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'videos.*.existing_video' => ['nullable', 'string', 'max:255'],
+            'videos.*.existing_poster' => ['nullable', 'string', 'max:255'],
+            'videos.*.ratio' => ['nullable', 'numeric'],
+            'videos.*.remove' => ['nullable', 'boolean'],
+        ], [
+            'videos.*.video.mimetypes' => 'Video harus berformat MP4 atau WebM.',
+            'videos.*.video.max' => 'Ukuran video maksimal 10 MB.',
+            'videos.*.poster.image' => 'Sampul harus berupa gambar.',
+            'videos.*.poster.max' => 'Ukuran sampul maksimal 2 MB.',
+        ]);
+
+        $previous = $this->decodeVideos(Setting::get('home_videos', '[]'));
+
+        $videos = [];
+        $usedVideos = [];
+        $usedPosters = [];
+
+        foreach ((array) $request->input('videos', []) as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $index = (int) $index;
+
+            if ((string) ($row['remove'] ?? '0') === '1') {
+                continue;
+            }
+
+            $videoPath = trim((string) ($row['existing_video'] ?? ''));
+
+            $file = $request->file('videos.' . $index . '.video');
+            if ($file !== null && $file->isValid()) {
+                $stored = $file->store('home-videos', 'public');
+                if ($stored) {
+                    $videoPath = $stored;
+                }
+            }
+
+            if ($videoPath === '' || ! $this->isHomeVideoPath($videoPath, 'home-videos/')) {
+                continue;
+            }
+
+            $posterPath = trim((string) ($row['existing_poster'] ?? ''));
+
+            $posterFile = $request->file('videos.' . $index . '.poster');
+            if ($posterFile !== null && $posterFile->isValid()) {
+                $stored = app(\App\Services\ImageWebpService::class)->store($posterFile, 'home-video-posters');
+                if ($stored) {
+                    $posterPath = $stored;
+                }
+            }
+
+            if (! $this->isHomeVideoPath($posterPath, 'home-video-posters/')) {
+                $posterPath = '';
+            }
+
+            $ratio = (float) ($row['ratio'] ?? 0);
+            if ($ratio < 0.3 || $ratio > 3) {
+                $ratio = 1.0;
+            }
+
+            $videos[] = [
+                'video'  => $videoPath,
+                'poster' => $posterPath !== '' ? $posterPath : null,
+                'ratio'  => round($ratio, 3),
+            ];
+
+            $usedVideos[] = $videoPath;
+            if ($posterPath !== '') {
+                $usedPosters[] = $posterPath;
+            }
+        }
+
+        Setting::set('home_videos', json_encode($videos, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        $this->deleteUnusedHomeVideoFiles($previous, $usedVideos, $usedPosters);
+    }
+
+    protected function isHomeVideoPath(string $path, string $prefix): bool
+    {
+        $path = ltrim($path, '/');
+
+        return $path !== ''
+            && strpos($path, $prefix) === 0
+            && ! preg_match('#(^|/)\.\.(/|$)#', $path);
+    }
+
+    /**
+     * Hapus berkas video/sampul lama yang sudah tidak dipakai lagi.
+     *
+     * @param  array<int,array{video:string,poster:?string,ratio:float}>  $previous
+     * @param  array<int,string>  $usedVideos
+     * @param  array<int,string>  $usedPosters
+     */
+    protected function deleteUnusedHomeVideoFiles(array $previous, array $usedVideos, array $usedPosters): void
+    {
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $usedVideos = array_unique($usedVideos);
+        $usedPosters = array_unique($usedPosters);
+
+        foreach ($previous as $item) {
+            $video = (string) ($item['video'] ?? '');
+            if ($video !== '' && ! in_array($video, $usedVideos, true) && $this->isHomeVideoPath($video, 'home-videos/')) {
+                $disk->delete(ltrim($video, '/'));
+            }
+
+            $poster = (string) ($item['poster'] ?? '');
+            if ($poster !== '' && ! in_array($poster, $usedPosters, true) && $this->isHomeVideoPath($poster, 'home-video-posters/')) {
+                $disk->delete(ltrim($poster, '/'));
+            }
+        }
     }
 
     protected function decodeTestimonials(string $json): array

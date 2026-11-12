@@ -61,6 +61,8 @@
 
 @include('public.partials.achievement-slider')
 
+@include('public.partials.home-videos')
+
 <main class="section" id="program">
     <div class="container">
         <div data-vue-app="ProgramExplorer">

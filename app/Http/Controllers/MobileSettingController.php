@@ -77,4 +77,22 @@ class MobileSettingController extends SettingController
 
         return redirect()->route('mo.settings.partners')->with('success', 'Logo mitra berhasil disimpan.');
     }
+
+    public function videos()
+    {
+        $settings = [
+            'home_videos' => $this->decodeVideos(Setting::get('home_videos', '[]')),
+        ];
+
+        return view('mobile.settings.videos', compact('settings'));
+    }
+
+    public function videosUpdate(Request $request)
+    {
+        $this->saveVideos($request);
+
+        ActivityLog::record('settings.update', 'Memperbarui video beranda');
+
+        return redirect()->route('mo.settings.videos')->with('success', 'Video beranda berhasil disimpan.');
+    }
 }

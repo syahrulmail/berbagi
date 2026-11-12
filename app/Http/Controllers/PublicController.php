@@ -42,9 +42,58 @@ class PublicController extends Controller
 
         $sections = $this->funnelSections();
 
+        $homeVideos = $this->homeVideos();
+
         return view('public.home', compact(
-            'programs', 'programCards', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate'
+            'programs', 'programCards', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate', 'homeVideos'
         ) + $sections);
+    }
+
+    /**
+     * Video yang ditampilkan di bawah kartu pencapaian pada beranda dan
+     * halaman agen. Kunci "home_videos" menyimpan larik objek berisi
+     * "video", "poster", dan "ratio".
+     *
+     * @return array<int,array{src:string,poster:?string,mime:string,ratio:float}>
+     */
+    protected function homeVideos(): array
+    {
+        $decoded = json_decode((string) Setting::get('home_videos', '[]'), true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $videos = [];
+        foreach ($decoded as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $video = ltrim(trim((string) ($item['video'] ?? '')), '/');
+            if ($video === '' || preg_match('#(^|/)\.\.(/|$)#', $video)) {
+                continue;
+            }
+
+            $ratio = (float) ($item['ratio'] ?? 0);
+            if ($ratio < 0.3 || $ratio > 3) {
+                $ratio = 1.0;
+            }
+
+            $poster = ltrim(trim((string) ($item['poster'] ?? '')), '/');
+            if ($poster !== '' && preg_match('#(^|/)\.\.(/|$)#', $poster)) {
+                $poster = '';
+            }
+
+            $videos[] = [
+                'src'    => asset('storage/' . $video),
+                'poster' => $poster !== '' ? asset('storage/' . $poster) : null,
+                'mime'   => strtolower(pathinfo($video, PATHINFO_EXTENSION)) === 'webm' ? 'video/webm' : 'video/mp4',
+                'ratio'  => round($ratio, 3),
+            ];
+        }
+
+        return $videos;
     }
 
     protected function funnelSections(): array
@@ -186,7 +235,9 @@ class PublicController extends Controller
             ? $profile['intro']
             : 'Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.';
 
-        return view('public.agent', compact('agen', 'programs', 'programCards', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro') + $sections);
+        $homeVideos = $this->homeVideos();
+
+        return view('public.agent', compact('agen', 'programs', 'programCards', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro', 'homeVideos') + $sections);
     }
 
     protected function agentProfile(User $user): array

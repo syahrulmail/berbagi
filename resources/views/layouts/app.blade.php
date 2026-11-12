@@ -73,6 +73,9 @@
                 <a href="{{ route('settings.partners') }}" class="nav-item {{ request()->routeIs('settings.partners*') ? 'active' : '' }}">
                     <i class="fas fa-handshake"></i><span class="nav-text">Mitra</span>
                 </a>
+                <a href="{{ route('settings.videos') }}" class="nav-item {{ request()->routeIs('settings.videos*') ? 'active' : '' }}">
+                    <i class="fas fa-video"></i><span class="nav-text">Video Beranda</span>
+                </a>
                 <a href="{{ route('campaign-tags.index') }}" class="nav-item {{ request()->routeIs('campaign-tags.*') ? 'active' : '' }}">
                     <i class="fas fa-tags"></i><span class="nav-text">Label Kampanye</span>
                 </a>
