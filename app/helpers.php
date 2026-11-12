@@ -426,36 +426,54 @@ if (! function_exists('instagram_embed_url')) {
     }
 }
 
-if (! function_exists('instagram_post_ratio')) {
+if (! function_exists('instagram_post_meta')) {
     /**
-     * Rasio tinggi/lebar media sebuah postingan Instagram (mis. 1.775 untuk
-     * reel 9:16), diambil dari metadata oEmbed resmi Instagram.
+     * Metadata ringan sebuah postingan Instagram dari oEmbed resmi:
+     * rasio media (tinggi/lebar) dan URL gambar sampul (thumbnail).
      *
-     * Dipakai untuk menyusun kartu embed sesuai bentuk asli media sehingga
-     * tidak ada bilah hitam di kiri-kanan. Hasil di-cache agar halaman
-     * publik tidak memanggil Instagram pada setiap request.
+     * Dipakai admin saat menyimpan URL, bukan saat halaman publik dibuka,
+     * agar pengunjung tidak pernah menunggu panggilan ke Instagram. Hasil
+     * di-cache agar pengelolaan berikutnya tidak memanggil ulang.
      *
-     * @return float|null  Rasio tinggi/lebar, atau null bila tidak diketahui.
+     * @return array{ratio:?float,thumbnail:?string}
      */
-    function instagram_post_ratio($url)
+    function instagram_post_meta($url)
     {
+        $empty = ['ratio' => null, 'thumbnail' => null];
+
         $url = trim((string) $url);
 
         if (! preg_match('#instagram\.com/(?:p|reel|tv)/([A-Za-z0-9_-]+)#i', $url, $m)) {
-            return null;
+            return $empty;
         }
 
         $shortcode = $m[1];
-        $cacheKey = 'instagram_ratio_' . $shortcode;
+        $cacheKey = 'instagram_meta_' . $shortcode;
 
         $cached = \Illuminate\Support\Facades\Cache::get($cacheKey);
         if ($cached !== null) {
-            return $cached === 'fail' ? null : (float) $cached;
+            if ($cached === 'fail') {
+                return $empty;
+            }
+
+            if (is_array($cached)) {
+                return [
+                    'ratio'     => isset($cached['ratio']) ? (float) $cached['ratio'] : null,
+                    'thumbnail' => isset($cached['thumbnail']) ? (string) $cached['thumbnail'] : null,
+                ];
+            }
+
+            // Format cache lama (hanya menyimpan rasio).
+            if (is_numeric($cached)) {
+                return ['ratio' => (float) $cached, 'thumbnail' => null];
+            }
+
+            return $empty;
         }
 
         // Jangan melakukan panggilan jaringan saat unit test.
         if (app()->runningUnitTests()) {
-            return null;
+            return $empty;
         }
 
         try {
@@ -472,20 +490,35 @@ if (! function_exists('instagram_post_ratio')) {
             $w = (int) ($data['thumbnail_width'] ?? 0);
             $h = (int) ($data['thumbnail_height'] ?? 0);
 
-            if ($w > 0 && $h > 0) {
-                $ratio = round($h / $w, 3);
-                if ($ratio >= 0.5 && $ratio <= 2.6) {
-                    \Illuminate\Support\Facades\Cache::put($cacheKey, $ratio, 604800);
-
-                    return $ratio;
-                }
+            $ratio = ($w > 0 && $h > 0) ? round($h / $w, 3) : null;
+            if ($ratio !== null && ($ratio < 0.5 || $ratio > 2.6)) {
+                $ratio = null;
             }
+
+            $thumbnail = trim((string) ($data['thumbnail_url'] ?? ''));
+            if ($thumbnail !== '' && ! preg_match('#^https://[^\s]+\.(?:cdninstagram\.com|fbcdn\.net)/#i', $thumbnail)) {
+                $thumbnail = '';
+            }
+
+            if ($ratio === null && $thumbnail === '') {
+                throw new \RuntimeException('oEmbed tanpa metadata media');
+            }
+
+            $meta = [
+                'ratio'     => $ratio,
+                'thumbnail' => $thumbnail !== '' ? $thumbnail : null,
+            ];
+
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $meta, 604800);
+
+            return $meta;
         } catch (\Throwable $e) {
-            // Diamkan: kartu tetap tampil dengan rasio kotak (1:1).
+            // Diamkan: kartu tetap tampil dengan rasio kotak tanpa sampul.
         }
 
         \Illuminate\Support\Facades\Cache::put($cacheKey, 'fail', 900);
 
-        return null;
+        return $empty;
     }
 }
+

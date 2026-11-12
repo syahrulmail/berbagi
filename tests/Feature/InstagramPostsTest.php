@@ -92,6 +92,71 @@ class InstagramPostsTest extends TestCase
         $response->assertSee('--ig-zoom: 1;', false);
     }
 
+    public function test_home_loads_cover_only_and_not_embed_iframe(): void
+    {
+        Setting::set('home_instagram_posts', json_encode([
+            [
+                'url' => 'https://www.instagram.com/p/COVERONLY1/',
+                'ratio' => 1.775,
+                'thumbnail' => 'https://scontent-sin6-3.cdninstagram.com/v/cover1.jpg',
+            ],
+            [
+                'url' => 'https://www.instagram.com/p/COVERONLY2/',
+                'ratio' => 1.0,
+                'thumbnail' => 'https://scontent-sin6-3.cdninstagram.com/v/cover2.jpg',
+            ],
+        ]));
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        // Sampul ringan dimuat, iframe Instagram tidak.
+        $response->assertSee('class="ig-posts-cover"', false);
+        $response->assertSee('https://scontent-sin6-3.cdninstagram.com/v/cover1.jpg', false);
+        $response->assertSee('loading="lazy"', false);
+        $response->assertSee('data-src="https://www.instagram.com/p/COVERONLY1/embed/"', false);
+        $response->assertDontSee('<iframe', false);
+        // Tidak ada lagi putar otomatis.
+        $response->assertDontSee('data-interval', false);
+    }
+
+    public function test_instagram_section_degrades_to_gradient_without_thumbnail(): void
+    {
+        Setting::set('home_instagram_posts', json_encode([
+            ['url' => 'https://www.instagram.com/p/NOTHUMB1/'],
+        ]));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('ig-posts-fallback', false)
+            ->assertDontSee('class="ig-posts-cover"', false);
+    }
+
+    public function test_multiple_posts_render_desktop_navigation_buttons(): void
+    {
+        Setting::set('home_instagram_posts', json_encode([
+            ['url' => 'https://www.instagram.com/p/NAVPOST01/'],
+            ['url' => 'https://www.instagram.com/p/NAVPOST02/'],
+        ]));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-ig-prev', false)
+            ->assertSee('data-ig-next', false);
+    }
+
+    public function test_single_post_has_no_navigation_buttons(): void
+    {
+        Setting::set('home_instagram_posts', json_encode([
+            ['url' => 'https://www.instagram.com/p/SINGLEPOST/'],
+        ]));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('class="ig-posts-nav ig-posts-nav--prev"', false)
+            ->assertDontSee('class="ig-posts-nav ig-posts-nav--next"', false);
+    }
+
     public function test_home_hides_instagram_section_without_posts(): void
     {
         Setting::set('home_instagram_posts', '[]');

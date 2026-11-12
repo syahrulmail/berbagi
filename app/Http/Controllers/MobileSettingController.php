@@ -84,6 +84,8 @@ class MobileSettingController extends SettingController
             'home_instagram_posts' => $this->decodeInstagramPosts(Setting::get('home_instagram_posts', '[]')),
         ];
 
+        $this->backfillInstagramMedia($settings['home_instagram_posts']);
+
         return view('mobile.settings.instagram', compact('settings'));
     }
 

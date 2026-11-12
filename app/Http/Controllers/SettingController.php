@@ -86,7 +86,7 @@ class SettingController extends Controller
             'home_instagram_posts' => $this->decodeInstagramPosts(Setting::get('home_instagram_posts', '[]')),
         ];
 
-        $this->backfillInstagramRatios($settings['home_instagram_posts']);
+        $this->backfillInstagramMedia($settings['home_instagram_posts']);
 
         return view('settings.instagram', compact('settings'));
     }
@@ -201,7 +201,7 @@ class SettingController extends Controller
     }
 
     /**
-     * @return array<int,array{url:string,embed:string}>
+     * @return array<int,array{url:string,embed:string,ratio:?float,thumbnail:?string}>
      */
     protected function decodeInstagramPosts(string $json): array
     {
@@ -218,10 +218,13 @@ class SettingController extends Controller
                 continue;
             }
 
+            $meta = instagram_post_meta($url);
+
             $posts[] = [
-                'url'   => $url,
-                'embed' => instagram_embed_url($url) ?? '',
-                'ratio' => instagram_post_ratio($url),
+                'url'       => $url,
+                'embed'     => instagram_embed_url($url) ?? '',
+                'ratio'     => $meta['ratio'],
+                'thumbnail' => $meta['thumbnail'],
             ];
         }
 
@@ -229,24 +232,35 @@ class SettingController extends Controller
     }
 
     /**
-     * Postingan yang disimpan sebelum fitur rasio ada belum punya data
-     * "ratio". Lengkapi sekali di halaman admin agar kartu publik dapat
-     * menyesuaikan bentuk media tanpa memanggil Instagram saat render.
+     * Postingan yang disimpan sebelum fitur media ada belum punya data
+     * "ratio"/"thumbnail". Lengkapi sekali di halaman admin agar kartu
+     * publik dapat menampilkan sampul ringan tanpa memanggil Instagram
+     * saat pengunjung membuka halaman.
      *
-     * @param  array<int,array{url:string,embed:string,ratio:?float}>  $posts
+     * @param  array<int,array{url:string,embed:string,ratio:?float,thumbnail:?string}>  $posts
      */
-    protected function backfillInstagramRatios(array &$posts): void
+    protected function backfillInstagramMedia(array &$posts): void
     {
         $changed = false;
 
         foreach ($posts as $index => $post) {
-            if ($post['ratio'] !== null || $post['embed'] === '') {
+            if ($post['embed'] === '') {
                 continue;
             }
 
-            $ratio = instagram_post_ratio($post['url']);
-            if ($ratio !== null) {
-                $posts[$index]['ratio'] = $ratio;
+            if ($post['ratio'] !== null && $post['thumbnail'] !== null) {
+                continue;
+            }
+
+            $meta = instagram_post_meta($post['url']);
+
+            if ($meta['ratio'] !== null && $post['ratio'] === null) {
+                $posts[$index]['ratio'] = $meta['ratio'];
+                $changed = true;
+            }
+
+            if ($meta['thumbnail'] !== null && $post['thumbnail'] === null) {
+                $posts[$index]['thumbnail'] = $meta['thumbnail'];
                 $changed = true;
             }
         }
@@ -255,14 +269,16 @@ class SettingController extends Controller
             return;
         }
 
-        $stored = array_map(function ($post) {
-            return [
-                'url'   => $post['url'],
-                'ratio' => $post['ratio'],
-            ];
-        }, $posts);
-
-        Setting::set('home_instagram_posts', json_encode($stored, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        Setting::set('home_instagram_posts', json_encode(
+            array_map(function ($post) {
+                return [
+                    'url'       => $post['url'],
+                    'ratio'     => $post['ratio'],
+                    'thumbnail' => $post['thumbnail'],
+                ];
+            }, $posts),
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        ));
     }
 
     protected function saveInstagramPosts(Request $request): void
@@ -287,9 +303,12 @@ class SettingController extends Controller
                 ]);
             }
 
+            $meta = instagram_post_meta($url);
+
             $posts[] = [
-                'url'   => $url,
-                'ratio' => instagram_post_ratio($url),
+                'url'       => $url,
+                'ratio'     => $meta['ratio'],
+                'thumbnail' => $meta['thumbnail'],
             ];
         }
 

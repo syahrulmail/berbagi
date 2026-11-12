@@ -36,7 +36,8 @@
                                 Tautan tidak dikenali sebagai postingan Instagram.
                             @else
                                 Embed: {{ $post['embed'] }}<br>
-                                Rasio media: {{ $post['ratio'] ? number_format($post['ratio'], 3, ',', '.') : 'belum terdeteksi' }}
+                                Rasio media: {{ $post['ratio'] ? number_format($post['ratio'], 3, ',', '.') : 'belum terdeteksi' }}<br>
+                                Sampul ringan: {{ $post['thumbnail'] ? 'tersedia' : 'belum terdeteksi' }}
                             @endif
                         </div>
                         <button type="button" class="mo-ig-rm mo-remove-btn" style="margin-top:8px;width:100%;"><i class="fas fa-trash-can"></i> Hapus</button>

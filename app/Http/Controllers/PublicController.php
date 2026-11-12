@@ -51,9 +51,10 @@ class PublicController extends Controller
 
     /**
      * Daftar postingan Instagram yang ditampilkan di bawah kartu pencapaian.
-     * Kunci "home_instagram_posts" menyimpan larik objek berisi "url".
+     * Kunci "home_instagram_posts" menyimpan larik objek berisi "url",
+     * "ratio", dan "thumbnail".
      *
-     * @return array<int,array{embed:string,ratio:float,zoom:float,top:int}>
+     * @return array<int,array{url:string,embed:string,thumbnail:?string,ratio:float,zoom:float,top:int}>
      */
     protected function instagramPosts(): array
     {
@@ -90,12 +91,22 @@ class PublicController extends Controller
             $zoom = max(1, $ratio / 1.25);
             $pad  = max(0, (1.25 - $ratio) / 2) * $cardWidth;
 
+            // Sampul dipakai sebagai pengganti iframe sampai pengunjung
+            // menekan kartu, agar halaman tidak memuat embed Instagram
+            // (±229 KB HTML + JS eksternal) saat pertama dibuka.
+            $thumbnail = is_array($item) ? trim((string) ($item['thumbnail'] ?? '')) : '';
+            if ($thumbnail !== '' && ! preg_match('#^https://#i', $thumbnail)) {
+                $thumbnail = '';
+            }
+
             $posts[] = [
-                'embed' => $embed,
-                'ratio' => $ratio,
-                'zoom'  => round($zoom, 4),
+                'url'       => $url,
+                'embed'     => $embed,
+                'thumbnail' => $thumbnail !== '' ? $thumbnail : null,
+                'ratio'     => $ratio,
+                'zoom'      => round($zoom, 4),
                 // 54px = tinggi header embed Instagram pada lebar alaminya.
-                'top'   => (int) round(-(54 * $zoom + $pad)),
+                'top'       => (int) round(-(54 * $zoom + $pad)),
             ];
         }
 

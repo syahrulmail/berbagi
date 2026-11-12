@@ -77,7 +77,8 @@
                                     Tautan tidak dikenali sebagai postingan Instagram.
                                 @else
                                     Embed: {{ $post['embed'] }}<br>
-                                    Rasio media: {{ $post['ratio'] ? number_format($post['ratio'], 3, ',', '.') : 'belum terdeteksi (kartu memakai bentuk persegi)' }}
+                                    Rasio media: {{ $post['ratio'] ? number_format($post['ratio'], 3, ',', '.') : 'belum terdeteksi (kartu memakai bentuk persegi)' }}<br>
+                                    Sampul ringan: {{ $post['thumbnail'] ? 'tersedia' : 'belum terdeteksi (kartu memakai latar gradien)' }}
                                 @endif
                             </div>
                         </div>
@@ -94,7 +95,9 @@
                 <code>https://www.instagram.com/reel/KODE/</code>,
                 <code>https://www.instagram.com/tv/KODE/</code>.
                 Postingan harus berasal dari akun publik. Bentuk kartu mengikuti
-                rasio media yang dibaca saat URL disimpan.
+                rasio media yang dibaca saat URL disimpan. Halaman publik hanya
+                memuat gambar sampul; embed resmi Instagram baru dimuat saat
+                kartu ditekan agar beranda tetap ringan.
             </small>
         </div>
 
