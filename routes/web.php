@@ -145,8 +145,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/settings/testimoni', [SettingController::class, 'testimonialsUpdate'])->name('settings.testimonials.update');
         Route::get('/settings/mitra', [SettingController::class, 'partners'])->name('settings.partners');
         Route::put('/settings/mitra', [SettingController::class, 'partnersUpdate'])->name('settings.partners.update');
-        Route::get('/settings/instagram', [SettingController::class, 'instagram'])->name('settings.instagram');
-        Route::put('/settings/instagram', [SettingController::class, 'instagramUpdate'])->name('settings.instagram.update');
+        Route::get('/settings/video', [SettingController::class, 'videos'])->name('settings.videos');
+        Route::put('/settings/video', [SettingController::class, 'videosUpdate'])->name('settings.videos.update');
     });
 
     Route::middleware('role:admin,supervisor')->group(function () {
@@ -315,8 +315,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/pengaturan/mitra', [MobileSettingController::class, 'partners'])->name('settings.partners');
             Route::put('/pengaturan/mitra', [MobileSettingController::class, 'partnersUpdate'])->name('settings.partners.update');
 
-            Route::get('/pengaturan/instagram', [MobileSettingController::class, 'instagram'])->name('settings.instagram');
-            Route::put('/pengaturan/instagram', [MobileSettingController::class, 'instagramUpdate'])->name('settings.instagram.update');
+            Route::get('/pengaturan/video', [MobileSettingController::class, 'videos'])->name('settings.videos');
+            Route::put('/pengaturan/video', [MobileSettingController::class, 'videosUpdate'])->name('settings.videos.update');
         });
 
         // Import / Tempel Kontak (semua role)

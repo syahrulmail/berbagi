@@ -80,24 +80,22 @@ class SettingController extends Controller
         return redirect()->route('settings.partners')->with('success', 'Logo mitra berhasil disimpan.');
     }
 
-    public function instagram()
+    public function videos()
     {
         $settings = [
-            'home_instagram_posts' => $this->decodeInstagramPosts(Setting::get('home_instagram_posts', '[]')),
+            'home_videos' => $this->decodeVideos(Setting::get('home_videos', '[]')),
         ];
 
-        $this->backfillInstagramMedia($settings['home_instagram_posts']);
-
-        return view('settings.instagram', compact('settings'));
+        return view('settings.videos', compact('settings'));
     }
 
-    public function instagramUpdate(Request $request)
+    public function videosUpdate(Request $request)
     {
-        $this->saveInstagramPosts($request);
+        $this->saveVideos($request);
 
-        ActivityLog::record('settings.update', 'Memperbarui postingan Instagram beranda');
+        ActivityLog::record('settings.update', 'Memperbarui video beranda');
 
-        return redirect()->route('settings.instagram')->with('success', 'Postingan Instagram berhasil disimpan.');
+        return redirect()->route('settings.videos')->with('success', 'Video beranda berhasil disimpan.');
     }
 
     protected function generalSettings(): array
@@ -203,7 +201,10 @@ class SettingController extends Controller
     /**
      * @return array<int,array{url:string,embed:string,ratio:?float,thumbnail:?string}>
      */
-    protected function decodeInstagramPosts(string $json): array
+    /**
+     * @return array<int,array{video:string,poster:?string,ratio:float}>
+     */
+    protected function decodeVideos(string $json): array
     {
         $decoded = json_decode($json, true);
 
@@ -211,108 +212,150 @@ class SettingController extends Controller
             return [];
         }
 
-        $posts = [];
+        $videos = [];
         foreach ($decoded as $item) {
-            $url = trim(is_array($item) ? (string) ($item['url'] ?? '') : (string) $item);
-            if ($url === '') {
+            if (! is_array($item)) {
                 continue;
             }
 
-            $meta = instagram_post_meta($url);
+            $video = trim((string) ($item['video'] ?? ''));
+            if ($video === '') {
+                continue;
+            }
 
-            $posts[] = [
-                'url'       => $url,
-                'embed'     => instagram_embed_url($url) ?? '',
-                'ratio'     => $meta['ratio'],
-                'thumbnail' => $meta['thumbnail'],
+            $poster = trim((string) ($item['poster'] ?? ''));
+            $ratio = (float) ($item['ratio'] ?? 0);
+            if ($ratio < 0.3 || $ratio > 3) {
+                $ratio = 1.0;
+            }
+
+            $videos[] = [
+                'video'  => $video,
+                'poster' => $poster !== '' ? $poster : null,
+                'ratio'  => round($ratio, 3),
             ];
         }
 
-        return $posts;
+        return $videos;
+    }
+
+    protected function saveVideos(Request $request): void
+    {
+        $request->validate([
+            'videos' => ['nullable', 'array'],
+            'videos.*.video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm', 'max:10240'],
+            'videos.*.poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'videos.*.existing_video' => ['nullable', 'string', 'max:255'],
+            'videos.*.existing_poster' => ['nullable', 'string', 'max:255'],
+            'videos.*.ratio' => ['nullable', 'numeric'],
+            'videos.*.remove' => ['nullable', 'boolean'],
+        ], [
+            'videos.*.video.mimetypes' => 'Video harus berformat MP4 atau WebM.',
+            'videos.*.video.max' => 'Ukuran video maksimal 10 MB.',
+            'videos.*.poster.image' => 'Sampul harus berupa gambar.',
+            'videos.*.poster.max' => 'Ukuran sampul maksimal 2 MB.',
+        ]);
+
+        $previous = $this->decodeVideos(Setting::get('home_videos', '[]'));
+
+        $videos = [];
+        $usedVideos = [];
+        $usedPosters = [];
+
+        foreach ((array) $request->input('videos', []) as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $index = (int) $index;
+
+            if ((string) ($row['remove'] ?? '0') === '1') {
+                continue;
+            }
+
+            $videoPath = trim((string) ($row['existing_video'] ?? ''));
+
+            $file = $request->file('videos.' . $index . '.video');
+            if ($file !== null && $file->isValid()) {
+                $stored = $file->store('home-videos', 'public');
+                if ($stored) {
+                    $videoPath = $stored;
+                }
+            }
+
+            if ($videoPath === '' || ! $this->isHomeVideoPath($videoPath, 'home-videos/')) {
+                continue;
+            }
+
+            $posterPath = trim((string) ($row['existing_poster'] ?? ''));
+
+            $posterFile = $request->file('videos.' . $index . '.poster');
+            if ($posterFile !== null && $posterFile->isValid()) {
+                $stored = app(\App\Services\ImageWebpService::class)->store($posterFile, 'home-video-posters');
+                if ($stored) {
+                    $posterPath = $stored;
+                }
+            }
+
+            if (! $this->isHomeVideoPath($posterPath, 'home-video-posters/')) {
+                $posterPath = '';
+            }
+
+            $ratio = (float) ($row['ratio'] ?? 0);
+            if ($ratio < 0.3 || $ratio > 3) {
+                $ratio = 1.0;
+            }
+
+            $videos[] = [
+                'video'  => $videoPath,
+                'poster' => $posterPath !== '' ? $posterPath : null,
+                'ratio'  => round($ratio, 3),
+            ];
+
+            $usedVideos[] = $videoPath;
+            if ($posterPath !== '') {
+                $usedPosters[] = $posterPath;
+            }
+        }
+
+        Setting::set('home_videos', json_encode($videos, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        $this->deleteUnusedHomeVideoFiles($previous, $usedVideos, $usedPosters);
+    }
+
+    protected function isHomeVideoPath(string $path, string $prefix): bool
+    {
+        $path = ltrim($path, '/');
+
+        return $path !== ''
+            && strpos($path, $prefix) === 0
+            && ! preg_match('#(^|/)\.\.(/|$)#', $path);
     }
 
     /**
-     * Postingan yang disimpan sebelum fitur media ada belum punya data
-     * "ratio"/"thumbnail". Lengkapi sekali di halaman admin agar kartu
-     * publik dapat menampilkan sampul ringan tanpa memanggil Instagram
-     * saat pengunjung membuka halaman.
+     * Hapus berkas video/sampul lama yang sudah tidak dipakai lagi.
      *
-     * @param  array<int,array{url:string,embed:string,ratio:?float,thumbnail:?string}>  $posts
+     * @param  array<int,array{video:string,poster:?string,ratio:float}>  $previous
+     * @param  array<int,string>  $usedVideos
+     * @param  array<int,string>  $usedPosters
      */
-    protected function backfillInstagramMedia(array &$posts): void
+    protected function deleteUnusedHomeVideoFiles(array $previous, array $usedVideos, array $usedPosters): void
     {
-        $changed = false;
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $usedVideos = array_unique($usedVideos);
+        $usedPosters = array_unique($usedPosters);
 
-        foreach ($posts as $index => $post) {
-            if ($post['embed'] === '') {
-                continue;
+        foreach ($previous as $item) {
+            $video = (string) ($item['video'] ?? '');
+            if ($video !== '' && ! in_array($video, $usedVideos, true) && $this->isHomeVideoPath($video, 'home-videos/')) {
+                $disk->delete(ltrim($video, '/'));
             }
 
-            if ($post['ratio'] !== null && $post['thumbnail'] !== null) {
-                continue;
-            }
-
-            $meta = instagram_post_meta($post['url']);
-
-            if ($meta['ratio'] !== null && $post['ratio'] === null) {
-                $posts[$index]['ratio'] = $meta['ratio'];
-                $changed = true;
-            }
-
-            if ($meta['thumbnail'] !== null && $post['thumbnail'] === null) {
-                $posts[$index]['thumbnail'] = $meta['thumbnail'];
-                $changed = true;
+            $poster = (string) ($item['poster'] ?? '');
+            if ($poster !== '' && ! in_array($poster, $usedPosters, true) && $this->isHomeVideoPath($poster, 'home-video-posters/')) {
+                $disk->delete(ltrim($poster, '/'));
             }
         }
-
-        if (! $changed) {
-            return;
-        }
-
-        Setting::set('home_instagram_posts', json_encode(
-            array_map(function ($post) {
-                return [
-                    'url'       => $post['url'],
-                    'ratio'     => $post['ratio'],
-                    'thumbnail' => $post['thumbnail'],
-                ];
-            }, $posts),
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-        ));
-    }
-
-    protected function saveInstagramPosts(Request $request): void
-    {
-        $request->validate([
-            'posts' => ['nullable', 'array'],
-            'posts.*.url' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $posts = [];
-
-        foreach ((array) $request->input('posts', []) as $row) {
-            $url = trim((string) (is_array($row) ? ($row['url'] ?? '') : $row));
-
-            if ($url === '') {
-                continue;
-            }
-
-            if (instagram_embed_url($url) === null) {
-                throw ValidationException::withMessages([
-                    'posts' => 'Tautan "' . $url . '" bukan URL postingan Instagram yang valid. Gunakan contoh: https://www.instagram.com/p/KODE/ atau https://www.instagram.com/reel/KODE/',
-                ]);
-            }
-
-            $meta = instagram_post_meta($url);
-
-            $posts[] = [
-                'url'       => $url,
-                'ratio'     => $meta['ratio'],
-                'thumbnail' => $meta['thumbnail'],
-            ];
-        }
-
-        Setting::set('home_instagram_posts', json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     protected function decodeTestimonials(string $json): array

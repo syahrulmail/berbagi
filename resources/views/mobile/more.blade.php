@@ -114,9 +114,9 @@
                 <div class="txt">Mitra</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
-            <a href="{{ route('mo.settings.instagram') }}" class="mo-menu-item">
-                <i class="fab fa-instagram mi gold"></i>
-                <div class="txt">Postingan Instagram</div>
+            <a href="{{ route('mo.settings.videos') }}" class="mo-menu-item">
+                <i class="fas fa-video mi gold"></i>
+                <div class="txt">Video Beranda</div>
                 <i class="fas fa-chevron-right chev"></i>
             </a>
             <a href="{{ route('mo.campaign-tags') }}" class="mo-menu-item">

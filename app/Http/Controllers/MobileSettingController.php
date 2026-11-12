@@ -78,23 +78,21 @@ class MobileSettingController extends SettingController
         return redirect()->route('mo.settings.partners')->with('success', 'Logo mitra berhasil disimpan.');
     }
 
-    public function instagram()
+    public function videos()
     {
         $settings = [
-            'home_instagram_posts' => $this->decodeInstagramPosts(Setting::get('home_instagram_posts', '[]')),
+            'home_videos' => $this->decodeVideos(Setting::get('home_videos', '[]')),
         ];
 
-        $this->backfillInstagramMedia($settings['home_instagram_posts']);
-
-        return view('mobile.settings.instagram', compact('settings'));
+        return view('mobile.settings.videos', compact('settings'));
     }
 
-    public function instagramUpdate(Request $request)
+    public function videosUpdate(Request $request)
     {
-        $this->saveInstagramPosts($request);
+        $this->saveVideos($request);
 
-        ActivityLog::record('settings.update', 'Memperbarui postingan Instagram beranda');
+        ActivityLog::record('settings.update', 'Memperbarui video beranda');
 
-        return redirect()->route('mo.settings.instagram')->with('success', 'Postingan Instagram berhasil disimpan.');
+        return redirect()->route('mo.settings.videos')->with('success', 'Video beranda berhasil disimpan.');
     }
 }

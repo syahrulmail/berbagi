@@ -42,75 +42,58 @@ class PublicController extends Controller
 
         $sections = $this->funnelSections();
 
-        $instagramPosts = $this->instagramPosts();
+        $homeVideos = $this->homeVideos();
 
         return view('public.home', compact(
-            'programs', 'programCards', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate', 'instagramPosts'
+            'programs', 'programCards', 'banners', 'achievements', 'tags', 'waNumber', 'waTemplate', 'homeVideos'
         ) + $sections);
     }
 
     /**
-     * Daftar postingan Instagram yang ditampilkan di bawah kartu pencapaian.
-     * Kunci "home_instagram_posts" menyimpan larik objek berisi "url",
-     * "ratio", dan "thumbnail".
+     * Video yang ditampilkan di bawah kartu pencapaian pada beranda dan
+     * halaman agen. Kunci "home_videos" menyimpan larik objek berisi
+     * "video", "poster", dan "ratio".
      *
-     * @return array<int,array{url:string,embed:string,thumbnail:?string,ratio:float,zoom:float,top:int}>
+     * @return array<int,array{src:string,poster:?string,mime:string,ratio:float}>
      */
-    protected function instagramPosts(): array
+    protected function homeVideos(): array
     {
-        $decoded = json_decode((string) Setting::get('home_instagram_posts', '[]'), true);
+        $decoded = json_decode((string) Setting::get('home_videos', '[]'), true);
 
         if (! is_array($decoded)) {
             return [];
         }
 
-        $posts = [];
+        $videos = [];
         foreach ($decoded as $item) {
-            $url = is_array($item) ? (string) ($item['url'] ?? '') : (string) $item;
-            $embed = instagram_embed_url($url);
-
-            if ($embed === null) {
+            if (! is_array($item)) {
                 continue;
             }
 
-            // Rasio media diambil sekali saat admin menyimpan URL, agar
-            // halaman publik tidak pernah menunggu panggilan ke Instagram.
-            $ratio = is_array($item) ? (float) ($item['ratio'] ?? 0) : 0.0;
-            if ($ratio < 0.5 || $ratio > 2.6) {
+            $video = ltrim(trim((string) ($item['video'] ?? '')), '/');
+            if ($video === '' || preg_match('#(^|/)\.\.(/|$)#', $video)) {
+                continue;
+            }
+
+            $ratio = (float) ($item['ratio'] ?? 0);
+            if ($ratio < 0.3 || $ratio > 3) {
                 $ratio = 1.0;
             }
 
-            // Embed resmi membatasi tinggi media pada kotak 4:5 (1,25).
-            // Media yang lebih tinggi (reel/IGTV) jadi mengecil dan diberi
-            // bilah hitam di kiri-kanan, sehingga perlu diperbesar tepat
-            // sampai lebarnya memenuhi kartu. Media 4:5 atau lebih pendek
-            // sudah selebar kartu, tetapi masih ada sisa kotak di atasnya
-            // yang ikut digeser agar media rata atas. Lebar kartu dikunci
-            // 272px supaya hitungan piksel ini tepat.
-            $cardWidth = 272;
-            $zoom = max(1, $ratio / 1.25);
-            $pad  = max(0, (1.25 - $ratio) / 2) * $cardWidth;
-
-            // Sampul dipakai sebagai pengganti iframe sampai pengunjung
-            // menekan kartu, agar halaman tidak memuat embed Instagram
-            // (±229 KB HTML + JS eksternal) saat pertama dibuka.
-            $thumbnail = is_array($item) ? trim((string) ($item['thumbnail'] ?? '')) : '';
-            if ($thumbnail !== '' && ! preg_match('#^https://#i', $thumbnail)) {
-                $thumbnail = '';
+            $poster = ltrim(trim((string) ($item['poster'] ?? '')), '/');
+            if ($poster !== '' && preg_match('#(^|/)\.\.(/|$)#', $poster)) {
+                $poster = '';
             }
 
-            $posts[] = [
-                'url'       => $url,
-                'embed'     => $embed,
-                'thumbnail' => $thumbnail !== '' ? $thumbnail : null,
-                'ratio'     => $ratio,
-                'zoom'      => round($zoom, 4),
-                // 54px = tinggi header embed Instagram pada lebar alaminya.
-                'top'       => (int) round(-(54 * $zoom + $pad)),
+            $videos[] = [
+                'src'    => asset('storage/' . $video),
+                'poster' => $poster !== '' ? asset('storage/' . $poster) : null,
+                'mime'   => strtolower(pathinfo($video, PATHINFO_EXTENSION)) === 'webm' ? 'video/webm' : 'video/mp4',
+                'ratio'  => round($ratio, 3),
             ];
         }
 
-        return $posts;
+        return $videos;
     }
 
     protected function funnelSections(): array
@@ -252,9 +235,9 @@ class PublicController extends Controller
             ? $profile['intro']
             : 'Assalamualaikum, saya siap membantu Anda menyalurkan wakaf, infak, dan sedekah melalui program-program BWA. Insya Allah amanah dan tepat sasaran.';
 
-        $instagramPosts = $this->instagramPosts();
+        $homeVideos = $this->homeVideos();
 
-        return view('public.agent', compact('agen', 'programs', 'programCards', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro', 'instagramPosts') + $sections);
+        return view('public.agent', compact('agen', 'programs', 'programCards', 'waTemplate', 'waFallback', 'achievements', 'tags', 'agenPhoto', 'agenIntro', 'homeVideos') + $sections);
     }
 
     protected function agentProfile(User $user): array

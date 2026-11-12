@@ -118,7 +118,7 @@
 
 @include('public.partials.achievement-slider')
 
-@include('public.partials.instagram-posts')
+@include('public.partials.home-videos')
 
 <main class="section">
     <div class="container">
