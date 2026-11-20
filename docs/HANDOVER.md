@@ -225,6 +225,11 @@ php artisan view:clear
   ```
 - **proc_open/exec dimatikan** di produksi → scheduler memakai `Artisan::call`
   di dalam closure, bukan `$schedule->command()`.
+- **Video beranda** (menu "Video Beranda"): admin mengunggah berkas MP4/WebM;
+  kompresi dilakukan di browser (MediaRecorder) karena `exec/proc_open` mati.
+  Server hanya menerima video ≤10 MB dan sampul ≤2 MB, disimpan di
+  `public/storage/home-videos` dan `home-video-posters`. `public/.user.ini`
+  menaikkan `upload_max_filesize` (16M) dan `post_max_size` (24M).
 - **CDN** men-cache `public/downloads` dan `css/*.css` lama; `assetv()` menambah
   `?v=filemtime` untuk cache-bust aset.
 - **Jangan pernah menimpa unggahan user**; bila GD/WebP tidak tersedia,

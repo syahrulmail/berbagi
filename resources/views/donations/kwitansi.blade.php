@@ -106,6 +106,15 @@
     .syarat { margin: 14px 12px 0; font-size: 9px; line-height: 1.55; }
     .syarat ol { margin: 4px 0 0; padding-left: 16px; }
 
+    .stub-no {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        text-align: center;
+        color: var(--line);
+        margin: 0 0 4px;
+    }
     .stub-logo { text-align: center; margin: 6px 0 4px; }
     .stub-logo-img { height: 56px; width: auto; }
     .sign-area { position: absolute; right: 22px; bottom: 34px; width: 150px; height: 108px; pointer-events: none; }
@@ -169,13 +178,13 @@
                 <div class="statement">Saya amanahkan wakaf/sedekah Saya kepada Badan Wakaf Al Qur'an sebagai berikut :</div>
 
                 <div class="frow">
-                    <span class="flabel">Nama Wakif / Donatur <b>*</b></span>
+                    <span class="flabel">Nama Pendaftar <b>*</b></span>
                     <span class="fval">{{ $wakifName }}</span>
                     <span class="flabel sm">Gelar</span>
                     <span class="fval sm"></span>
                 </div>
                 <div class="frow">
-                    <span class="flabel">Nama Pendaftar <b>*</b></span>
+                    <span class="flabel">Nama Wakif / Donatur <b>*</b></span>
                     <span class="fval">{{ $pendaftar }}</span>
                 </div>
                 <div class="frow">
@@ -259,6 +268,7 @@
             </div>
 
             <div class="col-right">
+                <div class="stub-no">{{ $noKwitansi }}</div>
                 <div class="stub-logo"><img class="stub-logo-img" src="{{ asset('images/logo-bwa.png') }}" alt="BWA Inovasi Wakaf"></div>
                 <div class="tagline">&ldquo;Wakaf yang Anda tunaikan tak hanya berbuah pahala yang mengalir abadi, namun akan membangkitkan saudara kita meraih impiannya&rdquo;</div>
                 <div class="officer">Diisi oleh petugas</div>

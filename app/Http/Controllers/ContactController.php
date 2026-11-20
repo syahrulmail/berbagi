@@ -220,7 +220,7 @@ class ContactController extends Controller
 
         $normalized = $this->importService->normalizePhone($data['phone']);
         if ($normalized === null) {
-            return back()->withErrors(['phone' => 'Format No. WhatsApp tidak valid. Gunakan 10-15 digit angka (contoh: 62812xxxxxxx atau 0812xxxxxxx).'])->withInput();
+            return back()->withErrors(['phone' => 'Format No. WhatsApp tidak valid. Gunakan 8-15 digit angka, boleh diawali 0/8 (Indonesia), 62, +62, atau kode negara lain (contoh: 62812xxxxxxx atau +60123456789).'])->withInput();
         }
         $data['phone'] = $normalized;
 
@@ -271,7 +271,7 @@ class ContactController extends Controller
         if ($normalized === null) {
             return response()->json([
                 'success' => false,
-                'message' => 'Format No. WhatsApp tidak valid. Gunakan 10-15 digit angka (contoh: 62812xxxxxxx atau 0812xxxxxxx).',
+                'message' => 'Format No. WhatsApp tidak valid. Gunakan 8-15 digit angka, boleh diawali 0/8 (Indonesia), 62, +62, atau kode negara lain (contoh: 62812xxxxxxx atau +60123456789).',
             ], 422);
         }
         $data['phone'] = $normalized;
@@ -346,7 +346,7 @@ class ContactController extends Controller
 
         $normalized = $this->importService->normalizePhone($data['phone']);
         if ($normalized === null) {
-            return back()->withErrors(['phone' => 'Format No. WhatsApp tidak valid. Gunakan 10-15 digit angka (contoh: 62812xxxxxxx atau 0812xxxxxxx).'])->withInput();
+            return back()->withErrors(['phone' => 'Format No. WhatsApp tidak valid. Gunakan 8-15 digit angka, boleh diawali 0/8 (Indonesia), 62, +62, atau kode negara lain (contoh: 62812xxxxxxx atau +60123456789).'])->withInput();
         }
         $data['phone'] = $normalized;
 
