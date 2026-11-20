@@ -214,6 +214,7 @@
                 <select id="mo-qc-status" name="status" class="mo-select">
                     <option value="prospect">Prospek</option>
                     <option value="contacted">Simpan</option>
+                    <option value="replied">Balas</option>
                     <option value="donated">Wakif</option>
                     <option value="churned">Stop</option>
                 </select>

@@ -41,6 +41,7 @@
                 <select id="status" name="status" class="mo-select">
                     <option value="prospect" {{ old('status', $contact->status ?? 'prospect') == 'prospect' ? 'selected' : '' }}>Prospek</option>
                     <option value="contacted" {{ old('status', $contact->status ?? '') == 'contacted' ? 'selected' : '' }}>Simpan</option>
+                    <option value="replied" {{ old('status', $contact->status ?? '') == 'replied' ? 'selected' : '' }}>Balas</option>
                     <option value="donated" {{ old('status', $contact->status ?? '') == 'donated' ? 'selected' : '' }}>Wakif</option>
                     <option value="churned" {{ old('status', $contact->status ?? '') == 'churned' ? 'selected' : '' }}>Stop</option>
                 </select>

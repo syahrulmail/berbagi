@@ -95,6 +95,9 @@
                     <button type="submit" name="status" value="contacted" class="mo-segmented-item {{ request('status') === 'contacted' ? 'active' : '' }}">
                         Simpan ({{ $statusCounts['contacted'] }})
                     </button>
+                    <button type="submit" name="status" value="replied" class="mo-segmented-item {{ request('status') === 'replied' ? 'active' : '' }}">
+                        Balas ({{ $statusCounts['replied'] }})
+                    </button>
                     <button type="submit" name="status" value="prospect" class="mo-segmented-item {{ request('status') === 'prospect' ? 'active' : '' }}">
                         Prospek ({{ $statusCounts['prospect'] }})
                     </button>
@@ -126,8 +129,8 @@
     <div class="mo-list">
         @forelse($contacts as $c)
             @php
-                $statusCls = ['prospect' => 'gray', 'contacted' => 'blue', 'donated' => 'green', 'churned' => 'red'][$c->status] ?? 'gray';
-                $rowIcon = $c->status === 'donated' ? '' : ($c->status === 'prospect' ? 'gold' : 'blue');
+                $statusCls = ['prospect' => 'gray', 'contacted' => 'blue', 'replied' => 'gold', 'donated' => 'green', 'churned' => 'red'][$c->status] ?? 'gray';
+                $rowIcon = $c->status === 'donated' ? '' : ($c->status === 'prospect' || $c->status === 'replied' ? 'gold' : 'blue');
             @endphp
             <div class="mo-row" data-contact-detail="{{ $c->id }}">
                 <div class="mo-row-icon {{ $rowIcon }}">{{ strtoupper(substr($c->name, 0, 1)) }}</div>

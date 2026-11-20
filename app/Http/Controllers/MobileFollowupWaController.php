@@ -109,7 +109,7 @@ class MobileFollowupWaController extends MobileModuleController
             'branch_id' => ['nullable', 'exists:branches,id'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'statuses' => ['nullable', 'array'],
-            'statuses.*' => ['nullable', 'in:prospect,contacted,donated,churned'],
+            'statuses.*' => ['nullable', 'in:prospect,contacted,replied,donated,churned'],
             'followups' => ['nullable', 'array'],
             'followups.*' => ['nullable', 'integer', 'min:0', 'max:3'],
             'mechanism' => ['required', 'in:auto,limit'],

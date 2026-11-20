@@ -754,6 +754,7 @@ class MobileAppController extends Controller
             'donated' => (clone $base)->where('status', 'donated')->count(),
             'prospect' => (clone $base)->where('status', 'prospect')->count(),
             'contacted' => (clone $base)->where('status', 'contacted')->count(),
+            'replied' => (clone $base)->where('status', 'replied')->count(),
             'churned' => (clone $base)->where('status', 'churned')->count(),
         ];
 

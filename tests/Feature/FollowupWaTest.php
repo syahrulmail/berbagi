@@ -819,6 +819,54 @@ class FollowupWaTest extends TestCase
             ->count());
     }
 
+    public function test_webhook_marks_contact_as_replied(): void
+    {
+        $service = app(FollowupWaService::class);
+        $user = $this->makeUser('admin');
+        $contact = $this->makeContact('Kontak Balas', '628999999999');
+        $token = $service->webhookToken($user);
+
+        $this->post(route('wa.webhook', ['provider' => 'starsender', 'u' => $user->id, 't' => $token]), [
+            'from' => '628999999999',
+            'text' => 'Siap, saya balas',
+        ])->assertOk();
+
+        $this->assertSame(Contact::STATUS_REPLIED, $contact->fresh()->status);
+        $this->assertSame('Balas', $contact->fresh()->statusLabel());
+    }
+
+    public function test_webhook_marks_local_number_contact_as_replied(): void
+    {
+        $service = app(FollowupWaService::class);
+        $user = $this->makeUser('admin');
+        $contact = $this->makeContact('Kontak Lokal', '08999888777');
+        $token = $service->webhookToken($user);
+
+        $this->post(route('wa.webhook', ['provider' => 'starsender', 'u' => $user->id, 't' => $token]), [
+            'from' => '628999888777',
+            'text' => 'Halo',
+        ])->assertOk();
+
+        $this->assertSame(Contact::STATUS_REPLIED, $contact->fresh()->status);
+    }
+
+    public function test_webhook_does_not_downgrade_donated_contact(): void
+    {
+        $service = app(FollowupWaService::class);
+        $user = $this->makeUser('admin');
+        $contact = $this->makeContact('Kontak Wakif', '628111222333', [
+            'status' => Contact::STATUS_DONATED,
+        ]);
+        $token = $service->webhookToken($user);
+
+        $this->post(route('wa.webhook', ['provider' => 'starsender', 'u' => $user->id, 't' => $token]), [
+            'from' => '628111222333',
+            'text' => 'Terima kasih',
+        ])->assertOk();
+
+        $this->assertSame(Contact::STATUS_DONATED, $contact->fresh()->status);
+    }
+
     public function test_mobile_followup_wa_page_renders(): void
     {
         $admin = $this->makeUser('admin');

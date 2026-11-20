@@ -357,7 +357,7 @@ class MobileCrudController extends MobileAppController
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
-            'status' => ['required', 'in:prospect,contacted,donated,churned'],
+            'status' => ['required', 'in:prospect,contacted,replied,donated,churned'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'notes' => ['nullable', 'string'],

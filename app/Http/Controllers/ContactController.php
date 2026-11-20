@@ -63,6 +63,7 @@ class ContactController extends Controller
         $order = [
             Contact::STATUS_PROSPECT,
             Contact::STATUS_CONTACTED,
+            Contact::STATUS_REPLIED,
             Contact::STATUS_DONATED,
             Contact::STATUS_CHURNED,
         ];
@@ -212,7 +213,7 @@ class ContactController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
-            'status' => ['required', 'in:prospect,contacted,donated,churned'],
+            'status' => ['required', 'in:prospect,contacted,replied,donated,churned'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'notes' => ['nullable', 'string'],
@@ -262,7 +263,7 @@ class ContactController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
-            'status' => ['nullable', 'in:prospect,contacted,donated,churned'],
+            'status' => ['nullable', 'in:prospect,contacted,replied,donated,churned'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'branch_id' => ['nullable', 'exists:branches,id'],
         ]);
@@ -338,7 +339,7 @@ class ContactController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
-            'status' => ['required', 'in:prospect,contacted,donated,churned'],
+            'status' => ['required', 'in:prospect,contacted,replied,donated,churned'],
             'agen_id' => ['nullable', 'exists:users,id'],
             'branch_id' => ['nullable', 'exists:branches,id'],
             'notes' => ['nullable', 'string'],
@@ -462,6 +463,7 @@ class ContactController extends Controller
         $colors = [
             'prospect' => 'badge-blue',
             'contacted' => 'badge-orange',
+            'replied' => 'badge-gold',
             'donated' => 'badge-green',
             'churned' => 'badge-red',
         ];

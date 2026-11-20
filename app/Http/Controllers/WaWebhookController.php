@@ -68,6 +68,8 @@ class WaWebhookController extends Controller
         $text = $this->extractText($payload);
 
         if ($from !== '') {
+            $this->service->markContactReplied($user, $from);
+
             $this->service->handleIncomingBroadcastReply(
                 $user,
                 $from,

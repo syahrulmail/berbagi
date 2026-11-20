@@ -69,6 +69,7 @@
                 <select id="status" name="status">
                     <option value="prospect" {{ old('status') == 'prospect' ? 'selected' : '' }}>Prospek</option>
                     <option value="contacted" {{ old('status') == 'contacted' ? 'selected' : '' }}>Simpan</option>
+                    <option value="replied" {{ old('status') == 'replied' ? 'selected' : '' }}>Balas</option>
                     <option value="donated" {{ old('status') == 'donated' ? 'selected' : '' }}>Wakif</option>
                     <option value="churned" {{ old('status') == 'churned' ? 'selected' : '' }}>Stop</option>
                 </select>
@@ -98,7 +99,7 @@
             <p>Contoh (1 baris = 1 kontak):</p>
             <pre>Yogyakarta,Marwa,Bpk Budi,6281234567890,Prospek,Suka Quran
 Bandung,Agen Citra,Ibu Sari,6289876543210,Wakif,Kontak dari pameran</pre>
-            <p>Status yang diterima: <strong>Prospek</strong>, <strong>Simpan</strong>, <strong>Wakif</strong>, <strong>Stop</strong>.</p>
+            <p>Status yang diterima: <strong>Prospek</strong>, <strong>Simpan</strong>, <strong>Balas</strong>, <strong>Wakif</strong>, <strong>Stop</strong>.</p>
             <p class="text-muted"><i class="fas fa-triangle-exclamation"></i> Cabang dan Agent harus sesuai data yang sudah ada, dan nama Agent harus unik di cabangnya. No. WhatsApp harus berupa angka 8-15 digit (boleh diawali 0/8, 62, +62, atau kode negara lain seperti +60/+65; tidak boleh duplikat dengan kontak lain atau dalam satu tempelan). Jika ada yang bermasalah, tempelan dibatalkan dan diberi tahu baris yang salah.</p>
         </div>
         <form method="POST" action="{{ route('contacts.paste') }}">
@@ -127,7 +128,7 @@ Bandung,Agen Citra,Ibu Sari,6289876543210,Wakif,Kontak dari pameran</pre>
                 <li>Boleh menyertakan <strong>baris judul</strong> (mis. <code>Cabang,Agent,Nama,No. WhatsApp,Status,Catatan</code>) di baris pertama — akan dideteksi otomatis.</li>
                 <li>Pilih file, lalu klik <strong>"Import Kontak"</strong>.</li>
             </ol>
-            <p>Status yang diterima: <strong>Prospek</strong>, <strong>Simpan</strong>, <strong>Wakif</strong>, <strong>Stop</strong>.</p>
+            <p>Status yang diterima: <strong>Prospek</strong>, <strong>Simpan</strong>, <strong>Balas</strong>, <strong>Wakif</strong>, <strong>Stop</strong>.</p>
             <p class="text-muted"><i class="fas fa-triangle-exclamation"></i> Cabang dan Agent harus sesuai data yang sudah ada, dan nama Agent harus unik di cabangnya. No. WhatsApp harus berupa angka 8-15 digit (boleh diawali 0/8, 62, +62, atau kode negara lain seperti +60/+65; tidak boleh duplikat dengan kontak lain atau dalam satu file). Jika ada yang bermasalah, import dibatalkan dan diberi tahu baris yang salah.</p>
             <div class="import-template">
                 <span class="import-template-label"><i class="fas fa-download"></i> Contoh format yang benar:</span>

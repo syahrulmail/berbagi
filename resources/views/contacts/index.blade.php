@@ -49,6 +49,7 @@
                 <option value="">Semua Status</option>
                 <option value="prospect" {{ request('status') == 'prospect' ? 'selected' : '' }}>Prospek</option>
                 <option value="contacted" {{ request('status') == 'contacted' ? 'selected' : '' }}>Simpan</option>
+                <option value="replied" {{ request('status') == 'replied' ? 'selected' : '' }}>Balas</option>
                 <option value="donated" {{ request('status') == 'donated' ? 'selected' : '' }}>Wakif</option>
                 <option value="churned" {{ request('status') == 'churned' ? 'selected' : '' }}>Stop</option>
             </select>
@@ -102,6 +103,7 @@
                                 $statusColors = [
                                     'prospect' => 'badge-blue',
                                     'contacted' => 'badge-orange',
+                                    'replied' => 'badge-gold',
                                     'donated' => 'badge-green',
                                     'churned' => 'badge-red',
                                 ];

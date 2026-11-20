@@ -215,6 +215,41 @@ class FollowupWaService
     }
 
     /**
+     * Tandai kontak yang membalas pesan sebagai "Balas".
+     * Hanya menaikkan status Prospek/Simpan agar Wakif/Stop tidak turun.
+     * Pencocokan memakai varian nomor yang sama seperti balasan broadcast.
+     */
+    public function markContactReplied(User $user, string $fromPhone): ?Contact
+    {
+        $phone = $this->sender->normalizePhone($fromPhone);
+
+        if ($phone === '') {
+            return null;
+        }
+
+        $variants = array_values(array_unique([
+            $phone,
+            '0' . substr($phone, 2),
+            '+' . $phone,
+        ]));
+
+        $contact = $this->contactScope($user)
+            ->whereIn('phone', $variants)
+            ->first();
+
+        if ($contact === null) {
+            return null;
+        }
+
+        if (in_array($contact->status, [Contact::STATUS_PROSPECT, Contact::STATUS_CONTACTED], true)) {
+            $contact->status = Contact::STATUS_REPLIED;
+            $contact->save();
+        }
+
+        return $contact;
+    }
+
+    /**
      * @param  array{branch_id?:mixed,agen_id?:mixed,statuses?:array,followups?:array}  $filters
      * @return \Illuminate\Database\Eloquent\Builder
      */

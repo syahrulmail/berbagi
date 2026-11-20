@@ -48,6 +48,7 @@
                     <select id="cq_status" name="status">
                         <option value="prospect" selected>Prospek</option>
                         <option value="contacted">Simpan</option>
+                        <option value="replied">Balas</option>
                         <option value="donated">Wakif</option>
                         <option value="churned">Stop</option>
                     </select>

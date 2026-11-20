@@ -100,7 +100,7 @@ class ContactImportService
 
             $status = $this->mapStatus($statusLabel);
             if ($status === null) {
-                $errors[] = "Baris {$lineNo}: Status '{$statusLabel}' tidak dikenali. Gunakan Prospek, Simpan, Wakif, atau Stop.";
+                $errors[] = "Baris {$lineNo}: Status '{$statusLabel}' tidak dikenali. Gunakan Prospek, Simpan, Balas, Wakif, atau Stop.";
                 continue;
             }
 
@@ -818,6 +818,8 @@ class ContactImportService
             'prospect' => 'prospect',
             'simpan' => 'contacted',
             'contacted' => 'contacted',
+            'balas' => 'replied',
+            'replied' => 'replied',
             'wakif' => 'donated',
             'donated' => 'donated',
             'donatur' => 'donated',

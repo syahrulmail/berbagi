@@ -34,7 +34,7 @@
 @php
     $dotColors = ['ok' => '#22c55e', 'fail' => '#ef4444', 'empty' => '#cbd5e1'];
     $dotLabels = ['ok' => 'Terkoneksi', 'fail' => 'Tidak terkoneksi', 'empty' => 'Belum diisi'];
-    $contactStatuses = ['prospect' => 'Prospek', 'contacted' => 'Simpan', 'donated' => 'Wakif', 'churned' => 'Stop'];
+    $contactStatuses = ['prospect' => 'Prospek', 'contacted' => 'Simpan', 'replied' => 'Balas', 'donated' => 'Wakif', 'churned' => 'Stop'];
     $followupBuckets = [0 => '0x', 1 => '1x', 2 => '2x', 3 => '3x+'];
 @endphp
 

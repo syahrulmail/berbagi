@@ -11,6 +11,7 @@ class Contact extends Model
 
     public const STATUS_PROSPECT = 'prospect';
     public const STATUS_CONTACTED = 'contacted';
+    public const STATUS_REPLIED = 'replied';
     public const STATUS_DONATED = 'donated';
     public const STATUS_CHURNED = 'churned';
 
@@ -56,6 +57,7 @@ class Contact extends Model
         $labels = [
             self::STATUS_PROSPECT => 'Prospek',
             self::STATUS_CONTACTED => 'Simpan',
+            self::STATUS_REPLIED => 'Balas',
             self::STATUS_DONATED => 'Wakif',
             self::STATUS_CHURNED => 'Stop',
         ];
