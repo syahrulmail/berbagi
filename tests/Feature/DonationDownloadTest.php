@@ -111,6 +111,29 @@ class DonationDownloadTest extends TestCase
         $this->assertSame('PK', substr((string) file_get_contents($file), 0, 2));
     }
 
+    public function test_download_contains_receipt_number_and_link_columns()
+    {
+        $admin = $this->makeUser('admin');
+        [$branch, $donation] = $this->makeDonation($admin);
+
+        $response = $this->actingAs($admin)->get(route('donations.download', [
+            'branch_ids' => [$branch->id],
+        ]));
+
+        $response->assertOk();
+
+        $file = $response->baseResponse->getFile()->getPathname();
+        $zip = new \ZipArchive();
+        $zip->open($file);
+        $sheet = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+
+        $this->assertStringContainsString('Nomor Kwitansi', $sheet);
+        $this->assertStringContainsString('Link/url Kwitansi', $sheet);
+        $this->assertStringContainsString('>' . $donation->id . '<', $sheet);
+        $this->assertStringContainsString('kwitansi/' . $donation->id, $sheet);
+    }
+
     public function test_download_rejects_invalid_date_range()
     {
         $admin = $this->makeUser('admin');

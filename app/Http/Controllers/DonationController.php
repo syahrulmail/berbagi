@@ -100,13 +100,15 @@ class DonationController extends Controller
             'Metode Pembayaran',
             'Bukti Pembayaran',
             'Catatan',
+            'Nomor Kwitansi',
+            'Link/url Kwitansi',
         ];
 
         $writer = (new XlsxWriter('Donasi'))
             ->setColumnWidths([
                 1 => 20, 2 => 20, 3 => 15, 4 => 24, 5 => 28,
                 6 => 20, 7 => 30, 8 => 16, 9 => 16, 10 => 18,
-                11 => 18, 12 => 36, 13 => 28,
+                11 => 18, 12 => 36, 13 => 28, 14 => 16, 15 => 60,
             ])
             ->addRow($headers, XlsxWriter::STYLE_HEADER);
 
@@ -138,6 +140,8 @@ class DonationController extends Controller
                 ['value' => $this->paymentMethodLabel($donation->payment_method), 'style' => $wrap],
                 ['value' => $donation->payment_proof ? asset_photo_url($donation->payment_proof) : '-', 'style' => $wrap],
                 ['value' => $donation->note ?: '-', 'style' => $wrap],
+                ['value' => (string) $donation->id, 'style' => $wrap],
+                ['value' => kwitansi_public_url($donation), 'style' => $wrap],
             ]);
         }
 
