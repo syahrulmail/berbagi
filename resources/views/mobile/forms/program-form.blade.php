@@ -159,6 +159,7 @@
         </div>
     @endif
 </div>
+@include('partials.slug-autofill')
 @endsection
 
 @push('scripts')

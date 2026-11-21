@@ -88,4 +88,5 @@
         </div>
     </form>
 </div>
+@include('partials.slug-autofill')
 @endsection

@@ -37,4 +37,17 @@ class ProgramCategoryTest extends TestCase
             ->assertOk()
             ->assertSee('Zakat (ZPP)');
     }
+
+    public function test_program_create_forms_include_slug_autofill()
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)->get(route('programs.create'))
+            ->assertOk()
+            ->assertSee('data-slug-autofill', false);
+
+        $this->actingAs($admin)->get(route('mo.program.create'))
+            ->assertOk()
+            ->assertSee('data-slug-autofill', false);
+    }
 }
