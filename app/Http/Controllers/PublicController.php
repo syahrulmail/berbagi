@@ -326,20 +326,34 @@ class PublicController extends Controller
     protected function relatedProgramCards(Program $program, string $waNumber, string $waTemplate, string $waSource, $agen = null): array
     {
         $tagIds = $program->campaignTags->pluck('id');
+        $limit = 4;
 
-        if ($tagIds->isEmpty()) {
-            return [];
+        $related = collect();
+
+        if ($tagIds->isNotEmpty()) {
+            $related = Program::where('is_active', true)
+                ->where('id', '!=', $program->id)
+                ->whereHas('campaignTags', function ($q) use ($tagIds) {
+                    $q->whereIn('campaign_tags.id', $tagIds);
+                })
+                ->with('campaignTags')
+                ->orderByDesc('created_at')
+                ->limit($limit)
+                ->get();
         }
 
-        $related = Program::where('is_active', true)
-            ->where('id', '!=', $program->id)
-            ->whereHas('campaignTags', function ($q) use ($tagIds) {
-                $q->whereIn('campaign_tags.id', $tagIds);
-            })
-            ->with('campaignTags')
-            ->orderByDesc('created_at')
-            ->limit(3)
-            ->get();
+        if ($related->count() < $limit) {
+            $excludeIds = $related->pluck('id')->push($program->id);
+
+            $fallback = Program::where('is_active', true)
+                ->whereNotIn('id', $excludeIds)
+                ->with('campaignTags')
+                ->orderByDesc('created_at')
+                ->limit($limit - $related->count())
+                ->get();
+
+            $related = $related->concat($fallback);
+        }
 
         return $this->cardifyPrograms($related, $waNumber, $waTemplate, $waSource, $agen);
     }
