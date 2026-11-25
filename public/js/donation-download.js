@@ -9,9 +9,36 @@
     var form = document.getElementById('donation-download-form');
     var allBox = document.getElementById('donation-download-all-branches');
     var branchBoxes = modal.querySelectorAll('input[name="branch_ids[]"]');
+    var agentSelect = document.getElementById('donation-download-agen');
+    var agentOptions = agentSelect ? agentSelect.querySelectorAll('option[data-branch]') : [];
     var closeBtns = modal.querySelectorAll('[data-donation-download-close]');
 
+    function selectedBranchIds() {
+        return Array.prototype.filter.call(branchBoxes, function (box) {
+            return box.checked;
+        }).map(function (box) {
+            return box.value;
+        });
+    }
+
+    function applyAgentFilter() {
+        if (!agentSelect || agentOptions.length === 0) return;
+
+        var branches = selectedBranchIds();
+
+        Array.prototype.forEach.call(agentOptions, function (option) {
+            var match = branches.length === 0
+                || branches.indexOf(option.getAttribute('data-branch')) !== -1;
+            option.hidden = !match;
+            option.disabled = !match;
+        });
+
+        var selected = agentSelect.options[agentSelect.selectedIndex];
+        if (selected && selected.disabled) agentSelect.value = '';
+    }
+
     function open() {
+        applyAgentFilter();
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
@@ -42,6 +69,7 @@
             Array.prototype.forEach.call(branchBoxes, function (box) {
                 box.checked = allBox.checked;
             });
+            applyAgentFilter();
         });
     }
 
@@ -53,6 +81,7 @@
                 });
 
             if (allBox) allBox.checked = allChecked;
+            applyAgentFilter();
         });
     });
 

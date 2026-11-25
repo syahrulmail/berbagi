@@ -58,8 +58,9 @@ class DonationController extends Controller
         $agents = $this->visibleAgents();
         $programs = Program::where('is_active', true)->orderBy('name')->get();
         $downloadBranches = $branches;
+        $downloadAgents = $agents;
 
-        return view('donations.index', compact('donations', 'totalAmount', 'branches', 'agents', 'programs', 'downloadBranches'));
+        return view('donations.index', compact('donations', 'totalAmount', 'branches', 'agents', 'programs', 'downloadBranches', 'downloadAgents'));
     }
 
     /**
@@ -67,19 +68,7 @@ class DonationController extends Controller
      */
     public function download(Request $request)
     {
-        $request->validate([
-            'branch_ids' => ['nullable', 'array'],
-            'branch_ids.*' => ['integer', 'exists:branches,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', Rule::when($request->filled('from'), ['after_or_equal:from'])],
-        ]);
-
-        $allowedBranchIds = $this->visibleBranches()->pluck('id')->all();
-        $requestedBranchIds = array_values(array_filter((array) $request->input('branch_ids', [])));
-
-        if (array_diff($requestedBranchIds, $allowedBranchIds)) {
-            abort(403, 'Cabang yang dipilih tidak sesuai dengan akses Anda.');
-        }
+        $this->validateDownloadFilters($request);
 
         $donations = $this->filteredQuery($request)
             ->orderBy('donations.donation_date')
@@ -168,19 +157,7 @@ class DonationController extends Controller
      */
     public function downloadProof(Request $request)
     {
-        $request->validate([
-            'branch_ids' => ['nullable', 'array'],
-            'branch_ids.*' => ['integer', 'exists:branches,id'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', Rule::when($request->filled('from'), ['after_or_equal:from'])],
-        ]);
-
-        $allowedBranchIds = $this->visibleBranches()->pluck('id')->all();
-        $requestedBranchIds = array_values(array_filter((array) $request->input('branch_ids', [])));
-
-        if (array_diff($requestedBranchIds, $allowedBranchIds)) {
-            abort(403, 'Cabang yang dipilih tidak sesuai dengan akses Anda.');
-        }
+        $this->validateDownloadFilters($request);
 
         $donations = $this->filteredQuery($request)
             ->whereNotNull('donations.payment_proof')
@@ -241,6 +218,42 @@ class DonationController extends Controller
         }
 
         return $count;
+    }
+
+    /**
+     * Validasi filter unduhan dan pastikan cabang/agen berada dalam akses pengguna.
+     */
+    protected function validateDownloadFilters(Request $request): void
+    {
+        $request->validate([
+            'branch_ids' => ['nullable', 'array'],
+            'branch_ids.*' => ['integer', 'exists:branches,id'],
+            'agen_id' => ['nullable', 'integer', 'exists:users,id'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', Rule::when($request->filled('from'), ['after_or_equal:from'])],
+        ]);
+
+        $allowedBranchIds = $this->visibleBranches()->pluck('id')->all();
+        $requestedBranchIds = array_values(array_filter((array) $request->input('branch_ids', [])));
+
+        if (array_diff($requestedBranchIds, $allowedBranchIds)) {
+            abort(403, 'Cabang yang dipilih tidak sesuai dengan akses Anda.');
+        }
+
+        $requestedAgenId = (int) $request->input('agen_id');
+
+        if ($requestedAgenId > 0) {
+            $allowedAgentIds = $this->visibleAgents()
+                ->pluck('id')
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->all();
+
+            if (! in_array($requestedAgenId, $allowedAgentIds, true)) {
+                abort(403, 'Agen yang dipilih tidak sesuai dengan akses Anda.');
+            }
+        }
     }
 
     /**

@@ -60,6 +60,22 @@
                         @endforelse
                     </div>
                 </div>
+                @if(auth()->user()->isAdmin() || auth()->user()->isSupervisor())
+                <div class="form-group">
+                    <label for="donation-download-agen">Agen</label>
+                    <select id="donation-download-agen" name="agen_id">
+                        <option value="">Semua Agen</option>
+                        @foreach($downloadAgents as $agent)
+                            <option value="{{ $agent->id }}" data-branch="{{ $agent->branch_id }}">
+                                {{ $agent->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="download-hint">
+                        Daftar agen mengikuti cabang yang Anda kelola.
+                    </p>
+                </div>
+                @endif
                 <div class="form-row">
                     <div class="form-group">
                         <label for="donation-download-from">Dari Tanggal</label>
